@@ -11,13 +11,6 @@
 - 🛡️ **类型安全**: 100% TypeScript 覆盖
 - 📦 **代码复用**: 创建工具函数库，提高可维护性
 
-详细优化内容请查看：
-
-- [📋 优化清单](./OPTIMIZATION_CHECKLIST.md)
-- [📊 优化前后对比](./BEFORE_AFTER_COMPARISON.md)
-- [📖 优化详细说明](./OPTIMIZATION.md)
-- [🚀 快速参考指南](./QUICK_REFERENCE.md)
-
 ## 🎯 项目简介
 
 Wallhaven 是一个功能丰富的在线壁纸浏览和管理应用，提供：

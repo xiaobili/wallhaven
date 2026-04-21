@@ -112,18 +112,25 @@ const closePreview = (): void => {
  * 滚轮滚动加载（使用节流优化）
  */
 const scrollEvent = (): void => {
+  // 如果正在加载，则不执行
+  if (wallpaperStore.loading) return
+
+  // 如果已经加载完所有页面且有数据，则不执行
+  const { currentPage, totalPage } = wallpaperStore.totalPageData
+  if (totalPage > 0 && currentPage >= totalPage) return
+
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
   const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
   const clientHeight = document.documentElement.clientHeight
 
-  // 距离底部100px时触发加载
-  if (scrollTop + clientHeight >= scrollHeight - 100) {
+  // 距离底部200px时触发加载（增加阈值以应对快速滚动）
+  if (scrollTop + clientHeight >= scrollHeight - 200) {
     wallpaperStore.loadMoreWallpapers()
   }
 }
 
-// 使用节流函数包装滚动事件（300ms间隔）
-const throttledScrollEvent = throttle(scrollEvent, 300)
+// 使用节流函数包装滚动事件（200ms间隔，更快响应）
+const throttledScrollEvent = throttle(scrollEvent, 200)
 </script>
 
 <style scoped></style>

@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
-import type { TotalPageData, GetParams, WallpaperItem } from '@/types'
+import type { TotalPageData, GetParams, WallpaperItem, CustomParams } from '@/types'
 import { searchWallpapers } from '@/services/wallpaperApi'
 
 export const useWallpaperStore = defineStore('wallpaper', () => {
@@ -16,6 +16,9 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
   const loading = ref<boolean>(false)
   const error = ref<boolean>(false)
   const queryParams = ref<GetParams | null>(null)
+  
+  // 保存的自定义搜索参数
+  const savedParams = ref<CustomParams | null>(null)
 
   // Actions
   /**
@@ -95,6 +98,20 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     queryParams.value = null
     error.value = false
   }
+  
+  /**
+   * 保存自定义搜索参数
+   */
+  function saveCustomParams(params: CustomParams): void {
+    savedParams.value = { ...params }
+  }
+  
+  /**
+   * 获取保存的自定义搜索参数
+   */
+  function getSavedParams(): CustomParams | null {
+    return savedParams.value
+  }
 
   return {
     // State
@@ -102,10 +119,13 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     loading,
     error,
     queryParams,
+    savedParams,
 
     // Actions
     fetchWallpapers,
     loadMoreWallpapers,
     resetState,
+    saveCustomParams,
+    getSavedParams,
   }
 })
