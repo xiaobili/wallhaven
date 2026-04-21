@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
-import type { TotalPageData, GetParams, WallpaperItem, CustomParams } from '@/types'
+import type { TotalPageData, GetParams, CustomParams } from '@/types'
 import { searchWallpapers } from '@/services/wallpaperApi'
 
 export const useWallpaperStore = defineStore('wallpaper', () => {
@@ -16,7 +16,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
   const loading = ref<boolean>(false)
   const error = ref<boolean>(false)
   const queryParams = ref<GetParams | null>(null)
-  
+
   // 保存的自定义搜索参数
   const savedParams = ref<CustomParams | null>(null)
 
@@ -98,19 +98,45 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     queryParams.value = null
     error.value = false
   }
-  
+
   /**
    * 保存自定义搜索参数
    */
   function saveCustomParams(params: CustomParams): void {
+    // 确保selector为0
+    params.selector = 0
     savedParams.value = { ...params }
+    // 保存到 localStorage
+    try {
+      localStorage.setItem('wallhaven_custom_params', JSON.stringify(params))
+    } catch (err) {
+      console.error('保存自定义搜索参数到 localStorage 失败:', err)
+    }
   }
-  
+
   /**
    * 获取保存的自定义搜索参数
    */
   function getSavedParams(): CustomParams | null {
-    return savedParams.value
+    // 优先从内存中获取
+    if (savedParams.value) {
+      return savedParams.value
+    }
+
+    // 否则从 localStorage 中获取
+    try {
+      const stored = localStorage.getItem('wallhaven_custom_params')
+      if (stored) {
+        const params = JSON.parse(stored) as CustomParams
+        // 同步到内存中
+        savedParams.value = params
+        return params
+      }
+    } catch (err) {
+      console.error('从 localStorage 获取自定义搜索参数失败:', err)
+    }
+
+    return null
   }
 
   return {
