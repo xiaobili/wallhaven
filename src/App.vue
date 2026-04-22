@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import OnlineWallpaper from '@/views/OnlineWallpaper.vue'
-import DownloadWallpaper from './views/DownloadWallpaper.vue'
+import PageHeader from '@/components/PageHeader.vue';
+import Main from '@/Main.vue';
 </script>
 
 <template>
   <div>
-    <OnlineWallpaper />
-    <!-- <DownloadWallpaper /> -->
+    <PageHeader title="" />
+    <Main />
   </div>
 </template>
 

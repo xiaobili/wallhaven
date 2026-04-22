@@ -1,7 +1,5 @@
 <template>
   <div>
-    <PageHeader title="在线壁纸" />
-
     <ImagePreview
       :showing="imgShow"
       :img-info="imgInfo"
@@ -39,7 +37,6 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import type { WallpaperItem, GetParams } from '@/types'
 import { throttle } from '@/utils/helpers'
