@@ -1,9 +1,10 @@
 // Wallhaven 壁纸业务逻辑
 
-import type { Ref } from 'vue'
-import type { TotalPageData, GetParams, CustomParams } from '@/types'
+import type { Ref, Reactive } from 'vue'
+import type { TotalPageData, GetParams, CustomParams, AppSettings } from '@/types'
 import { searchWallpapers } from '@/services/wallpaperApi'
 import { saveCustomParamsToStorage, getSavedParamsFromStorage } from './storage'
+import { saveSettingsToStorage, getSettingsFromStorage } from './settings-storage'
 
 /**
  * 创建壁纸 actions
@@ -14,6 +15,7 @@ export function createWallpaperActions(
   error: Ref<boolean>,
   queryParams: Ref<GetParams | null>,
   savedParams: Ref<CustomParams | null>,
+  settings: Reactive<AppSettings>,
 ) {
   /**
    * 搜索壁纸（替换现有数据）
@@ -123,11 +125,33 @@ export function createWallpaperActions(
     return params
   }
 
+  /**
+   * 更新应用设置
+   */
+  function updateSettings(newSettings: Partial<AppSettings>): void {
+    // 合并新设置
+    Object.assign(settings, newSettings)
+    // 保存到 localStorage
+    saveSettingsToStorage(settings)
+  }
+
+  /**
+   * 加载保存的应用设置
+   */
+  function loadSettings(): void {
+    const savedSettings = getSettingsFromStorage()
+    if (savedSettings) {
+      Object.assign(settings, savedSettings)
+    }
+  }
+
   return {
     fetchWallpapers,
     loadMoreWallpapers,
     resetState,
     saveCustomParams,
     getSavedParams,
+    updateSettings,
+    loadSettings,
   }
 }

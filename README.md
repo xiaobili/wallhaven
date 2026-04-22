@@ -38,15 +38,25 @@ src/
 │   ├── ImagePreview.vue    # 图片预览
 │   ├── PageHeader.vue      # 页面头部
 │   ├── SearchBar.vue       # 搜索栏
-│   └── WallpaperList.vue   # 壁纸列表
+│   ├── WallpaperList.vue   # 壁纸列表
+│   └── DownloadList.vue    # 下载列表
 ├── services/           # ✨ API 服务层
 │   └── wallpaperApi.ts     # Wallhaven API 封装
 ├── stores/             # ✨ Pinia 状态管理
-│   └── wallpaper.ts        # 壁纸状态
+│   └── modules/
+│       └── wallpaper/
+│           ├── state.ts        # 状态定义
+│           ├── actions.ts      # 业务逻辑
+│           ├── storage.ts      # 搜索参数存储
+│           ├── settings-storage.ts  # 设置存储
+│           └── index.ts        # Store 入口
 ├── utils/              # ✨ 工具函数
 │   └── helpers.ts          # 通用工具函数
 ├── views/              # 视图组件
-│   └── ToolBars.vue        # 主视图
+│   ├── OnlineWallpaper.vue   # 在线壁纸
+│   ├── LocalWallpaper.vue    # 本地壁纸
+│   ├── DownloadWallpaper.vue # 下载中心
+│   └── SettingPage.vue       # ⭐ 应用设置
 ├── types/              # TypeScript 类型
 │   └── index.ts
 ├── router/             # 路由配置
@@ -134,6 +144,23 @@ npm run format
 - 自动加载更多
 - 节流优化
 - 提前预加载
+
+### 4. 应用设置 ⭐ 新增
+
+提供丰富的个性化配置选项：
+
+- **下载设置**
+  - 自定义下载目录
+  - 多线程下载数量调节（1-10）
+  
+- **API 设置**
+  - Wallhaven API Key 配置
+  - 支持 NSFW 内容访问
+  
+- **桌面设置**
+  - 6 种壁纸适配模式（填充、适应、拉伸、平铺、居中、跨屏）
+  - 实时预览效果
+  - 所有设置自动保存到本地
 
 ## 🔧 开发指南
 

@@ -201,3 +201,25 @@ export interface FinishedDownloadItem extends DownloadItem {
   path: string
   time: string
 }
+
+// ==================== 应用设置类型 ====================
+
+/**
+ * 壁纸适配模式
+ */
+export type WallpaperFit = 'fill' | 'fit' | 'stretch' | 'tile' | 'center' | 'span'
+
+/**
+ * 应用设置接口
+ */
+export interface AppSettings {
+  // 下载设置
+  downloadPath: string
+  maxConcurrentDownloads: number
+  
+  // API 设置
+  apiKey: string
+  
+  // 桌面设置
+  wallpaperFit: WallpaperFit
+}

@@ -15,6 +15,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     state.error,
     state.queryParams,
     state.savedParams,
+    state.settings,
   )
 
   return {
