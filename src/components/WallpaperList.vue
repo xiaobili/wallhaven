@@ -11,14 +11,22 @@
         <ul>
           <li v-for="(liItem, index) in sectionItem.data" :key="liItem.id">
             <figure class="thumb"
-                    :class="'thumb-' + (liItem.id) + ' thumb-' + (liItem.purity) + ' thumb-' + (liItem.category)"
-                    :data-wallpaper-id="liItem.id" style="width:300px;height:200px">
-              <a class="thumb-btn thumb-btn-fav jsAnchor overlay-anchor" title="设为壁纸" @click="emit('set-bg', liItem)">
+                    :class="['thumb-' + (liItem.id), 'thumb-' + (liItem.purity), 'thumb-' + (liItem.category), { 'selected': isSelected(liItem.id) }]"
+                    :data-wallpaper-id="liItem.id" 
+                    style="width:300px;height:200px"
+                    @click.ctrl.exact.prevent="toggleSelect(liItem.id)"
+                    @click.meta.exact.prevent="toggleSelect(liItem.id)">
+              <!-- 选择框 -->
+              <div class="thumb-checkbox" @click.stop.prevent="toggleSelect(liItem.id)">
+                <i class="fas fa-check check-icon" v-if="isSelected(liItem.id)"></i>
+              </div>
+
+              <a class="thumb-btn thumb-btn-fav jsAnchor overlay-anchor" title="设为壁纸" @click.stop="emit('set-bg', liItem)">
                 <i class="fas fa-fw fa-repeat-alt"></i>
               </a>
               <img alt="loading" loading="lazy" class="lazyload loaded"
                    :data-src="liItem.thumbs.small" :src="liItem.thumbs.small"/>
-              <a class="preview" @click="emit('preview', liItem)"></a>
+              <a class="preview" @click.stop="emit('preview', liItem)"></a>
               <div class="thumb-info">
                 <span class="wall-res">{{ formatResolution(liItem.resolution) }}</span>
                 <a class="jsAnchor overlay-anchor wall-favs">{{ formatFileSize(liItem.file_size) }}</a>
@@ -40,27 +48,106 @@
 </template>
 
 <script setup lang="ts">
-import type { WallpaperItem ,TotalPageData } from '@/types'
+import type { WallpaperItem, TotalPageData } from '@/types'
 import { formatResolution, formatFileSize } from '@/utils/helpers'
 
 const props = defineProps<{
   pageData: TotalPageData;
   loading: boolean;
   error: boolean;
+  selectedIds?: string[];  // 选中的壁纸ID列表
 }>();
-
 
 const emit = defineEmits<{
   'set-bg': [item: WallpaperItem];
   'preview': [item: WallpaperItem];
   'download-img': [item: WallpaperItem];
   'close-search-modal': [];
+  'select-wallpaper': [id: string];  // 切换选择状态
 }>();
 
+/**
+ * 检查是否已选中
+ */
+const isSelected = (id: string): boolean => {
+  return props.selectedIds?.includes(id) || false
+}
+
+/**
+ * 切换选择状态
+ */
+const toggleSelect = (id: string): void => {
+  emit('select-wallpaper', id)
+}
 </script>
 
 <style scoped>
 @import url("@/static/css/list.css");
+
+/* 选中状态样式 */
+.thumb.selected {
+  outline: 3px solid #667eea;
+  outline-offset: -3px;
+}
+
+/* 选择框样式 - 默认隐藏，悬停或选中时显示 */
+.thumb-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 150;
+  transition: all 0.2s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* 悬停时显示 */
+.thumb:hover .thumb-checkbox {
+  opacity: 0.7;
+  visibility: visible;
+}
+
+.thumb-checkbox:hover {
+  background: rgba(102, 126, 234, 0.7);
+  border-color: white;
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+/* 选中时始终显示 */
+.thumb.selected .thumb-checkbox {
+  background: #667eea;
+  border-color: #667eea;
+  opacity: 1;
+  visibility: visible;
+}
+
+.check-icon {
+  color: white;
+  font-size: 14px;
+  animation: checkPop 0.2s ease;
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
 .main-bottom {
   height: 30px;
@@ -81,13 +168,12 @@ const emit = defineEmits<{
   animation: spin 0.8s infinite linear;
 }
 
-.main-bottom i {
-  font-size: 30px;
-  line-height: 1.2;
-  font-weight: normal !important;
-}
-
-#main::-webkit-scrollbar {
-  display: none;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

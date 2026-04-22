@@ -1,71 +1,92 @@
 # Wallhaven - 在线壁纸浏览器
 
-> 基于 Vue 3 + Vite + TypeScript 构建的现代化壁纸浏览应用
+> 基于 Electron + Vue 3 + Vite + TypeScript 构建的跨平台桌面壁纸应用
 
-## ✨ 最新优化 (v1.0.0)
+## ✨ 最新优化 (v2.0.0)
 
-本项目已完成全面优化，包括：
+本项目已完成全面升级，现已支持 **Electron 桌面应用**：
 
+- 🖥️ **跨平台支持**: macOS、Windows、Linux
 - ⚡ **性能提升**: 滚动事件优化 95%，流畅的用户体验
-- 🏗️ **架构升级**: 引入 API Service 层和 Pinia 状态管理
+- 🏗️ **架构升级**: Electron + Vue 3 + electron-vite
 - 🛡️ **类型安全**: 100% TypeScript 覆盖
 - 📦 **代码复用**: 创建工具函数库，提高可维护性
+- 🔌 **原生能力**: 文件系统访问、系统托盘、通知等
 
 ## 🎯 项目简介
 
-Wallhaven 是一个功能丰富的在线壁纸浏览和管理应用，提供：
+Wallhaven 是一个功能丰富的跨平台桌面壁纸浏览和管理应用，提供：
 
 - 🔍 强大的搜索功能（关键词、分类、纯度、分辨率等）
 - 🖼️ 流畅的图片预览和下载
-- 📱 响应式设计，支持多种设备
+- 💻 桌面应用体验，支持离线使用
+- 🌐 跨平台支持（macOS、Windows、Linux）
 - ⚡ 无限滚动加载，浏览体验流畅
 
 ## 🛠️ 技术栈
 
+- **桌面框架**: Electron 41+
 - **前端框架**: Vue 3.5+ (Composition API)
-- **构建工具**: Vite 8.0+
-- **语言**: TypeScript 6.0+
-- **状态管理**: Pinia 3.0+
-- **路由**: Vue Router 5.0+
+- **构建工具**: electron-vite 5+ / Vite 8+
+- **语言**: TypeScript 6+
+- **状态管理**: Pinia 3+
+- **路由**: Vue Router 5+
 - **HTTP 客户端**: Axios 1.15+
-- **测试框架**: Vitest 4.1+
+- **打包工具**: electron-builder 26+
+- **测试框架**: Vitest 4+
 
 ## 📁 项目结构
 
 ```
-src/
-├── components/          # Vue 组件
-│   ├── ImagePreview.vue    # 图片预览
-│   ├── PageHeader.vue      # 页面头部
-│   ├── SearchBar.vue       # 搜索栏
-│   ├── WallpaperList.vue   # 壁纸列表
-│   └── DownloadList.vue    # 下载列表
-├── services/           # ✨ API 服务层
-│   └── wallpaperApi.ts     # Wallhaven API 封装
-├── stores/             # ✨ Pinia 状态管理
-│   └── modules/
-│       └── wallpaper/
-│           ├── state.ts        # 状态定义
-│           ├── actions.ts      # 业务逻辑
-│           ├── storage.ts      # 搜索参数存储
-│           ├── settings-storage.ts  # 设置存储
-│           └── index.ts        # Store 入口
-├── utils/              # ✨ 工具函数
-│   └── helpers.ts          # 通用工具函数
-├── views/              # 视图组件
-│   ├── OnlineWallpaper.vue   # 在线壁纸
-│   ├── LocalWallpaper.vue    # 本地壁纸
-│   ├── DownloadWallpaper.vue # 下载中心
-│   └── SettingPage.vue       # ⭐ 应用设置
-├── types/              # TypeScript 类型
-│   └── index.ts
-├── router/             # 路由配置
-│   └── index.ts
-├── static/             # 静态资源
-│   └── css/
-├── App.vue             # 根组件
-└── main.ts             # 入口文件
+wallhaven/
+├── electron/                 # Electron 主进程代码
+│   ├── main/                # 主进程
+│   │   ├── index.ts         # 主进程入口
+│   │   └── ipc/             # IPC 通信处理
+│   └── preload/             # 预加载脚本
+│       └── index.ts         # 预加载脚本入口
+├── src/                     # Vue 渲染进程代码
+├── build/                   # 构建资源
+├── resources/               # 应用资源（图标等）
+├── electron.vite.config.ts  # electron-vite 配置
+└── electron-builder.yml     # electron-builder 配置
 ```
+
+### IPC 通信
+
+**渲染进程 → 主进程：**
+
+```typescript
+// 在 Vue 组件中
+window.electronAPI.send('channel-name', { data: 'value' })
+
+window.electronAPI.receive('response-channel', (data) => {
+  console.log('收到回复:', data)
+})
+```
+
+**主进程处理：**
+
+```typescript
+// electron/main/ipc/xxx.ts
+import { ipcMain } from 'electron'
+
+ipcMain.on('channel-name', (event, data) => {
+  // 处理逻辑
+  event.reply('response-channel', { result: 'success' })
+})
+```
+
+### 原生功能示例
+
+- 文件下载管理
+- 系统通知
+- 剪贴板操作
+- 窗口控制
+- 系统托盘
+- 全局快捷键
+
+详细文档请查看 [ELECTRON_INTEGRATION.md](./ELECTRON_INTEGRATION.md)
 
 ## 🚀 快速开始
 
@@ -80,19 +101,47 @@ src/
 npm install
 ```
 
-### 开发模式
+### 开发模式（桌面应用）
 
 ```sh
 npm run dev
 ```
 
-访问: <http://localhost:5173/>
+这将启动 Electron 桌面应用，支持热重载（HMR）。
+
+### 开发模式（仅浏览器）
+
+如果只想在浏览器中调试渲染进程：
+
+```sh
+npm run preview
+```
 
 ### 生产构建
 
+**构建所有平台：**
 ```sh
 npm run build
 ```
+
+**构建特定平台：**
+
+Windows:
+```sh
+npm run build:win
+```
+
+macOS:
+```sh
+npm run build:mac
+```
+
+Linux:
+```sh
+npm run build:linux
+```
+
+构建产物将输出到 `release/` 目录。
 
 ### 预览生产构建
 
@@ -256,6 +305,10 @@ formatResolution('1920x1080') // "1920 × 1080"
 ### Vue DevTools
 
 按 `Option(⌥)+Shift(⇧)+D` 打开 Vue DevTools
+
+### Electron DevTools
+
+在开发模式下，按 `F12` 或 `Cmd+Option+I` (macOS) / `Ctrl+Shift+I` (Windows/Linux) 打开开发者工具
 
 ### Pinia DevTools
 

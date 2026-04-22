@@ -114,40 +114,90 @@ const settings = wallpaperStore.settings
 
 // 方法
 const browseDownloadPath = async (): Promise<void> => {
-  // TODO: 调用 Electron API 打开文件夹选择对话框
-  console.log('打开文件夹选择对话框')
-  // 示例：通过 IPC 调用主进程
-  // const path = await window.electron.selectFolder()
-  // if (path) {
-  //   settings.downloadPath = path
-  // }
+  try {
+    // 检查 Electron API 是否可用
+    // @ts-ignore
+    if (!window.electronAPI) {
+      console.error('[SettingPage] window.electronAPI is undefined')
+      alert('❌ Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志')
+      return
+    }
+    
+    console.log('[SettingPage] window.electronAPI:', window.electronAPI)
+    // @ts-ignore
+    console.log('[SettingPage] selectFolder method:', window.electronAPI.selectFolder)
+    
+    // 调用 Electron API 打开文件夹选择对话框
+    // @ts-ignore
+    const selectedPath = await window.electronAPI.selectFolder()
+    
+    console.log('[SettingPage] Selected path:', selectedPath)
+    
+    if (selectedPath) {
+      settings.downloadPath = selectedPath
+      // 自动保存设置
+      wallpaperStore.updateSettings({ downloadPath: selectedPath })
+    }
+  } catch (error: any) {
+    console.error('选择文件夹失败:', error)
+    alert('选择文件夹失败: ' + error.message)
+  }
 }
 
-const saveSettings = (): void => {
+const saveSettings = async (): Promise<void> => {
   // 验证设置
   if (settings.maxConcurrentDownloads < 1 || settings.maxConcurrentDownloads > 10) {
     alert('多线程下载数量必须在 1-10 之间')
     return
   }
   
-  // 保存设置到 store 和 localStorage
-  wallpaperStore.updateSettings({ ...settings })
-  
-  // 显示成功提示
-  console.log('设置已保存')
-  // TODO: 使用 Toast 组件显示提示
-  // showToast('设置已保存', 'success')
+  try {
+    // 保存设置到 store
+    wallpaperStore.updateSettings({ ...settings })
+    
+    // 检查 Electron API 是否可用
+    // @ts-ignore
+    if (!window.electronAPI) {
+      console.error('[SettingPage] window.electronAPI is undefined during save')
+      alert('❌ Electron API 未加载，无法保存设置')
+      return
+    }
+
+    console.log('[SettingPage] Saving settings via electronAPI...')
+    
+    // 同步保存到 Electron 持久化存储
+    // @ts-ignore
+    const result = await window.electronAPI.saveSettings(settings)
+    
+    console.log('[SettingPage] Save result:', result)
+    
+    if (result.success) {
+      alert('✅ 设置已保存')
+    } else {
+      alert('❌ 保存失败: ' + (result.error || '未知错误'))
+    }
+  } catch (error: any) {
+    console.error('保存设置错误:', error)
+    alert('保存设置失败: ' + error.message)
+  }
 }
 
 const resetSettings = (): void => {
   if (confirm('确定要恢复默认设置吗？')) {
     // 重置为默认值
-    wallpaperStore.updateSettings({
+    const defaultSettings = {
       downloadPath: '',
       maxConcurrentDownloads: 3,
       apiKey: '',
-      wallpaperFit: 'fill',
-    })
+      wallpaperFit: 'fill' as WallpaperFit,
+    }
+    
+    wallpaperStore.updateSettings(defaultSettings)
+    
+    // 同时更新本地显示
+    Object.assign(settings, defaultSettings)
+    
+    alert('✅ 已恢复默认设置')
   }
 }
 

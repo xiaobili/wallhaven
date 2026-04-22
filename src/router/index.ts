@@ -43,6 +43,24 @@ const routes: RouteRecordRaw[] = [
       icon: 'fas fa-cog',
     },
   },
+  {
+    path: '/api-test',
+    name: 'APITest',
+    component: () => import('@/views/APITest.vue'),
+    meta: {
+      title: 'API测试',
+      icon: 'fas fa-wrench',
+    },
+  },
+  {
+    path: '/diagnostic',
+    name: 'Diagnostic',
+    component: () => import('@/views/Diagnostic.vue'),
+    meta: {
+      title: 'Electron诊断',
+      icon: 'fas fa-stethoscope',
+    },
+  },
 ]
 
 const router = createRouter({

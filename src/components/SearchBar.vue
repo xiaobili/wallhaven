@@ -482,6 +482,21 @@
     <button type="button" class="button" id="search-reset" @click="resetSelect">
       <i class="fas fa-undo"></i>
     </button>
+
+    <!-- 多选工具栏 -->
+    <div v-if="(selectedCount || 0) > 0" class="selection-toolbar framed">
+      <div class="toolbar-left">
+        <span class="selection-count">已选择 {{ selectedCount || 0 }} 张壁纸</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="button blue" @click="handleDownloadSelected" :disabled="downloading || false">
+          <i class="fas fa-download"></i> 下载选中
+        </button>
+        <button class="button" @click="handleClearSelection">
+          <i class="fas fa-times"></i> 取消选择
+        </button>
+      </div>
+    </div>
   </form>
 </template>
 
@@ -506,11 +521,15 @@ const props = defineProps<{
   apiKey: string
   desktopInfo: string
   saving: boolean
+  selectedCount?: number
+  downloading?: boolean
 }>()
 
 // Emits
 const emit = defineEmits<{
   (e: 'changeParams', value: GetParams | null): void
+  (e: 'downloadSelected'): void
+  (e: 'clearSelection'): void
 }>()
 
 // 本地参数副本 - 使用 reactive 确保深层响应式
@@ -657,6 +676,14 @@ const saveParams = (): void => {
   wallpaperStore.saveCustomParams({ ...localParams })
 }
 
+const handleDownloadSelected = (): void => {
+  emit('downloadSelected')
+}
+
+const handleClearSelection = (): void => {
+  emit('clearSelection')
+}
+
 // 暴露方法给父组件，用于关闭模态框
 defineExpose({
   closeModal,
@@ -668,5 +695,59 @@ defineExpose({
 
 #search-save {
   background-image: linear-gradient(to bottom, #d5bf2a 0, #777744 100%) !important;
+}
+
+/* 多选工具栏样式 */
+.selection-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75em 1em;
+  margin-top: 0.5em;
+  background: rgba(49, 49, 49, 0.8);
+  border-radius: 3px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, .33);
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.selection-count {
+  color: #ddd;
+  font-size: 0.95em;
+  font-weight: 500;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 0.5em;
+}
+
+.button.blue {
+  background-image: linear-gradient(to bottom, #0cd 0, #099 100%);
+  color: #fff;
+}
+
+.button.blue:hover:not(:disabled) {
+  background-image: linear-gradient(to bottom, #0de 0, #0aa 100%);
+}
+
+.button.blue:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

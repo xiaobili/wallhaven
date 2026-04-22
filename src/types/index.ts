@@ -182,7 +182,9 @@ export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed'
  * 下载任务项
  */
 export interface DownloadItem {
+  id: string  // 唯一标识符
   url: string
+  filename: string  // 文件名
   small: string
   resolution: string
   size: number
@@ -192,6 +194,7 @@ export interface DownloadItem {
   state: DownloadState
   path?: string
   time?: string
+  wallpaperId?: string  // 关联的壁纸ID
 }
 
 /**

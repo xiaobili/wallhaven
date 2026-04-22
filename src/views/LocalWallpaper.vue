@@ -57,7 +57,7 @@
               <img alt="本地壁纸" 
                    loading="lazy" 
                    class="lazyload loaded"
-                   :src="wallpaper.path"
+                   :src="getImageUrl(wallpaper.path)"
                    @click="previewWallpaper(wallpaper)"
                    @error="handleImageError(index)"/>
               
@@ -157,46 +157,56 @@ const refreshList = async (): Promise<void> => {
   loading.value = true
   
   try {
-    // TODO: 调用 Electron IPC 读取文件夹中的图片文件
-    // const files = await window.electron.readDirectory(downloadPath.value)
+    // 调用 Electron IPC 读取文件夹中的图片文件
+    const result = await window.electronAPI.readDirectory(downloadPath.value)
     
-    // 模拟数据（实际使用时需要替换为真实的 Electron API 调用）
-    await new Promise(resolve => setTimeout(resolve, 500))
+    if (result.error) {
+      console.error('读取目录失败:', result.error)
+      localWallpapers.value = []
+      return
+    }
     
-    // 示例：假设从文件系统读取到的图片文件列表
-    // localWallpapers.value = files.map(file => ({
-    //   name: file.name,
-    //   path: file.path,
-    //   size: file.size,
-    //   modifiedTime: file.modifiedTime,
-    //   width: file.width,
-    //   height: file.height
-    // }))
+    // 转换为本地壁纸格式
+    localWallpapers.value = result.files.map(file => ({
+      name: file.name,
+      path: file.path,
+      size: file.size,
+      modifiedTime: new Date(file.modifiedAt).toISOString(),
+      width: file.width,
+      height: file.height
+    }))
     
-    localWallpapers.value = [] // 清空示例数据
-    
-    console.log('本地壁纸列表已刷新')
+    console.log(`已加载 ${localWallpapers.value.length} 张本地壁纸`)
   } catch (error) {
     console.error('读取本地壁纸失败:', error)
+    localWallpapers.value = []
   } finally {
     loading.value = false
   }
 }
 
-const openFolder = (): void => {
+const openFolder = async (): Promise<void> => {
   if (!downloadPath.value) return
   
-  // TODO: 调用 Electron IPC 打开文件夹
-  // window.electron.openFolder(downloadPath.value)
-  console.log('打开文件夹:', downloadPath.value)
+  try {
+    const result = await window.electronAPI.openFolder(downloadPath.value)
+    if (!result.success) {
+      console.error('打开文件夹失败:', result.error)
+    }
+  } catch (error) {
+    console.error('打开文件夹错误:', error)
+  }
 }
 
 const previewWallpaper = (wallpaper: LocalWallpaper): void => {
+  // 转换文件路径为 wallhaven:// 协议
+  const imageUrl = getImageUrl(wallpaper.path)
+  
   // 转换为 WallpaperItem 格式用于预览
   previewItem.value = {
     id: wallpaper.name,
-    url: wallpaper.path,
-    short_url: wallpaper.path,
+    url: imageUrl,
+    short_url: imageUrl,
     views: 0,
     favorites: 0,
     source: '',
@@ -210,11 +220,11 @@ const previewWallpaper = (wallpaper: LocalWallpaper): void => {
     file_type: getImageType(wallpaper.name),
     created_at: wallpaper.modifiedTime,
     colors: [],
-    path: wallpaper.path,
+    path: imageUrl,
     thumbs: {
-      large: wallpaper.path,
-      original: wallpaper.path,
-      small: wallpaper.path,
+      large: imageUrl,
+      original: imageUrl,
+      small: imageUrl,
     },
   }
 }
@@ -223,32 +233,69 @@ const closePreview = (): void => {
   previewItem.value = null
 }
 
-const setAsWallpaper = (wallpaper: LocalWallpaper | WallpaperItem): void => {
-  // TODO: 调用 Electron IPC 设置桌面壁纸
-  const path = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
-  console.log('设置为桌面壁纸:', path)
-  
-  // window.electron.setWallpaper(path)
+const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {
+  try {
+    const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
+    
+    const result = await window.electronAPI.setWallpaper(imagePath)
+    
+    if (result.success) {
+      alert('✅ 壁纸设置成功！')
+    } else {
+      alert('❌ 设置壁纸失败: ' + (result.error || '未知错误'))
+    }
+  } catch (error: any) {
+    console.error('设置壁纸错误:', error)
+    alert('设置壁纸失败: ' + error.message)
+  }
 }
 
-const deleteWallpaper = (wallpaper: LocalWallpaper, index: number): void => {
+const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promise<void> => {
   if (!confirm(`确定要删除 "${wallpaper.name}" 吗？此操作不可恢复。`)) {
     return
   }
   
-  // TODO: 调用 Electron IPC 删除文件
-  console.log('删除壁纸:', wallpaper.path)
-  
-  // 从列表中移除
-  localWallpapers.value.splice(index, 1)
+  try {
+    const result = await window.electronAPI.deleteFile(wallpaper.path)
+    
+    if (result.success) {
+      // 从列表中移除
+      localWallpapers.value.splice(index, 1)
+      alert('✅ 文件已删除')
+    } else {
+      alert('❌ 删除失败: ' + (result.error || '未知错误'))
+    }
+  } catch (error: any) {
+    console.error('删除文件错误:', error)
+    alert('删除失败: ' + error.message)
+  }
 }
 
 const handleImageError = (index: number): void => {
   const wallpaper = localWallpapers.value[index]
   if (wallpaper) {
-    console.warn('图片加载失败:', wallpaper.name)
+    console.warn('图片加载失败:', wallpaper.name, wallpaper.path)
   }
-  // 可以添加错误标记或移除该条目
+}
+
+/**
+ * 将本地文件路径转换为 wallhaven:// 协议 URL
+ */
+const getImageUrl = (filePath: string): string => {
+  // 如果已经是 http/https 协议，直接返回
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    return filePath
+  }
+  
+  // 转换本地路径为 wallhaven:// URL
+  try {
+    // 编码特殊字符
+    const encodedPath = encodeURIComponent(filePath)
+    return `wallhaven://${encodedPath}`
+  } catch (error) {
+    console.error('转换文件路径失败:', error, filePath)
+    return filePath
+  }
 }
 
 const formatDate = (dateString: string): string => {

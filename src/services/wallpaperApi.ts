@@ -8,7 +8,7 @@ import type { GetParams } from '@/types'
  */
 const apiClient = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 15000, // 增加超时时间到15秒
   headers: {
     'Content-Type': 'application/json',
   },
@@ -19,10 +19,11 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    // 可以在这里添加 token 等认证信息
+    console.log('[API Request]', config.method?.toUpperCase(), config.url, config.params)
     return config
   },
   (error) => {
+    console.error('[API Request Error]', error)
     return Promise.reject(error)
   },
 )
@@ -32,10 +33,30 @@ apiClient.interceptors.request.use(
  */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    console.log('[API Response]', response.config.url, response.status)
     return response.data
   },
   (error) => {
-    console.error('API 请求错误:', error.message)
+    console.error('[API Response Error]', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      url: error.config?.url,
+    })
+
+    // 提供更友好的错误信息
+    if (error.code === 'ECONNABORTED') {
+      console.error('请求超时，请检查网络连接')
+    } else if (error.response?.status === 401) {
+      console.error('API Key 无效或已过期')
+    } else if (error.response?.status === 403) {
+      console.error('访问被拒绝，可能需要 API Key')
+    } else if (error.response?.status === 404) {
+      console.error('API 端点不存在')
+    } else if (!error.response) {
+      console.error('网络错误，请检查网络连接或代理配置')
+    }
+
     return Promise.reject(error)
   },
 )

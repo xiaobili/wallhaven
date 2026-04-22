@@ -1,0 +1,11 @@
+{
+  "extends": "@tsconfig/node24/tsconfig.json",
+  "include": ["electron/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "types": ["electron-vite/node", "node"],
+    "moduleResolution": "node",
+    "outDir": "./out",
+    "module": "ESNext"
+  }
+}

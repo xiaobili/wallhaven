@@ -37,3 +37,12 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Electron
+out/
+release/
+build/*.exe
+build/*.dmg
+build/*.AppImage
+build/*.snap
+build/*.deb
