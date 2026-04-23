@@ -230,8 +230,4 @@ a:visited {
   margin-left: 180px;
   /*float: left;*/
 }
-
-.container::-webkit-scrollbar {
-  display: none;
-}
 </style>

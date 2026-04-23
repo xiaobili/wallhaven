@@ -53,11 +53,11 @@
                 <i class="fas fa-fw fa-trash"></i>
               </a>
               
-              <!-- 图片预览 -->
+              <!-- 图片预览 - 优先使用缩略图 -->
               <img alt="本地壁纸" 
                    loading="lazy" 
                    class="lazyload loaded"
-                   :src="getImageUrl(wallpaper.path)"
+                   :src="getImageUrl(wallpaper.thumbnailPath || wallpaper.path)"
                    @click="previewWallpaper(wallpaper)"
                    @error="handleImageError(index)"/>
               
@@ -141,6 +141,7 @@ const emptyMessage = computed(() => {
 interface LocalWallpaper {
   name: string
   path: string
+  thumbnailPath?: string // 缩略图路径（可选）
   size: number
   modifiedTime: string
   width?: number
@@ -170,6 +171,7 @@ const refreshList = async (): Promise<void> => {
     localWallpapers.value = result.files.map(file => ({
       name: file.name,
       path: file.path,
+      thumbnailPath: file.thumbnailPath || '', // 缩略图路径
       size: file.size,
       modifiedTime: new Date(file.modifiedAt).toISOString(),
       width: file.width,
@@ -411,7 +413,7 @@ onMounted(() => {
 .thumb-local {
   position: relative;
   border-radius: 3px;
-  overflow: hidden;
+  overflow: visible; /* 改为visible，避免裁剪操作按钮 */
   background-color: #1a1a1a;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
   transition: transform 0.25s, box-shadow 0.25s;
@@ -442,13 +444,15 @@ onMounted(() => {
   border-radius: 50%;
   color: #ddd;
   font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.25s, background-color 0.25s;
-  z-index: 10;
+  opacity: 0.6; /* 基础透明度，保持占位且隐约可见 */
+  transition: opacity 0.25s, background-color 0.25s, transform 0.25s;
+  z-index: 130; /* 高于 .preview (110) 和 .thumb-info (120) */
+  cursor: pointer;
 }
 
 .thumb-local:hover .thumb-btn {
-  opacity: 1;
+  opacity: 1; /* 悬停时完全显示 */
+  transform: scale(1.1); /* 悬停时稍微放大 */
 }
 
 .thumb-btn:hover {
@@ -457,7 +461,7 @@ onMounted(() => {
 }
 
 .thumb-btn-set {
-  left: 8px;
+  left: -8px;
 }
 
 .thumb-btn-set:hover {

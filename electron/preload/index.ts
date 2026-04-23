@@ -41,6 +41,12 @@ export interface ElectronAPI {
   saveSettings: (settings: any) => Promise<{ success: boolean; error?: string }>
   loadSettings: () => Promise<{ success: boolean; settings: any | null; error?: string }>
   
+  // 窗口控制
+  minimizeWindow: () => Promise<void>
+  maximizeWindow: () => Promise<void>
+  closeWindow: () => Promise<void>
+  isMaximized: () => Promise<boolean>
+  
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void
@@ -107,6 +113,24 @@ const electronAPI: ElectronAPI = {
   loadSettings: () => {
     console.log('[Preload] loadSettings called')
     return ipcRenderer.invoke('load-settings')
+  },
+  
+  // 窗口控制
+  minimizeWindow: () => {
+    console.log('[Preload] minimizeWindow called')
+    return ipcRenderer.invoke('window-minimize')
+  },
+  maximizeWindow: () => {
+    console.log('[Preload] maximizeWindow called')
+    return ipcRenderer.invoke('window-maximize')
+  },
+  closeWindow: () => {
+    console.log('[Preload] closeWindow called')
+    return ipcRenderer.invoke('window-close')
+  },
+  isMaximized: () => {
+    console.log('[Preload] isMaximized called')
+    return ipcRenderer.invoke('window-is-maximized')
   },
   
   // 通用IPC通信（保留示例功能）

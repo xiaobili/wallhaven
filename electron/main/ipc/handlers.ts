@@ -1,9 +1,10 @@
-import { ipcMain, dialog, shell } from 'electron'
+import { ipcMain, dialog, shell, BrowserWindow } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
 import { pipeline } from 'stream'
 import { promisify } from 'util'
+import sharp from 'sharp'
 
 const streamPipeline = promisify(pipeline)
 
@@ -24,7 +25,7 @@ ipcMain.handle('select-folder', async () => {
 })
 
 /**
- * 读取目录内容
+ * 读取目录内容（带缩略图）
  */
 ipcMain.handle('read-directory', async (_event, dirPath: string) => {
   try {
@@ -43,22 +44,29 @@ ipcMain.handle('read-directory', async (_event, dirPath: string) => {
         const filePath = path.join(dirPath, file)
         const stats = fs.statSync(filePath)
         
-        // 获取图片尺寸（静默失败，不输出错误日志）
+        // 获取图片尺寸和生成缩略图
         let width = 0
         let height = 0
+        let thumbnailPath = ''
+        
         try {
           const sizeInfo = await getImageDimensions(filePath)
           width = sizeInfo.width
           height = sizeInfo.height
+          
+          // 生成缩略图
+          thumbnailPath = await generateThumbnail(filePath, dirPath, file)
         } catch (e) {
-          // 静默失败，使用默认值 0
+          // 静默失败，使用默认值
           width = 0
           height = 0
+          thumbnailPath = ''
         }
         
         return {
           name: file,
           path: filePath,
+          thumbnailPath: thumbnailPath, // 缩略图路径
           size: stats.size,
           modifiedAt: stats.mtimeMs,
           width,
@@ -150,6 +158,50 @@ function getImageDimensions(filePath: string): Promise<{ width: number; height: 
       }
     })
   })
+}
+
+/**
+ * 生成图片缩略图
+ * @param imagePath 原图路径
+ * @param dirPath 目录路径
+ * @param fileName 文件名
+ * @returns 缩略图路径
+ */
+async function generateThumbnail(imagePath: string, dirPath: string, fileName: string): Promise<string> {
+  try {
+    // 创建缩略图缓存目录
+    const cacheDir = path.join(dirPath, '.thumbnails')
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true })
+    }
+    
+    // 生成缩略图文件名（使用原文件名的hash + 扩展名）
+    const ext = path.extname(fileName).toLowerCase()
+    const baseName = path.basename(fileName, ext)
+    const thumbnailFileName = `${baseName}_thumb.jpg` // 统一转为jpg格式
+    const thumbnailFilePath = path.join(cacheDir, thumbnailFileName)
+    
+    // 如果缩略图已存在，直接返回
+    if (fs.existsSync(thumbnailFilePath)) {
+      return thumbnailFilePath
+    }
+    
+    // 使用 sharp 生成缩略图
+    await sharp(imagePath)
+      .resize(300, 200, {
+        fit: 'cover', // 裁剪并填充，保持比例
+        position: 'center' // 从中心裁剪
+      })
+      .jpeg({ quality: 80 }) // 转换为JPEG，质量80%
+      .toFile(thumbnailFilePath)
+    
+    console.log(`[Thumbnail] Generated: ${thumbnailFileName}`)
+    return thumbnailFilePath
+  } catch (error) {
+    console.warn(`[Thumbnail] Failed to generate for ${fileName}:`, error)
+    // 失败时返回空字符串，前端将使用原图
+    return ''
+  }
 }
 
 /**
@@ -454,4 +506,46 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
       error: error.message || '下载失败'
     }
   }
+})
+
+/**
+ * 窗口控制 - 最小化
+ */
+ipcMain.handle('window-minimize', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.minimize()
+  }
+})
+
+/**
+ * 窗口控制 - 最大化/还原
+ */
+ipcMain.handle('window-maximize', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+  }
+})
+
+/**
+ * 窗口控制 - 关闭
+ */
+ipcMain.handle('window-close', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.close()
+  }
+})
+
+/**
+ * 窗口控制 - 检查是否最大化
+ */
+ipcMain.handle('window-is-maximized', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return win ? win.isMaximized() : false
 })

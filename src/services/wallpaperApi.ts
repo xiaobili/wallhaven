@@ -2,6 +2,7 @@
 
 import axios, { type AxiosResponse } from 'axios'
 import type { GetParams } from '@/types'
+import { getSettingsFromStorage } from '@/stores/modules/wallpaper/settings-storage'
 
 /**
  * 创建 axios 实例
@@ -20,6 +21,14 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     console.log('[API Request]', config.method?.toUpperCase(), config.url, config.params)
+    
+    // 从 localStorage 获取设置，如果存在 API Key 则添加到请求头
+    const settings = getSettingsFromStorage()
+    if (settings?.apiKey) {
+      config.headers['X-API-Key'] = settings.apiKey
+      console.log('[API] Added X-API-Key header')
+    }
+    
     return config
   },
   (error) => {

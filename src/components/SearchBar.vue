@@ -484,15 +484,12 @@
     </button>
 
     <!-- 多选工具栏 -->
-    <div v-if="(selectedCount || 0) > 0" class="selection-toolbar framed">
-      <div class="toolbar-left">
-        <span class="selection-count">已选择 {{ selectedCount || 0 }} 张壁纸</span>
-      </div>
-      <div class="toolbar-right">
-        <button class="button blue" @click="handleDownloadSelected" :disabled="downloading || false">
+    <div v-if="(selectedCount || 0) > 0">
+      <div>
+        <button class="button" @click="handleDownloadSelected" :disabled="downloading || false">
           <i class="fas fa-download"></i> 下载选中
         </button>
-        <button class="button" @click="handleClearSelection">
+        <button class="button red" @click="handleClearSelection">
           <i class="fas fa-times"></i> 取消选择
         </button>
       </div>

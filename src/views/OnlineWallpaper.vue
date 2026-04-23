@@ -83,6 +83,7 @@ const downloading = ref<boolean>(false)
 onMounted(() => {
   // 加载下载历史记录
   downloadStore.loadFromStorage()
+  apiKey.value = wallpaperStore.settings.apiKey
   
   // 使用节流优化滚动事件
   window.addEventListener('scroll', throttledScrollEvent)

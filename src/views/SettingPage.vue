@@ -165,9 +165,19 @@ const saveSettings = async (): Promise<void> => {
 
     console.log('[SettingPage] Saving settings via electronAPI...')
     
+    // 将 reactive 对象转换为普通对象，避免 "An object could not be cloned" 错误
+    const plainSettings = {
+      downloadPath: settings.downloadPath,
+      maxConcurrentDownloads: settings.maxConcurrentDownloads,
+      apiKey: settings.apiKey,
+      wallpaperFit: settings.wallpaperFit,
+    }
+    
+    console.log('[SettingPage] Plain settings:', plainSettings)
+    
     // 同步保存到 Electron 持久化存储
     // @ts-ignore
-    const result = await window.electronAPI.saveSettings(settings)
+    const result = await window.electronAPI.saveSettings(plainSettings)
     
     console.log('[SettingPage] Save result:', result)
     

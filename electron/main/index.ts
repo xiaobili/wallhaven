@@ -31,35 +31,36 @@ function registerLocalFileProtocol() {
 function createWindow(): void {
   // 解析 preload 脚本路径（注意：electron-vite 输出 .mjs 文件）
   const preloadPath = join(__dirname, '..', 'preload', 'index.mjs')
-  
+
   // 调试：检查文件是否存在
   console.log('[Electron] __dirname:', __dirname)
   console.log('[Electron] Preload path:', preloadPath)
   console.log('[Electron] Preload exists:', existsSync(preloadPath))
-  
+
   if (!existsSync(preloadPath)) {
     console.error('[Electron] ❌ Preload script not found at:', preloadPath)
     console.error('[Electron] Please run "npm run build" first or check electron.vite.config.ts')
   }
-  
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1900,
     height: 800,
     show: false,
+    frame: false, // 移除默认标题栏，使用自定义UI
     autoHideMenuBar: true,
     // ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: preloadPath,
       sandbox: false,
       contextIsolation: true,
-      nodeIntegration: false
-    }
+      nodeIntegration: false,
+    },
   })
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
-    
+
     // 在开发模式下打开开发者工具
     if (is.dev) {
       mainWindow.webContents.openDevTools()
@@ -86,7 +87,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // 注册自定义协议（必须在 app.whenReady 之后）
   registerLocalFileProtocol()
-  
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.wallhaven')
 
