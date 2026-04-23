@@ -72,7 +72,7 @@ export function createWallpaperActions(
       }
 
       const data = await searchWallpapers(params)
-      
+
       // 创建新数组以触发 shallowRef 更新
       const newSections = [...totalPageData.value.sections, data]
       totalPageData.value = {

@@ -657,9 +657,9 @@ const closeModal = (): void => {
   localParams.selector = 0
 }
 
-const resetSelect = (): void => {
+const resetSelect = async (): Promise<void> => {
   // 重置选择,从pinia中获取参数
-  const saved = wallpaperStore.getSavedParams()
+  const saved = await wallpaperStore.getSavedParams()
   if (saved) {
     // 将保存的参数复制到 localParams
     Object.assign(localParams, saved)
