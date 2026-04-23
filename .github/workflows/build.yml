@@ -100,7 +100,7 @@ jobs:
   # macOS x64 (Intel) 构建
   build-macos-x64:
     needs: [lint-and-test]
-    runs-on: macos-13
+    runs-on: macos-26-intel
     if: always() && needs.lint-and-test.result == 'success'
     steps:
       - name: Checkout code
