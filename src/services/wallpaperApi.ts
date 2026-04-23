@@ -16,6 +16,52 @@ const apiClient = axios.create({
 })
 
 /**
+ * 判断是否为生产环境（Electron 打包后）
+ */
+const isProduction = () => {
+  // 在 Electron 中，可以通过检查 window.electronAPI 是否存在来判断
+  // import.meta.env.PROD 是 Vite 提供的环境变量
+  const hasElectronAPI = typeof (window as any).electronAPI !== 'undefined'
+  const isProd = import.meta.env.PROD
+  
+  return hasElectronAPI && isProd
+}
+
+/**
+ * 通过 Electron IPC 调用 Wallhaven API（生产环境）
+ */
+const callWallhavenAPIViaIPC = async (endpoint: string, params: any) => {
+  const electronAPI = (window as any).electronAPI
+  
+  if (!electronAPI || !electronAPI.wallhavenApiRequest) {
+    throw new Error('Electron API not available')
+  }
+  
+  // 从 localStorage 获取 API Key
+  const settings = getSettingsFromStorage()
+  const requestParams = {
+    ...params,
+    apiKey: settings?.apiKey || undefined
+  }
+  
+  console.log('[API] Using Electron IPC for:', endpoint)
+  
+  const result = await electronAPI.wallhavenApiRequest({
+    endpoint,
+    params: requestParams
+  })
+  
+  if (!result.success) {
+    const error: any = new Error(result.error || 'API request failed')
+    error.code = 'ELECTRON_API_ERROR'
+    error.response = { status: result.status }
+    throw error
+  }
+  
+  return result.data
+}
+
+/**
  * 请求拦截器
  */
 apiClient.interceptors.request.use(
@@ -77,6 +123,12 @@ apiClient.interceptors.response.use(
  */
 export const searchWallpapers = async (params: GetParams | null): Promise<any> => {
   try {
+    // 生产环境使用 Electron IPC
+    if (isProduction()) {
+      return await callWallhavenAPIViaIPC('/search', params)
+    }
+    
+    // 开发环境使用 axios 代理
     const response = await apiClient.get('/search', { params })
     return response as unknown as any
   } catch (error) {
@@ -92,6 +144,12 @@ export const searchWallpapers = async (params: GetParams | null): Promise<any> =
  */
 export const getWallpaperDetail = async (id: string): Promise<any> => {
   try {
+    // 生产环境使用 Electron IPC
+    if (isProduction()) {
+      return await callWallhavenAPIViaIPC(`/w/${id}`, {})
+    }
+    
+    // 开发环境使用 axios 代理
     const response = await apiClient.get(`/w/${id}`)
     return response as unknown as any
   } catch (error) {

@@ -9,9 +9,13 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+# 解包 sharp 模块以支持原生二进制文件
 asarUnpack:
+  - '**/node_modules/sharp/**/*'
   - resources/**
+# 图标配置
 win:
+  icon: build/icon.ico
   executableName: Wallhaven
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -19,6 +23,7 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  icon: build/icon.icns
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -35,9 +40,11 @@ linux:
     - deb
   maintainer: wallhaven.app
   category: Utility
+  icon: build/icon.png
 appImage:
   artifactName: ${name}-${version}.${ext}
-npmRebuild: false
+# 启用原生模块重建
+npmRebuild: true
 publish:
   provider: generic
   url: https://example.com/auto-updates

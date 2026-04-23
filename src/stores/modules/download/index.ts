@@ -85,29 +85,54 @@ export const useDownloadStore = defineStore('download', () => {
       
       // 启动实际的Electron下载
       try {
-        // 获取下载目录
-        const settingsStr = localStorage.getItem('app_settings')
+        // 获取下载目录 - 使用正确的storage key
         let downloadPath = ''
+        
+        // 首先尝试从 wallpaper store 的设置中获取
+        const settingsStr = localStorage.getItem('wallhaven_app_settings')
         if (settingsStr) {
           try {
             const settings = JSON.parse(settingsStr)
             downloadPath = settings.downloadPath || ''
+            console.log('[DownloadStore] 从 wallhaven_app_settings 获取下载路径:', downloadPath)
           } catch (e) {
             console.error('解析设置失败:', e)
           }
         }
         
+        // 如果还是没有，尝试旧的key（向后兼容）
+        if (!downloadPath) {
+          const oldSettingsStr = localStorage.getItem('app_settings')
+          if (oldSettingsStr) {
+            try {
+              const oldSettings = JSON.parse(oldSettingsStr)
+              downloadPath = oldSettings.downloadPath || ''
+              console.log('[DownloadStore] 从 app_settings 获取下载路径:', downloadPath)
+            } catch (e) {
+              console.error('解析旧设置失败:', e)
+            }
+          }
+        }
+        
         if (!downloadPath && typeof window !== 'undefined' && window.electronAPI) {
           // 如果没有设置，提示用户选择
+          console.log('[DownloadStore] 未设置下载路径，提示用户选择')
           const selectedDir = await window.electronAPI.selectFolder()
           if (selectedDir) {
             downloadPath = selectedDir
-            // 保存设置
-            const settings = { downloadPath }
-            localStorage.setItem('app_settings', JSON.stringify(settings))
+            // 保存设置到正确的key
+            const settings = { 
+              downloadPath,
+              maxConcurrentDownloads: 3,
+              apiKey: '',
+              wallpaperFit: 'fill' as const
+            }
+            localStorage.setItem('wallhaven_app_settings', JSON.stringify(settings))
+            console.log('[DownloadStore] 已保存下载路径到 wallhaven_app_settings')
           } else {
             // 用户取消选择，暂停任务
             task.state = 'paused'
+            console.log('[DownloadStore] 用户取消选择下载目录，任务已暂停')
             return
           }
         }
@@ -120,12 +145,22 @@ export const useDownloadStore = defineStore('download', () => {
         
         // 调用Electron API开始下载
         if (typeof window !== 'undefined' && window.electronAPI) {
+          console.log('[DownloadStore] 调用 electronAPI.startDownloadTask:', {
+            taskId: id,
+            url: task.url,
+            filename: task.filename,
+            saveDir: downloadPath
+          })
+          
           window.electronAPI.startDownloadTask({
             taskId: id,
             url: task.url,
             filename: task.filename,
             saveDir: downloadPath
           })
+        } else {
+          console.error('[DownloadStore] window.electronAPI 不存在')
+          task.state = 'paused'
         }
       } catch (error) {
         console.error('[DownloadStore] 启动下载失败:', error)

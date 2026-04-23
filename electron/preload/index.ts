@@ -41,6 +41,14 @@ export interface ElectronAPI {
   saveSettings: (settings: any) => Promise<{ success: boolean; error?: string }>
   loadSettings: () => Promise<{ success: boolean; settings: any | null; error?: string }>
   
+  // Wallhaven API 代理
+  wallhavenApiRequest: (params: { endpoint: string; params?: any }) => Promise<{
+    success: boolean
+    data: any | null
+    error?: string
+    status?: number
+  }>
+  
   // 窗口控制
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
@@ -113,6 +121,12 @@ const electronAPI: ElectronAPI = {
   loadSettings: () => {
     console.log('[Preload] loadSettings called')
     return ipcRenderer.invoke('load-settings')
+  },
+  
+  // Wallhaven API 代理
+  wallhavenApiRequest: (params) => {
+    console.log('[Preload] wallhavenApiRequest called:', params.endpoint)
+    return ipcRenderer.invoke('wallhaven-api-request', params)
   },
   
   // 窗口控制

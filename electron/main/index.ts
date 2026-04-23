@@ -3,7 +3,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { existsSync } from 'node:fs'
-// import icon from '../../resources/icon.png?asset'
+//import icon from '../../resources/icon.png?asset'
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url)
@@ -49,7 +49,7 @@ function createWindow(): void {
     show: false,
     frame: false, // 移除默认标题栏，使用自定义UI
     autoHideMenuBar: true,
-    // ...(process.platform === 'linux' ? { icon } : {}),
+    //...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: preloadPath,
       sandbox: false,

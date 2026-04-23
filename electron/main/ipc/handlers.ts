@@ -509,6 +509,50 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
 })
 
 /**
+ * Wallhaven API 代理
+ * 用于生产环境中绕过 CORS 限制
+ */
+ipcMain.handle('wallhaven-api-request', async (_event, { endpoint, params }: {
+  endpoint: string
+  params?: any
+}) => {
+  try {
+    const apiKey = params?.apiKey
+    
+    // 构建请求URL
+    const url = `https://wallhaven.cc/api/v1${endpoint}`
+    
+    console.log('[Wallhaven API Proxy] Request:', url, 'Params:', params)
+    
+    // 发起请求
+    const response = await axios.get(url, {
+      params: params ? { ...params, apiKey: undefined } : {}, // 移除 apiKey 参数
+      headers: {
+        'User-Agent': 'Wallhaven-Desktop-App/1.0',
+        ...(apiKey ? { 'X-API-Key': apiKey } : {})
+      },
+      timeout: 15000
+    })
+    
+    console.log('[Wallhaven API Proxy] Response status:', response.status)
+    
+    return {
+      success: true,
+      data: response.data
+    }
+  } catch (error: any) {
+    console.error('[Wallhaven API Proxy] Error:', error.message)
+    
+    return {
+      success: false,
+      error: error.message,
+      status: error.response?.status,
+      data: null
+    }
+  }
+})
+
+/**
  * 窗口控制 - 最小化
  */
 ipcMain.handle('window-minimize', async (event) => {
