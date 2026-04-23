@@ -34,47 +34,9 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-  # 自动生成版本号（仅在推送到主分支时）
-  auto-tag:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    outputs:
-      tag_name: ${{ steps.create_tag.outputs.tag_name }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get current version from package.json
-        id: get_version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create and push tag
-        id: create_tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG_NAME="v${{ steps.get_version.outputs.version }}"
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-
-          # 检查标签是否已存在
-          if git tag -l "$TAG_NAME" | grep -q .; then
-            echo "Tag $TAG_NAME already exists"
-          else
-            git config user.name "GitHub Actions"
-            git config user.email "actions@github.com"
-            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-            git push origin "$TAG_NAME"
-            echo "Created and pushed tag $TAG_NAME"
-          fi
-
   # Windows 构建
   build-windows:
-    needs: [lint-and-test, auto-tag]
+    needs: [lint-and-test]
     runs-on: windows-latest
     if: always() && needs.lint-and-test.result == 'success'
     steps:
@@ -104,7 +66,7 @@ jobs:
 
   # macOS ARM64 (Apple Silicon) 构建
   build-macos-arm64:
-    needs: [lint-and-test, auto-tag]
+    needs: [lint-and-test]
     runs-on: macos-latest
     if: always() && needs.lint-and-test.result == 'success'
     steps:
@@ -137,8 +99,8 @@ jobs:
 
   # macOS x64 (Intel) 构建
   build-macos-x64:
-    needs: [lint-and-test, auto-tag]
-    runs-on: macos-26-intel
+    needs: [lint-and-test]
+    runs-on: macos-13
     if: always() && needs.lint-and-test.result == 'success'
     steps:
       - name: Checkout code
@@ -170,7 +132,7 @@ jobs:
 
   # Linux 构建
   build-linux:
-    needs: [lint-and-test, auto-tag]
+    needs: [lint-and-test]
     runs-on: ubuntu-latest
     if: always() && needs.lint-and-test.result == 'success'
     steps:
@@ -205,7 +167,7 @@ jobs:
   release:
     needs: [build-windows, build-macos-arm64, build-macos-x64, build-linux]
     runs-on: ubuntu-latest
-    if: always() && needs.auto-tag.result == 'success'
+    if: always() && needs.build-windows.result == 'success' && needs.build-macos-arm64.result == 'success' && needs.build-macos-x64.result == 'success' && needs.build-linux.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -217,19 +179,25 @@ jobs:
 
       - name: Get tag name
         id: get_tag
-        run: echo "tag_name=${{ needs.auto-tag.outputs.tag_name }}" >> $GITHUB_OUTPUT
+        run: |
+          TAG_NAME=$(node -p "require('./package.json').version")
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Tag name: $TAG_NAME"
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
+          name: Wallhaven Electron App ${{ steps.get_tag.outputs.tag_name }}
           tag_name: ${{ steps.get_tag.outputs.tag_name }}
           files: |
             artifacts/wallhaven-windows/*
             artifacts/wallhaven-macos-arm64/*
             artifacts/wallhaven-macos-x64/*
             artifacts/wallhaven-linux/*
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            This release contains the following artifacts:
+            - Windows: wallhaven-${{ steps.get_tag.outputs.tag_name }}.exe
+            - macOS (Apple Silicon): wallhaven-${{ steps.get_tag.outputs.tag_name }}.dmg
+            - macOS (Intel): wallhaven-${{ steps.get_tag.outputs.tag_name }}.dmg
+            - Linux: wallhaven-${{ steps.get_tag.outputs.tag_name }}.AppImage
