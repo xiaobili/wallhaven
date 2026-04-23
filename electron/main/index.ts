@@ -1,8 +1,8 @@
 import { app, BrowserWindow, shell, protocol } from 'electron'
-import { join, dirname } from 'node:path'
+import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 //import icon from '../../resources/icon.png?asset'
 
 // 获取当前文件的目录路径
@@ -17,13 +17,45 @@ import './ipc/handlers'
  * 使用 wallhaven:// 协议访问本地文件
  */
 function registerLocalFileProtocol() {
-  protocol.registerFileProtocol('wallhaven', (request, callback) => {
+  // MIME 类型映射表
+  const mimeTypes: Record<string, string> = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.bmp': 'image/bmp',
+    '.ico': 'image/x-icon',
+  }
+
+  protocol.handle('wallhaven', (request) => {
     const url = request.url.replace(/^wallhaven:\/\//, '')
     try {
-      return callback(decodeURIComponent(url))
+      const filePath = decodeURIComponent(url)
+      
+      // 检查文件是否存在
+      if (!existsSync(filePath)) {
+        return new Response(null, { status: 404 })
+      }
+      
+      // 读取文件内容
+      const fileContent = readFileSync(filePath)
+      
+      // 检测 MIME 类型
+      const ext = extname(filePath).toLowerCase()
+      const mimeType = mimeTypes[ext] || 'application/octet-stream'
+      
+      // 返回文件内容
+      return new Response(fileContent, {
+        status: 200,
+        headers: {
+          'Content-Type': mimeType
+        }
+      })
     } catch (error) {
-      console.error('[Protocol] Failed to register protocol:', error)
-      callback({ error: -2 }) // net::FAILED
+      console.error('[Protocol] Failed to handle request:', error)
+      return new Response(null, { status: 500 })
     }
   })
 }
