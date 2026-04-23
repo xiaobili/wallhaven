@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DownloadItem, FinishedDownloadItem } from '@/types'
+import { storeGet, storeSet } from '@/utils/store'
 
 /**
  * 下载管理 Store
@@ -34,7 +35,7 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 添加下载任务
    */
-  const addDownloadTask = (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>): string => {
+  const addDownloadTask = async (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>): Promise<string> => {
     const id = generateId()
     
     const downloadItem: DownloadItem = {
@@ -48,8 +49,8 @@ export const useDownloadStore = defineStore('download', () => {
     
     downloadingList.value.push(downloadItem)
     
-    // 保存到localStorage
-    saveToStorage()
+    // 保存到 electron-store
+    await saveToStorage()
     
     console.log('[DownloadStore] 添加下载任务:', id)
     
@@ -59,13 +60,13 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 批量添加下载任务
    */
-  const addBatchDownloadTasks = (tasks: Array<Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>>): string[] => {
+  const addBatchDownloadTasks = async (tasks: Array<Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>>): Promise<string[]> => {
     const ids: string[] = []
     
-    tasks.forEach(task => {
-      const id = addDownloadTask(task)
+    for (const task of tasks) {
+      const id = await addDownloadTask(task)
       ids.push(id)
-    })
+    }
     
     console.log(`[DownloadStore] 批量添加 ${ids.length} 个下载任务`)
     
@@ -85,33 +86,17 @@ export const useDownloadStore = defineStore('download', () => {
       
       // 启动实际的Electron下载
       try {
-        // 获取下载目录 - 使用正确的storage key
+        // 获取下载目录 - 从 electron-store 中获取设置
         let downloadPath = ''
         
-        // 首先尝试从 wallpaper store 的设置中获取
-        const settingsStr = localStorage.getItem('wallhaven_app_settings')
-        if (settingsStr) {
-          try {
-            const settings = JSON.parse(settingsStr)
+        try {
+          const settings = await storeGet<any>('appSettings')
+          if (settings) {
             downloadPath = settings.downloadPath || ''
-            console.log('[DownloadStore] 从 wallhaven_app_settings 获取下载路径:', downloadPath)
-          } catch (e) {
-            console.error('解析设置失败:', e)
+            console.log('[DownloadStore] 从 electron-store 获取下载路径:', downloadPath)
           }
-        }
-        
-        // 如果还是没有，尝试旧的key（向后兼容）
-        if (!downloadPath) {
-          const oldSettingsStr = localStorage.getItem('app_settings')
-          if (oldSettingsStr) {
-            try {
-              const oldSettings = JSON.parse(oldSettingsStr)
-              downloadPath = oldSettings.downloadPath || ''
-              console.log('[DownloadStore] 从 app_settings 获取下载路径:', downloadPath)
-            } catch (e) {
-              console.error('解析旧设置失败:', e)
-            }
-          }
+        } catch (e) {
+          console.error('解析设置失败:', e)
         }
         
         if (!downloadPath && typeof window !== 'undefined' && window.electronAPI) {
@@ -120,15 +105,15 @@ export const useDownloadStore = defineStore('download', () => {
           const selectedDir = await window.electronAPI.selectFolder()
           if (selectedDir) {
             downloadPath = selectedDir
-            // 保存设置到正确的key
+            // 保存设置到 electron-store
             const settings = { 
               downloadPath,
               maxConcurrentDownloads: 3,
               apiKey: '',
               wallpaperFit: 'fill' as const
             }
-            localStorage.setItem('wallhaven_app_settings', JSON.stringify(settings))
-            console.log('[DownloadStore] 已保存下载路径到 wallhaven_app_settings')
+            await storeSet('appSettings', settings)
+            console.log('[DownloadStore] 已保存下载路径到 electron-store')
           } else {
             // 用户取消选择，暂停任务
             task.state = 'paused'
@@ -172,11 +157,11 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 暂停下载
    */
-  const pauseDownload = (id: string): void => {
+  const pauseDownload = async (id: string): Promise<void> => {
     const task = downloadingList.value.find(item => item.id === id)
     if (task && task.state === 'downloading') {
       task.state = 'paused'
-      saveToStorage()
+      await saveToStorage()
       console.log('[DownloadStore] 暂停下载:', id)
     }
   }
@@ -184,11 +169,11 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 恢复下载
    */
-  const resumeDownload = (id: string): void => {
+  const resumeDownload = async (id: string): Promise<void> => {
     const task = downloadingList.value.find(item => item.id === id)
     if (task && task.state === 'paused') {
       task.state = 'downloading'
-      saveToStorage()
+      await saveToStorage()
       console.log('[DownloadStore] 恢复下载:', id)
     }
   }
@@ -196,17 +181,17 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 取消下载
    */
-  const cancelDownload = (id: string): boolean => {
+  const cancelDownload = async (id: string): Promise<boolean> => {
     const index = downloadingList.value.findIndex(item => item.id === id)
     if (index !== -1) {
       downloadingList.value.splice(index, 1)
-      saveToStorage()
+      await saveToStorage()
       console.log('[DownloadStore] 取消下载:', id)
       return true
     }
     return false
   }
-  
+
   /**
    * 更新下载进度
    */
@@ -229,7 +214,7 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 完成下载
    */
-  const completeDownload = (id: string, filePath?: string): void => {
+  const completeDownload = async (id: string, filePath?: string): Promise<void> => {
     const index = downloadingList.value.findIndex(item => item.id === id)
     if (index !== -1) {
       const task = downloadingList.value[index]
@@ -263,7 +248,7 @@ export const useDownloadStore = defineStore('download', () => {
         finishedList.value = finishedList.value.slice(0, 50)
       }
       
-      saveToStorage()
+      await saveToStorage()
       console.log('[DownloadStore] 下载完成:', id)
     }
   }
@@ -271,11 +256,11 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 删除已完成记录
    */
-  const removeFinishedRecord = (id: string): boolean => {
+  const removeFinishedRecord = async (id: string): Promise<boolean> => {
     const index = finishedList.value.findIndex(item => item.id === id)
     if (index !== -1) {
       finishedList.value.splice(index, 1)
-      saveToStorage()
+      await saveToStorage()
       console.log('[DownloadStore] 删除完成记录:', id)
       return true
     }
@@ -285,31 +270,31 @@ export const useDownloadStore = defineStore('download', () => {
   /**
    * 清空已完成列表
    */
-  const clearFinishedList = (): void => {
+  const clearFinishedList = async (): Promise<void> => {
     finishedList.value = []
-    saveToStorage()
+    await saveToStorage()
     console.log('[DownloadStore] 清空已完成列表')
   }
   
   /**
-   * 保存到localStorage
+   * 保存到 electron-store
    */
-  const saveToStorage = (): void => {
+  const saveToStorage = async (): Promise<void> => {
     try {
-      localStorage.setItem('download_finished_list', JSON.stringify(finishedList.value))
+      await storeSet('downloadFinishedList', finishedList.value)
     } catch (error) {
       console.error('[DownloadStore] 保存失败:', error)
     }
   }
   
   /**
-   * 从localStorage加载
+   * 从 electron-store 加载
    */
-  const loadFromStorage = (): void => {
+  const loadFromStorage = async (): Promise<void> => {
     try {
-      const saved = localStorage.getItem('download_finished_list')
+      const saved = await storeGet<FinishedDownloadItem[]>('downloadFinishedList')
       if (saved) {
-        finishedList.value = JSON.parse(saved)
+        finishedList.value = saved
         console.log('[DownloadStore] 已加载历史记录:', finishedList.value.length)
       }
     } catch (error) {

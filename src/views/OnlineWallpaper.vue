@@ -165,10 +165,12 @@ const downloadSelected = async (): Promise<void> => {
       wallpaperId: item.id
     }))
     
-    const ids = downloadStore.addBatchDownloadTasks(tasks)
+    const ids = await downloadStore.addBatchDownloadTasks(tasks)
     
     // 自动开始所有下载
-    ids.forEach(id => downloadStore.startDownload(id))
+    for (const id of ids) {
+      await downloadStore.startDownload(id)
+    }
     
     alert(`✅ 已添加 ${selectedItems.length} 个下载任务到下载中心`)
     
@@ -247,8 +249,8 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
       return { success: false, filePath: null, error: '未选择下载目录' }
     }
     
-    // 保存下载目录到设置
-    wallpaperStore.updateSettings({ downloadPath: selectedDir })
+    // 保存下载目录到 electron-store
+    await wallpaperStore.updateSettings({ downloadPath: selectedDir })
   }
   
   const saveDir = downloadPath || (await window.electronAPI.selectFolder())
@@ -333,11 +335,11 @@ const addToDownloadQueue = async (imgItem: WallpaperItem): Promise<void> => {
     wallpaperId: imgItem.id
   }
   
-  // 添加到下载队列
-  const taskId = downloadStore.addDownloadTask(task)
+  // 添加到下载队列（现在是异步的）
+  const taskId = await downloadStore.addDownloadTask(task)
   
   // 自动开始下载
-  downloadStore.startDownload(taskId)
+  await downloadStore.startDownload(taskId)
   
   console.log('[OnlineWallpaper] 已添加下载任务:', taskId)
 }

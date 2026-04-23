@@ -100,29 +100,29 @@ const downloadList = computed(() => downloadStore.downloadingList)
 const downloadFinishedList = computed(() => downloadStore.finishedList)
 
 // 取消下载
-const onCancelDownload = (id: string) => {
+const onCancelDownload = async (id: string) => {
   if (confirm('确定要取消这个下载任务吗？')) {
-    downloadStore.cancelDownload(id)
+    await downloadStore.cancelDownload(id)
     showMessage('已取消下载', 'info')
   }
 }
 
 // 暂停下载
-const onPauseDownload = (id: string) => {
-  downloadStore.pauseDownload(id)
+const onPauseDownload = async (id: string) => {
+  await downloadStore.pauseDownload(id)
   showMessage('已暂停下载', 'info')
 }
 
 // 恢复下载
 const onResumeDownload = async (id: string) => {
-  downloadStore.resumeDownload(id)
+  await downloadStore.resumeDownload(id)
   showMessage('恢复下载...', 'info')
 }
 
 // 删除完成记录
-const delRecorder = (id: string) => {
+const delRecorder = async (id: string) => {
   if (confirm('确定要删除这条记录吗？')) {
-    downloadStore.removeFinishedRecord(id)
+    await downloadStore.removeFinishedRecord(id)
     showMessage('记录已删除', 'success')
   }
 }

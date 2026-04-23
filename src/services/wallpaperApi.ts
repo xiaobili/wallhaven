@@ -2,7 +2,6 @@
 
 import axios, { type AxiosResponse, type CancelTokenSource } from 'axios'
 import type { GetParams } from '@/types'
-import { getSettingsFromStorage } from '@/stores/modules/wallpaper/settings-storage'
 
 /**
  * 创建 axios 实例
@@ -96,18 +95,11 @@ const callWallhavenAPIViaIPC = async (endpoint: string, params: any) => {
     throw new Error('Electron API not available')
   }
   
-  // 从 localStorage 获取 API Key
-  const settings = getSettingsFromStorage()
-  const requestParams = {
-    ...params,
-    apiKey: settings?.apiKey || undefined
-  }
-  
   console.log('[API] Using Electron IPC for:', endpoint)
   
   const result = await electronAPI.wallhavenApiRequest({
     endpoint,
-    params: requestParams
+    params
   })
   
   if (!result.success) {
@@ -126,13 +118,6 @@ const callWallhavenAPIViaIPC = async (endpoint: string, params: any) => {
 apiClient.interceptors.request.use(
   (config) => {
     console.log('[API Request]', config.method?.toUpperCase(), config.url, config.params)
-    
-    // 从 localStorage 获取设置，如果存在 API Key 则添加到请求头
-    const settings = getSettingsFromStorage()
-    if (settings?.apiKey) {
-      config.headers['X-API-Key'] = settings.apiKey
-      console.log('[API] Added X-API-Key header')
-    }
     
     return config
   },

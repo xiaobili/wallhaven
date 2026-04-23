@@ -64,6 +64,12 @@ interface ElectronAPI {
   closeWindow: () => Promise<void>
   isMaximized: () => Promise<boolean>
   
+  // Electron Store 操作
+  storeGet: (key: string) => Promise<{ success: boolean; value: any; error?: string }>
+  storeSet: (params: { key: string; value: any }) => Promise<{ success: boolean; error?: string }>
+  storeDelete: (key: string) => Promise<{ success: boolean; error?: string }>
+  storeClear: () => Promise<{ success: boolean; error?: string }>
+  
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void

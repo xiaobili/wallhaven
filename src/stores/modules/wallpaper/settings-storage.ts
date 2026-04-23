@@ -1,31 +1,30 @@
 // Wallhaven 设置本地存储管理
 
 import type { AppSettings } from './state'
+import { storeGet, storeSet } from '@/utils/store'
 
-const SETTINGS_STORAGE_KEY = 'wallhaven_app_settings'
+const SETTINGS_STORAGE_KEY = 'appSettings'
 
 /**
- * 保存应用设置到 localStorage
+ * 保存应用设置到 electron-store
  */
-export function saveSettingsToStorage(settings: AppSettings): void {
+export async function saveSettingsToStorage(settings: AppSettings): Promise<void> {
   try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+    await storeSet(SETTINGS_STORAGE_KEY, settings)
   } catch (err) {
-    console.error('保存应用设置到 localStorage 失败:', err)
+    console.error('保存应用设置到 electron-store 失败:', err)
   }
 }
 
 /**
- * 从 localStorage 获取保存的应用设置
+ * 从 electron-store 获取保存的应用设置
  */
-export function getSettingsFromStorage(): AppSettings | null {
+export async function getSettingsFromStorage(): Promise<AppSettings | null> {
   try {
-    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored) as AppSettings
-    }
+    const stored = await storeGet<AppSettings>(SETTINGS_STORAGE_KEY)
+    return stored
   } catch (err) {
-    console.error('从 localStorage 获取应用设置失败:', err)
+    console.error('从 electron-store 获取应用设置失败:', err)
   }
 
   return null

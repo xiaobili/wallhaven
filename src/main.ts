@@ -26,22 +26,17 @@ async function initializeApp() {
   wallpaperStore = wallpaperModule.useWallpaperStore()
   downloadStore = downloadModule.useDownloadStore()
   
-  // 首先从 localStorage 加载
-  wallpaperStore.loadSettings()
+  // 从 electron-store 加载设置
+  await wallpaperStore.loadSettings()
   
-  // 加载下载历史记录
-  downloadStore.loadFromStorage()
+  // 从 electron-store 加载下载历史记录
+  await downloadStore.loadFromStorage()
   
-  // 如果在 Electron 环境中，尝试从 Electron 存储加载
+  console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
+  
+  // 如果在 Electron 环境中，注册下载进度监听器
   if (window.electronAPI) {
     try {
-      const result = await window.electronAPI.loadSettings()
-      if (result.success && result.settings) {
-        // 使用 Electron 存储的设置覆盖 localStorage
-        wallpaperStore.updateSettings(result.settings)
-        console.log('已从 Electron 存储加载设置')
-      }
-      
       // 注册下载进度监听器
       window.electronAPI.onDownloadProgress((data) => {
         console.log('[Main] 收到下载进度:', data)
@@ -68,7 +63,7 @@ async function initializeApp() {
       
       console.log('[Main] 下载进度监听器已注册')
     } catch (error) {
-      console.warn('从 Electron 加载设置失败，使用 localStorage:', error)
+      console.warn('注册 Electron 监听器失败:', error)
     }
   }
 }

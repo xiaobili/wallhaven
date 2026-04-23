@@ -4,13 +4,13 @@
     
     <div class="section">
       <h3>1. 环境检测</h3>
-      <p><strong>window.electronAPI:</strong> {{ typeof window !== 'undefined' && window.electronAPI ? '✅ 已定义' : '❌ 未定义' }}</p>
-      <p><strong>window.electronAPI.selectFolder:</strong> {{ typeof window !== 'undefined' && window.electronAPI?.selectFolder ? '✅ 可用' : '❌ 不可用' }}</p>
+      <p><strong>window.electronAPI:</strong> {{ isElectronAPIAvailable ? '✅ 已定义' : '❌ 未定义' }}</p>
+      <p><strong>window.electronAPI.selectFolder:</strong> {{ hasSelectFolder ? '✅ 可用' : '❌ 不可用' }}</p>
     </div>
     
     <div class="section">
       <h3>2. 测试选择文件夹</h3>
-      <button @click="testSelectFolder" :disabled="!window.electronAPI?.selectFolder">
+      <button @click="testSelectFolder" :disabled="!hasSelectFolder">
         测试选择文件夹
       </button>
       <div v-if="testResult" class="result">
@@ -20,9 +20,9 @@
     
     <div class="section">
       <h3>3. 所有可用的 API 方法</h3>
-      <ul v-if="window.electronAPI">
-        <li v-for="(value, key) in window.electronAPI" :key="key">
-          {{ key }}: {{ typeof value }}
+      <ul v-if="electronAPIMethods.length > 0">
+        <li v-for="(item, index) in electronAPIMethods" :key="index">
+          {{ item.key }}: {{ item.type }}
         </li>
       </ul>
       <p v-else>electronAPI 未定义</p>
@@ -37,15 +37,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const testResult = ref<string>('')
+
+const isElectronAPIAvailable = computed(() => typeof window !== 'undefined' && !!window.electronAPI)
+const hasSelectFolder = computed(() => typeof window !== 'undefined' && !!window.electronAPI?.selectFolder)
+const electronAPIMethods = computed(() => {
+  if (typeof window === 'undefined' || !window.electronAPI) return []
+  return Object.entries(window.electronAPI).map(([key, value]) => ({ key, type: typeof value }))
+})
 
 const testSelectFolder = async () => {
   try {
     console.log('[Diagnostic] Testing selectFolder...')
     
-    if (!window.electronAPI) {
+    if (typeof window === 'undefined' || !window.electronAPI) {
       testResult.value = '❌ window.electronAPI is undefined'
       return
     }

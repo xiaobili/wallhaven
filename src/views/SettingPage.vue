@@ -104,6 +104,7 @@
 
 <script lang="ts" setup>
 import { useWallpaperStore } from '@/stores/wallpaper'
+import { toRaw } from 'vue'
 import type { WallpaperFit } from '@/types'
 
 // Pinia Store
@@ -135,8 +136,8 @@ const browseDownloadPath = async (): Promise<void> => {
     
     if (selectedPath) {
       settings.downloadPath = selectedPath
-      // 自动保存设置
-      wallpaperStore.updateSettings({ downloadPath: selectedPath })
+      // 自动保存设置到 electron-store
+      await wallpaperStore.updateSettings({ downloadPath: selectedPath })
     }
   } catch (error: any) {
     console.error('选择文件夹失败:', error)
@@ -152,49 +153,24 @@ const saveSettings = async (): Promise<void> => {
   }
   
   try {
-    // 保存设置到 store
-    wallpaperStore.updateSettings({ ...settings })
+    // 将 reactive 对象转换为普通对象，避免 IPC 克隆错误
+    const plainSettings = toRaw(settings)
     
-    // 检查 Electron API 是否可用
-    // @ts-ignore
-    if (!window.electronAPI) {
-      console.error('[SettingPage] window.electronAPI is undefined during save')
-      alert('❌ Electron API 未加载，无法保存设置')
-      return
-    }
-
-    console.log('[SettingPage] Saving settings via electronAPI...')
+    // 保存设置到 electron-store
+    await wallpaperStore.updateSettings(plainSettings)
     
-    // 将 reactive 对象转换为普通对象，避免 "An object could not be cloned" 错误
-    const plainSettings = {
-      downloadPath: settings.downloadPath,
-      maxConcurrentDownloads: settings.maxConcurrentDownloads,
-      apiKey: settings.apiKey,
-      wallpaperFit: settings.wallpaperFit,
-    }
+    console.log('[SettingPage] 设置已保存到 electron-store')
     
-    console.log('[SettingPage] Plain settings:', plainSettings)
-    
-    // 同步保存到 Electron 持久化存储
-    // @ts-ignore
-    const result = await window.electronAPI.saveSettings(plainSettings)
-    
-    console.log('[SettingPage] Save result:', result)
-    
-    if (result.success) {
-      alert('✅ 设置已保存')
-    } else {
-      alert('❌ 保存失败: ' + (result.error || '未知错误'))
-    }
+    alert('✅ 设置已保存')
   } catch (error: any) {
     console.error('保存设置错误:', error)
     alert('保存设置失败: ' + error.message)
   }
 }
 
-const resetSettings = (): void => {
+const resetSettings = async (): Promise<void> => {
   if (confirm('确定要恢复默认设置吗？')) {
-    // 重置为默认值
+    // 重置为默认值（普通对象）
     const defaultSettings = {
       downloadPath: '',
       maxConcurrentDownloads: 3,
@@ -202,7 +178,7 @@ const resetSettings = (): void => {
       wallpaperFit: 'fill' as WallpaperFit,
     }
     
-    wallpaperStore.updateSettings(defaultSettings)
+    await wallpaperStore.updateSettings(defaultSettings)
     
     // 同时更新本地显示
     Object.assign(settings, defaultSettings)

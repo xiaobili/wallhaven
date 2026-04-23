@@ -1,31 +1,30 @@
 // Wallhaven 壁纸本地存储管理
 
 import type { CustomParams } from '@/types'
+import { storeGet, storeSet } from '@/utils/store'
 
-const STORAGE_KEY = 'wallhaven_query_params'
+const STORAGE_KEY = 'wallpaperQueryParams'
 
 /**
- * 保存自定义搜索参数到 localStorage
+ * 保存自定义搜索参数到 electron-store
  */
-export function saveCustomParamsToStorage(params: CustomParams): void {
+export async function saveCustomParamsToStorage(params: CustomParams): Promise<void> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(params))
+    await storeSet(STORAGE_KEY, params)
   } catch (err) {
-    console.error('保存自定义搜索参数到 localStorage 失败:', err)
+    console.error('保存自定义搜索参数到 electron-store 失败:', err)
   }
 }
 
 /**
- * 从 localStorage 获取保存的自定义搜索参数
+ * 从 electron-store 获取保存的自定义搜索参数
  */
-export function getSavedParamsFromStorage(): CustomParams | null {
+export async function getSavedParamsFromStorage(): Promise<CustomParams | null> {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored) as CustomParams
-    }
+    const stored = await storeGet<CustomParams>(STORAGE_KEY)
+    return stored
   } catch (err) {
-    console.error('从 localStorage 获取自定义搜索参数失败:', err)
+    console.error('从 electron-store 获取自定义搜索参数失败:', err)
   }
 
   return null

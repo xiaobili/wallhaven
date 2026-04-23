@@ -55,6 +55,12 @@ export interface ElectronAPI {
   closeWindow: () => Promise<void>
   isMaximized: () => Promise<boolean>
   
+  // Electron Store 操作
+  storeGet: (key: string) => Promise<{ success: boolean; value: any; error?: string }>
+  storeSet: (params: { key: string; value: any }) => Promise<{ success: boolean; error?: string }>
+  storeDelete: (key: string) => Promise<{ success: boolean; error?: string }>
+  storeClear: () => Promise<{ success: boolean; error?: string }>
+  
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void
@@ -145,6 +151,24 @@ const electronAPI: ElectronAPI = {
   isMaximized: () => {
     console.log('[Preload] isMaximized called')
     return ipcRenderer.invoke('window-is-maximized')
+  },
+  
+  // Electron Store 操作
+  storeGet: (key: string) => {
+    console.log('[Preload] storeGet called:', key)
+    return ipcRenderer.invoke('store-get', key)
+  },
+  storeSet: (params: { key: string; value: any }) => {
+    console.log('[Preload] storeSet called:', params.key)
+    return ipcRenderer.invoke('store-set', params)
+  },
+  storeDelete: (key: string) => {
+    console.log('[Preload] storeDelete called:', key)
+    return ipcRenderer.invoke('store-delete', key)
+  },
+  storeClear: () => {
+    console.log('[Preload] storeClear called')
+    return ipcRenderer.invoke('store-clear')
   },
   
   // 通用IPC通信（保留示例功能）

@@ -586,3 +586,60 @@ ipcMain.handle('window-is-maximized', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   return win ? win.isMaximized() : false
 })
+
+/**
+ * Electron Store - 获取值
+ */
+ipcMain.handle('store-get', async (_event, key: string) => {
+  try {
+    const { store } = await import('../index')
+    const value = store.get(key)
+    return { success: true, value }
+  } catch (error: any) {
+    console.error('[Store] Get failed:', error)
+    return { success: false, error: error.message, value: null }
+  }
+})
+
+/**
+ * Electron Store - 设置值
+ */
+ipcMain.handle('store-set', async (_event, { key, value }: { key: string; value: any }) => {
+  try {
+    const { store } = await import('../index')
+    store.set(key, value)
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Store] Set failed:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+/**
+ * Electron Store - 删除值
+ */
+ipcMain.handle('store-delete', async (_event, key: string) => {
+  try {
+    const { store } = await import('../index')
+    // @ts-ignore - electron-store 的类型定义过于严格，但运行时支持任意字符串 key
+    store.delete(key)
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Store] Delete failed:', error)
+    return { success: false, error: error.message }
+  }
+})
+
+/**
+ * Electron Store - 清空所有数据
+ */
+ipcMain.handle('store-clear', async () => {
+  try {
+    const { store } = await import('../index')
+    store.clear()
+    return { success: true }
+  } catch (error: any) {
+    console.error('[Store] Clear failed:', error)
+    return { success: false, error: error.message }
+  }
+})

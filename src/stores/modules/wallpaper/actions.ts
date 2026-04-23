@@ -104,25 +104,25 @@ export function createWallpaperActions(
   /**
    * 保存自定义搜索参数
    */
-  function saveCustomParams(params: CustomParams): void {
+  async function saveCustomParams(params: CustomParams): Promise<void> {
     // 确保selector为0
     params.selector = 0
     savedParams.value = { ...params }
-    // 保存到 localStorage
-    saveCustomParamsToStorage(params)
+    // 保存到 electron-store
+    await saveCustomParamsToStorage(params)
   }
 
   /**
    * 获取保存的自定义搜索参数
    */
-  function getSavedParams(): CustomParams | null {
+  async function getSavedParams(): Promise<CustomParams | null> {
     // 优先从内存中获取
     if (savedParams.value) {
       return savedParams.value
     }
 
-    // 否则从 localStorage 中获取
-    const params = getSavedParamsFromStorage()
+    // 否则从 electron-store 中获取
+    const params = await getSavedParamsFromStorage()
     if (params) {
       // 同步到内存中
       savedParams.value = params
@@ -134,18 +134,18 @@ export function createWallpaperActions(
   /**
    * 更新应用设置
    */
-  function updateSettings(newSettings: Partial<AppSettings>): void {
+  async function updateSettings(newSettings: Partial<AppSettings>): Promise<void> {
     // 合并新设置
     Object.assign(settings, newSettings)
-    // 保存到 localStorage
-    saveSettingsToStorage(settings)
+    // 保存到 electron-store
+    await saveSettingsToStorage(settings)
   }
 
   /**
    * 加载保存的应用设置
    */
-  function loadSettings(): void {
-    const savedSettings = getSettingsFromStorage()
+  async function loadSettings(): Promise<void> {
+    const savedSettings = await getSettingsFromStorage()
     if (savedSettings) {
       Object.assign(settings, savedSettings)
     }

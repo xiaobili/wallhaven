@@ -668,9 +668,9 @@ const resetSelect = (): void => {
   }
 }
 
-const saveParams = (): void => {
-  // 将 params 存储到 pinia 中
-  wallpaperStore.saveCustomParams({ ...localParams })
+const saveParams = async (): Promise<void> => {
+  // 将 params 存储到 electron-store 中
+  await wallpaperStore.saveCustomParams({ ...localParams })
 }
 
 const handleDownloadSelected = (): void => {
