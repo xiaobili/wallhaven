@@ -1,7 +1,15 @@
 <template>
   <div class="settings-page">
-    <h2>应用设置</h2>
+    <!-- Alert 提示框 -->
+    <Alert
+      v-if="alert.visible"
+      :type="alert.type"
+      :message="alert.message"
+      :duration="alert.duration"
+      @close="alert.visible = false"
+    />
     
+    <h2>应用设置</h2>
     <!-- 下载设置 -->
     <section class="settings-section">
       <h3><i class="fas fa-download"></i> 下载设置</h3>
@@ -103,15 +111,34 @@
 </template>
 
 <script lang="ts" setup>
+import { reactive, toRaw } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
-import { toRaw } from 'vue'
 import type { WallpaperFit } from '@/types'
+import Alert from '@/components/Alert.vue'
 
 // Pinia Store
 const wallpaperStore = useWallpaperStore()
 const settings = wallpaperStore.settings
 
-// 注意：设置已在应用启动时通过 main.ts 自动加载，无需在此处再次加载
+// Alert 状态管理
+const alert = reactive({
+  visible: false,
+  type: 'info' as 'success' | 'error' | 'warning' | 'info',
+  message: '',
+  duration: 3000
+})
+
+// 显示提示消息
+const showAlert = (
+  message: string,
+  type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  duration: number = 3000
+) => {
+  alert.message = message
+  alert.type = type
+  alert.duration = duration
+  alert.visible = true
+}
 
 // 方法
 const browseDownloadPath = async (): Promise<void> => {
@@ -120,7 +147,7 @@ const browseDownloadPath = async (): Promise<void> => {
     // @ts-ignore
     if (!window.electronAPI) {
       console.error('[SettingPage] window.electronAPI is undefined')
-      alert('❌ Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志')
+      showAlert('❌ Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志', 'error', 5000)
       return
     }
     
@@ -141,14 +168,14 @@ const browseDownloadPath = async (): Promise<void> => {
     }
   } catch (error: any) {
     console.error('选择文件夹失败:', error)
-    alert('选择文件夹失败: ' + error.message)
+    showAlert('选择文件夹失败: ' + error.message, 'error')
   }
 }
 
 const saveSettings = async (): Promise<void> => {
   // 验证设置
   if (settings.maxConcurrentDownloads < 1 || settings.maxConcurrentDownloads > 10) {
-    alert('多线程下载数量必须在 1-10 之间')
+    showAlert('多线程下载数量必须在 1-10 之间', 'warning')
     return
   }
   
@@ -161,30 +188,33 @@ const saveSettings = async (): Promise<void> => {
     
     console.log('[SettingPage] 设置已保存到 electron-store')
     
-    alert('✅ 设置已保存')
+    showAlert('✅ 设置已保存', 'success')
   } catch (error: any) {
     console.error('保存设置错误:', error)
-    alert('保存设置失败: ' + error.message)
+    showAlert('保存设置失败: ' + error.message, 'error')
   }
 }
 
 const resetSettings = async (): Promise<void> => {
-  if (confirm('确定要恢复默认设置吗？')) {
-    // 重置为默认值（普通对象）
-    const defaultSettings = {
-      downloadPath: '',
-      maxConcurrentDownloads: 3,
-      apiKey: '',
-      wallpaperFit: 'fill' as WallpaperFit,
-    }
-    
-    await wallpaperStore.updateSettings(defaultSettings)
-    
-    // 同时更新本地显示
-    Object.assign(settings, defaultSettings)
-    
-    alert('✅ 已恢复默认设置')
+  const confirmed = window.confirm('确定要恢复默认设置吗？')
+  if (!confirmed) {
+    return
   }
+  
+  // 重置为默认值（普通对象）
+  const defaultSettings = {
+    downloadPath: '',
+    maxConcurrentDownloads: 3,
+    apiKey: '',
+    wallpaperFit: 'fill' as WallpaperFit,
+  }
+  
+  await wallpaperStore.updateSettings(defaultSettings)
+  
+  // 同时更新本地显示
+  Object.assign(settings, defaultSettings)
+  
+  showAlert('✅ 已恢复默认设置', 'success')
 }
 
 const getFitDescription = (fit: WallpaperFit): string => {

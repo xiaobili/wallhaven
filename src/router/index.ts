@@ -61,6 +61,15 @@ const routes: RouteRecordRaw[] = [
       icon: 'fas fa-stethoscope',
     },
   },
+  {
+    path: '/alert-test',
+    name: 'AlertTest',
+    component: () => import('@/views/AlertTest.vue'),
+    meta: {
+      title: 'Alert组件测试',
+      icon: 'fas fa-bell',
+    },
+  },
 ]
 
 const router = createRouter({

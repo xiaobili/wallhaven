@@ -1,5 +1,14 @@
 <template>
   <div class="online-wallpaper-page">
+    <!-- Alert 提示框 -->
+    <Alert
+      v-if="alert.visible"
+      :type="alert.type"
+      :message="alert.message"
+      :duration="alert.duration"
+      @close="alert.visible = false"
+    />
+
     <ImagePreview
       :showing="imgShow"
       :img-info="imgInfo"
@@ -56,10 +65,11 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
+import Alert from '@/components/Alert.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/modules/download'
 import type { WallpaperItem, GetParams } from '@/types'
@@ -80,6 +90,26 @@ const downloading = ref<boolean>(false)
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
 const apiKey = computed(() => wallpaperStore.settings.apiKey)
+
+// Alert 状态管理
+const alert = reactive({
+  visible: false,
+  type: 'info' as 'success' | 'error' | 'warning' | 'info',
+  message: '',
+  duration: 3000
+})
+
+// 显示提示消息
+const showAlert = (
+  message: string,
+  type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  duration: number = 3000
+) => {
+  alert.message = message
+  alert.type = type
+  alert.duration = duration
+  alert.visible = true
+}
 
 // Lifecycle hooks
 onMounted(() => {
@@ -130,7 +160,7 @@ const clearSelection = (): void => {
  */
 const downloadSelected = async (): Promise<void> => {
   if (selectedWallpapers.value.length === 0) {
-    alert('请先选择要下载的壁纸')
+    showAlert('请先选择要下载的壁纸', 'warning')
     return
   }
   
@@ -151,7 +181,7 @@ const downloadSelected = async (): Promise<void> => {
     )
     
     if (selectedItems.length === 0) {
-      alert('未找到选中的壁纸信息')
+      showAlert('未找到选中的壁纸信息', 'error')
       return
     }
     
@@ -172,13 +202,13 @@ const downloadSelected = async (): Promise<void> => {
       await downloadStore.startDownload(id)
     }
     
-    alert(`✅ 已添加 ${selectedItems.length} 个下载任务到下载中心`)
+    showAlert(`✅ 已添加 ${selectedItems.length} 个下载任务到下载中心`, 'success')
     
     // 清空选择
     clearSelection()
   } catch (error: any) {
     console.error('批量下载失败:', error)
-    alert('批量下载失败: ' + error.message)
+    showAlert('批量下载失败: ' + error.message, 'error')
   } finally {
     downloading.value = false
   }
@@ -202,7 +232,7 @@ const setBg = async (imgItem: WallpaperItem): Promise<void> => {
     const downloadResult = await downloadWallpaperFile(imgItem)
     
     if (!downloadResult.success || !downloadResult.filePath) {
-      alert('下载壁纸失败: ' + (downloadResult.error || '未知错误'))
+      showAlert('下载壁纸失败: ' + (downloadResult.error || '未知错误'), 'error')
       return
     }
     
@@ -210,13 +240,13 @@ const setBg = async (imgItem: WallpaperItem): Promise<void> => {
     const setResult = await window.electronAPI.setWallpaper(downloadResult.filePath)
     
     if (setResult.success) {
-      alert('✅ 壁纸设置成功！')
+      showAlert('✅ 壁纸设置成功！', 'success')
     } else {
-      alert('设置壁纸失败: ' + (setResult.error || '未知错误'))
+      showAlert('设置壁纸失败: ' + (setResult.error || '未知错误'), 'error')
     }
   } catch (error: any) {
     console.error('设置壁纸错误:', error)
-    alert('设置壁纸失败: ' + error.message)
+    showAlert('设置壁纸失败: ' + error.message, 'error')
   }
 }
 
@@ -224,10 +254,10 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
   try {
     // 添加到下载队列
     await addToDownloadQueue(imgItem)
-    alert('✅ 已添加到下载队列，请在下载中心查看进度')
+    showAlert('✅ 已添加到下载队列，请在下载中心查看进度', 'success')
   } catch (error: any) {
     console.error('添加下载任务失败:', error)
-    alert('添加下载任务失败: ' + error.message)
+    showAlert('添加下载任务失败: ' + error.message, 'error')
   }
 }
 

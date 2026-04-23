@@ -1,5 +1,14 @@
 <template>
   <main id="main" class="local-wallpaper-page">
+    <!-- Alert 提示框 -->
+    <Alert
+      v-if="alert.visible"
+      :type="alert.type"
+      :message="alert.message"
+      :duration="alert.duration"
+      @close="alert.visible = false"
+    />
+    
     <!-- 工具栏 -->
     <div class="local-toolbar framed">
       <div class="toolbar-left">
@@ -109,15 +118,35 @@
   </main>
 </template>
 
-<script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import ImagePreview from '@/components/ImagePreview.vue'
+import Alert from '@/components/Alert.vue'
 import type { WallpaperItem } from '@/types'
 import { formatFileSize } from '@/utils/helpers'
 
-// Pinia Store
 const wallpaperStore = useWallpaperStore()
+
+// Alert 状态管理
+const alert = reactive({
+  visible: false,
+  type: 'info' as 'success' | 'error' | 'warning' | 'info',
+  message: '',
+  duration: 3000
+})
+
+// 显示提示消息
+const showAlert = (
+  message: string,
+  type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  duration: number = 3000
+) => {
+  alert.message = message
+  alert.type = type
+  alert.duration = duration
+  alert.visible = true
+}
 
 // 响应式数据
 const loading = ref<boolean>(false)
@@ -242,18 +271,19 @@ const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promis
     const result = await window.electronAPI.setWallpaper(imagePath)
     
     if (result.success) {
-      alert('✅ 壁纸设置成功！')
+      showAlert('✅ 壁纸设置成功！', 'success')
     } else {
-      alert('❌ 设置壁纸失败: ' + (result.error || '未知错误'))
+      showAlert('❌ 设置壁纸失败: ' + (result.error || '未知错误'), 'error')
     }
   } catch (error: any) {
     console.error('设置壁纸错误:', error)
-    alert('设置壁纸失败: ' + error.message)
+    showAlert('设置壁纸失败: ' + error.message, 'error')
   }
 }
 
 const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promise<void> => {
-  if (!confirm(`确定要删除 "${wallpaper.name}" 吗？此操作不可恢复。`)) {
+  const confirmed = window.confirm(`确定要删除 "${wallpaper.name}" 吗？此操作不可恢复。`)
+  if (!confirmed) {
     return
   }
   
@@ -263,13 +293,13 @@ const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promis
     if (result.success) {
       // 从列表中移除
       localWallpapers.value.splice(index, 1)
-      alert('✅ 文件已删除')
+      showAlert('✅ 文件已删除', 'success')
     } else {
-      alert('❌ 删除失败: ' + (result.error || '未知错误'))
+      showAlert('❌ 删除失败: ' + (result.error || '未知错误'), 'error')
     }
   } catch (error: any) {
     console.error('删除文件错误:', error)
-    alert('删除失败: ' + error.message)
+    showAlert('删除失败: ' + error.message, 'error')
   }
 }
 

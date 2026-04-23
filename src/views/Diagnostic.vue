@@ -1,5 +1,14 @@
 <template>
   <div class="diagnostic-page">
+    <!-- Alert 提示框 -->
+    <Alert
+      v-if="alert.visible"
+      :type="alert.type"
+      :message="alert.message"
+      :duration="alert.duration"
+      @close="alert.visible = false"
+    />
+    
     <h2>🔍 Electron API 诊断</h2>
     
     <div class="section">
@@ -37,7 +46,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
+import Alert from '@/components/Alert.vue'
+
+// Alert 状态管理
+const alert = reactive({
+  visible: false,
+  type: 'info' as 'success' | 'error' | 'warning' | 'info',
+  message: '',
+  duration: 5000
+})
+
+// 显示提示消息
+const showAlert = (
+  message: string,
+  type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  duration: number = 5000
+) => {
+  alert.message = message
+  alert.type = type
+  alert.duration = duration
+  alert.visible = true
+}
 
 const testResult = ref<string>('')
 
@@ -71,14 +101,14 @@ const testSelectFolder = async () => {
 }
 
 const showConsoleLogs = () => {
-  alert(`请在浏览器控制台（F12）中查看以下日志：
+  showAlert(`请在浏览器控制台（F12）中查看以下日志：
 
 1. [Preload] Script loaded - Preload脚本已加载
 2. [Preload] Exposing electronAPI to window - 正在暴露API
 3. [Preload] Done - Preload脚本执行完成
 4. [SettingPage] window.electronAPI - SettingPage组件中的API状态
 
-如果看不到这些日志，说明preload脚本没有正确加载。`)
+如果看不到这些日志，说明preload脚本没有正确加载。`, 'info', 8000)
 }
 </script>
 

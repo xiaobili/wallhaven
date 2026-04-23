@@ -1,5 +1,14 @@
 <template>
   <div class="download-center">
+    <!-- Alert 提示框 -->
+    <Alert
+      v-if="alert.visible"
+      :type="alert.type"
+      :message="alert.message"
+      :duration="alert.duration"
+      @close="alert.visible = false"
+    />
+    
     <div class="dowloading">
       <div class="m-title">
         <a class="dowloading-title">下载中</a>
@@ -88,12 +97,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import { useDownloadStore } from '@/stores/modules/download'
 import { formatFileSize, formatResolution, formatSpeed, formatTime } from '@/utils/helpers'
+import Alert from '@/components/Alert.vue'
 
 // Pinia Store
 const downloadStore = useDownloadStore()
+
+// Alert 状态管理
+const alert = reactive({
+  visible: false,
+  type: 'info' as 'success' | 'error' | 'warning' | 'info',
+  message: '',
+  duration: 3000
+})
+
+// 显示提示消息
+const showAlert = (
+  message: string,
+  type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  duration: number = 3000
+) => {
+  alert.message = message
+  alert.type = type
+  alert.duration = duration
+  alert.visible = true
+}
 
 // 从store获取数据（使用computed保持响应式）
 const downloadList = computed(() => downloadStore.downloadingList)
@@ -101,29 +131,32 @@ const downloadFinishedList = computed(() => downloadStore.finishedList)
 
 // 取消下载
 const onCancelDownload = async (id: string) => {
-  if (confirm('确定要取消这个下载任务吗？')) {
+  // 使用自定义确认对话框（简单实现，可以后续优化为Modal组件）
+  const confirmed = window.confirm('确定要取消这个下载任务吗？')
+  if (confirmed) {
     await downloadStore.cancelDownload(id)
-    showMessage('已取消下载', 'info')
+    showAlert('已取消下载', 'info')
   }
 }
 
 // 暂停下载
 const onPauseDownload = async (id: string) => {
   await downloadStore.pauseDownload(id)
-  showMessage('已暂停下载', 'info')
+  showAlert('已暂停下载', 'info')
 }
 
 // 恢复下载
 const onResumeDownload = async (id: string) => {
   await downloadStore.resumeDownload(id)
-  showMessage('恢复下载...', 'info')
+  showAlert('恢复下载...', 'info')
 }
 
 // 删除完成记录
 const delRecorder = async (id: string) => {
-  if (confirm('确定要删除这条记录吗？')) {
+  const confirmed = window.confirm('确定要删除这条记录吗？')
+  if (confirmed) {
     await downloadStore.removeFinishedRecord(id)
-    showMessage('记录已删除', 'success')
+    showAlert('记录已删除', 'success')
   }
 }
 
@@ -138,22 +171,16 @@ const showInFolder = async (path: string) => {
       
       const result = await (window as any).electronAPI.openFolder(dirPath)
       if (!result.success) {
-        showMessage('打开文件夹失败: ' + (result.error || ''), 'error')
+        showAlert('打开文件夹失败: ' + (result.error || ''), 'error')
       }
     } else {
-      showMessage('请在Electron环境中使用此功能', 'warning')
+      showAlert('请在Electron环境中使用此功能', 'warning')
       console.log('模拟打开文件夹:', path)
     }
   } catch (error: any) {
     console.error('打开文件夹错误:', error)
-    showMessage('打开文件夹失败', 'error')
+    showAlert('打开文件夹失败', 'error')
   }
-}
-
-// 显示消息
-const showMessage = (message: string, type: 'success' | 'error' | 'warning' | 'info') => {
-  // 临时使用 alert，实际项目中建议替换为 Element Plus Message 或类似组件
-  alert(`[${type.toUpperCase()}] ${message}`)
 }
 
 // 生命周期钩子
