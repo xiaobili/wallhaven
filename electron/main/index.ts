@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// 导入IPC handlers
+// 导入IPC handlers（使用 side-effect import）
 import './ipc/handlers'
 
 /**

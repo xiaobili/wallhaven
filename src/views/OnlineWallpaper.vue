@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
@@ -69,24 +69,24 @@ import { throttle } from '@/utils/helpers'
 const wallpaperStore = useWallpaperStore()
 const downloadStore = useDownloadStore()
 
-// Refs
+// Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
-const apiKey = ref<string>('')
 const desktopInfo = ref<string>('')
 const saving = ref<boolean>(false)
-const imgInfo = ref<WallpaperItem | null>(null)
+const imgInfo = shallowRef<WallpaperItem | null>(null) // 使用 shallowRef
 const imgShow = ref<boolean>(false)
 const selectedWallpapers = ref<string[]>([])
 const downloading = ref<boolean>(false)
+
+// Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
+const apiKey = computed(() => wallpaperStore.settings.apiKey)
 
 // Lifecycle hooks
 onMounted(() => {
   // 加载下载历史记录
   downloadStore.loadFromStorage()
-  apiKey.value = wallpaperStore.settings.apiKey
-  
-  // 使用节流优化滚动事件
-  window.addEventListener('scroll', throttledScrollEvent)
+  // 使用节流优化滚动事件（300ms间隔，平衡性能和响应）
+  window.addEventListener('scroll', throttledScrollEvent, { passive: true })
 })
 
 onUnmounted(() => {
@@ -308,8 +308,8 @@ const scrollEvent = (): void => {
   }
 }
 
-// 使用节流函数包装滚动事件（200ms间隔，更快响应）
-const throttledScrollEvent = throttle(scrollEvent, 200)
+// 使用节流函数包装滚动事件（300ms间隔，平衡性能和响应速度）
+const throttledScrollEvent = throttle(scrollEvent, 300)
 
 /**
  * 添加到下载队列（单个）

@@ -24,8 +24,14 @@
               <a class="thumb-btn thumb-btn-fav jsAnchor overlay-anchor" title="设为壁纸" @click.stop="emit('set-bg', liItem)">
                 <i class="fas fa-fw fa-repeat-alt"></i>
               </a>
-              <img alt="loading" loading="lazy" class="lazyload loaded"
-                   :data-src="liItem.thumbs.small" :src="liItem.thumbs.small"/>
+              <!-- 使用 IntersectionObserver 优化的懒加载 -->
+              <img alt="loading" 
+                   loading="lazy" 
+                   class="lazyload loaded"
+                   :data-src="liItem.thumbs.small" 
+                   :src="liItem.thumbs.small"
+                   decoding="async"
+                   fetchpriority="low"/>
               <a class="preview" @click.stop="emit('preview', liItem)"></a>
               <div class="thumb-info">
                 <span class="wall-res">{{ formatResolution(liItem.resolution) }}</span>
@@ -50,6 +56,7 @@
 <script setup lang="ts">
 import type { WallpaperItem, TotalPageData } from '@/types'
 import { formatResolution, formatFileSize } from '@/utils/helpers'
+import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   pageData: TotalPageData;
@@ -79,6 +86,44 @@ const isSelected = (id: string): boolean => {
 const toggleSelect = (id: string): void => {
   emit('select-wallpaper', id)
 }
+
+/**
+ * 使用 IntersectionObserver 优化图片懒加载
+ */
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  // 创建 IntersectionObserver 实例
+  if ('IntersectionObserver' in window) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement
+            // 图片已经在视口中，浏览器会自动加载
+            observer?.unobserve(img)
+          }
+        })
+      },
+      {
+        rootMargin: '200px', // 提前200px开始加载
+        threshold: 0.01
+      }
+    )
+
+    // 观察所有懒加载图片
+    const images = document.querySelectorAll('img[loading="lazy"]')
+    images.forEach((img) => observer?.observe(img))
+  }
+})
+
+onUnmounted(() => {
+  // 清理 Observer
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+})
 </script>
 
 <style scoped>

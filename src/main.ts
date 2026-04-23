@@ -3,8 +3,10 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import { useWallpaperStore } from './stores/wallpaper'
-import { useDownloadStore } from './stores/modules/download'
+
+// 延迟导入stores，减少启动时的模块加载
+let wallpaperStore: any = null
+let downloadStore: any = null
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -12,12 +14,18 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-// 应用启动时加载保存的设置
-const wallpaperStore = useWallpaperStore()
-const downloadStore = useDownloadStore()
+// 快速挂载应用，不等待异步操作
+app.mount('#app')
 
-// 异步加载设置（支持 Electron 持久化存储）
+// 异步初始化（在应用挂载后执行）
 async function initializeApp() {
+  // 动态导入stores
+  const wallpaperModule = await import('./stores/wallpaper')
+  const downloadModule = await import('./stores/modules/download')
+  
+  wallpaperStore = wallpaperModule.useWallpaperStore()
+  downloadStore = downloadModule.useDownloadStore()
+  
   // 首先从 localStorage 加载
   wallpaperStore.loadSettings()
   
@@ -43,7 +51,7 @@ async function initializeApp() {
         if (error) {
           // 下载失败
           console.error('[Main] 下载失败:', error)
-          const task = downloadStore.downloadingList.find(item => item.id === taskId)
+          const task = downloadStore.downloadingList.find((item: any) => item.id === taskId)
           if (task) {
             task.state = 'waiting'
             task.progress = 0
@@ -63,9 +71,7 @@ async function initializeApp() {
       console.warn('从 Electron 加载设置失败，使用 localStorage:', error)
     }
   }
-  
-  // 挂载应用
-  app.mount('#app')
 }
 
+// 非阻塞式初始化
 initializeApp()

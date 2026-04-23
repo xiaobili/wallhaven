@@ -7,10 +7,10 @@ import { saveCustomParamsToStorage, getSavedParamsFromStorage } from './storage'
 import { saveSettingsToStorage, getSettingsFromStorage } from './settings-storage'
 
 /**
- * 创建壁纸 actions
+ * 创建壁纸 actions（优化版）
  */
 export function createWallpaperActions(
-  totalPageData: TotalPageData,
+  totalPageData: any, // shallowRef<TotalPageData>
   loading: Ref<boolean>,
   error: Ref<boolean>,
   queryParams: Ref<GetParams | null>,
@@ -38,12 +38,12 @@ export function createWallpaperActions(
 
       const data = await searchWallpapers(finalParams)
 
-      // 清空旧数据并设置新数据
-      totalPageData.sections = []
-      totalPageData.sections.push(data)
-      // 确保转换为数字类型，避免 NaN 问题
-      totalPageData.totalPage = Number(data.meta.last_page) || 0
-      totalPageData.currentPage = Number(data.meta.current_page) || 0
+      // 使用新对象替换，触发 shallowRef 更新
+      totalPageData.value = {
+        sections: [data],
+        totalPage: Number(data.meta.last_page) || 0,
+        currentPage: Number(data.meta.current_page) || 0,
+      }
     } catch (err) {
       console.error('获取壁纸数据失败:', err)
       error.value = true
@@ -63,7 +63,7 @@ export function createWallpaperActions(
 
     try {
       // 确保 currentPage 是数字类型
-      const currentPage = Number(totalPageData.currentPage) || 0
+      const currentPage = Number(totalPageData.value.currentPage) || 0
       const nextPage = currentPage + 1
 
       const params = {
@@ -72,10 +72,14 @@ export function createWallpaperActions(
       }
 
       const data = await searchWallpapers(params)
-      // 追加新数据
-      totalPageData.sections.push(data)
-      // 确保转换为数字类型
-      totalPageData.currentPage = Number(data.meta.current_page) || 0
+      
+      // 创建新数组以触发 shallowRef 更新
+      const newSections = [...totalPageData.value.sections, data]
+      totalPageData.value = {
+        ...totalPageData.value,
+        sections: newSections,
+        currentPage: Number(data.meta.current_page) || 0,
+      }
     } catch (err) {
       console.error('加载更多壁纸失败:', err)
       error.value = true
@@ -88,9 +92,11 @@ export function createWallpaperActions(
    * 重置状态
    */
   function resetState(): void {
-    totalPageData.sections = []
-    totalPageData.totalPage = 0
-    totalPageData.currentPage = 0
+    totalPageData.value = {
+      sections: [],
+      totalPage: 0,
+      currentPage: 0,
+    }
     queryParams.value = null
     error.value = false
   }

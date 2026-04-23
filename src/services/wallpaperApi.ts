@@ -1,6 +1,6 @@
 // API Service 层 - 统一管理 Wallhaven API 调用
 
-import axios, { type AxiosResponse } from 'axios'
+import axios, { type AxiosResponse, type CancelTokenSource } from 'axios'
 import type { GetParams } from '@/types'
 import { getSettingsFromStorage } from '@/stores/modules/wallpaper/settings-storage'
 
@@ -14,6 +14,65 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+/**
+ * 简单的内存缓存（用于API响应）
+ */
+interface CacheItem {
+  data: any
+  timestamp: number
+  ttl: number // Time to live in milliseconds
+}
+
+const apiCache = new Map<string, CacheItem>()
+const CACHE_TTL = 5 * 60 * 1000 // 5分钟缓存
+
+/**
+ * 生成缓存key
+ */
+const generateCacheKey = (url: string, params?: any): string => {
+  return `${url}:${JSON.stringify(params || {})}`
+}
+
+/**
+ * 从缓存获取数据
+ */
+const getFromCache = (key: string): any | null => {
+  const item = apiCache.get(key)
+  if (!item) return null
+  
+  // 检查是否过期
+  if (Date.now() - item.timestamp > item.ttl) {
+    apiCache.delete(key)
+    return null
+  }
+  
+  return item.data
+}
+
+/**
+ * 设置缓存
+ */
+const setCache = (key: string, data: any): void => {
+  // 限制缓存大小
+  if (apiCache.size > 50) {
+    const firstKey = apiCache.keys().next().value
+    if (firstKey) apiCache.delete(firstKey)
+  }
+  
+  apiCache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl: CACHE_TTL
+  })
+}
+
+/**
+ * 清除缓存
+ */
+export const clearApiCache = (): void => {
+  apiCache.clear()
+}
 
 /**
  * 判断是否为生产环境（Electron 打包后）
@@ -84,11 +143,18 @@ apiClient.interceptors.request.use(
 )
 
 /**
- * 响应拦截器 - 直接返回 data
+ * 响应拦截器 - 直接返回 data 并缓存
  */
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     console.log('[API Response]', response.config.url, response.status)
+    
+    // 缓存GET请求的响应
+    if (response.config.method === 'get') {
+      const cacheKey = generateCacheKey(response.config.url || '', response.config.params)
+      setCache(cacheKey, response.data)
+    }
+    
     return response.data
   },
   (error) => {
@@ -116,22 +182,63 @@ apiClient.interceptors.response.use(
   },
 )
 
+// 存储当前请求的cancel token
+let currentCancelTokenSource: CancelTokenSource | null = null
+
 /**
- * 搜索壁纸
+ * 取消正在进行的请求
+ */
+export const cancelCurrentRequest = (): void => {
+  if (currentCancelTokenSource) {
+    currentCancelTokenSource.cancel('Request cancelled by user')
+    currentCancelTokenSource = null
+  }
+}
+
+/**
+ * 搜索壁纸（带缓存和取消机制）
  * @param params 搜索参数
  * @returns 壁纸数据
  */
 export const searchWallpapers = async (params: GetParams | null): Promise<any> => {
   try {
+    // 生成缓存key
+    const cacheKey = generateCacheKey('/search', params)
+    
+    // 尝试从缓存获取
+    const cachedData = getFromCache(cacheKey)
+    if (cachedData) {
+      console.log('[API] Using cached data for search')
+      return cachedData
+    }
+    
+    // 取消之前的请求
+    cancelCurrentRequest()
+    
+    // 创建新的cancel token
+    currentCancelTokenSource = axios.CancelToken.source()
+    
     // 生产环境使用 Electron IPC
     if (isProduction()) {
-      return await callWallhavenAPIViaIPC('/search', params)
+      const data = await callWallhavenAPIViaIPC('/search', params)
+      setCache(cacheKey, data)
+      return data
     }
     
     // 开发环境使用 axios 代理
-    const response = await apiClient.get('/search', { params })
+    const response = await apiClient.get('/search', { 
+      params,
+      cancelToken: currentCancelTokenSource.token
+    })
+    
     return response as unknown as any
-  } catch (error) {
+  } catch (error: any) {
+    // 忽略取消的请求
+    if (axios.isCancel(error)) {
+      console.log('[API] Request cancelled')
+      return null
+    }
+    
     console.error('搜索壁纸失败:', error)
     throw error
   }
@@ -144,9 +251,21 @@ export const searchWallpapers = async (params: GetParams | null): Promise<any> =
  */
 export const getWallpaperDetail = async (id: string): Promise<any> => {
   try {
+    // 生成缓存key
+    const cacheKey = generateCacheKey(`/w/${id}`, {})
+    
+    // 尝试从缓存获取
+    const cachedData = getFromCache(cacheKey)
+    if (cachedData) {
+      console.log('[API] Using cached data for wallpaper detail')
+      return cachedData
+    }
+    
     // 生产环境使用 Electron IPC
     if (isProduction()) {
-      return await callWallhavenAPIViaIPC(`/w/${id}`, {})
+      const data = await callWallhavenAPIViaIPC(`/w/${id}`, {})
+      setCache(cacheKey, data)
+      return data
     }
     
     // 开发环境使用 axios 代理

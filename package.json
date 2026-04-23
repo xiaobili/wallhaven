@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "main": "./out/main/index.js",
+  "sideEffects": [
+    "*.vue",
+    "*.css",
+    "src/static/**/*",
+    "electron/main/ipc/handlers.ts"
+  ],
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

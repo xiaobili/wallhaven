@@ -36,7 +36,12 @@
     </div>
   </div>
   <div class="container" :style="{width: calContainerW + 'px'}">
-    <router-view></router-view>
+    <!-- 使用 KeepAlive 缓存路由组件，避免重复渲染 -->
+    <router-view v-slot="{ Component, route }">
+      <KeepAlive :include="['OnlineWallpaper', 'LocalWallpaper', 'DownloadWallpaper']">
+        <component :is="Component" :key="route.path" />
+      </KeepAlive>
+    </router-view>
   </div>
 </template>
 
@@ -50,44 +55,33 @@ const version = pkg.version
 // 客户端宽度
 const clientWidth = ref<number>(700)
 
-// 桌面信息
-const desktopInfo = ref<string>('')
-
-// 图片下载列表
-const downloadList = ref<any[]>([])
-
-// 图片下载完成列表
-const downloadFinishedList = ref<any[]>([])
-
 // 计算容器宽度
 const calContainerW = computed(() => {
   const width = clientWidth.value - 200
   return width < 800 ? 800 : width
 })
 
-// 窗口大小变化处理
+// 窗口大小变化处理（使用防抖）
+let resizeTimer: number | null = null
 const handleResize = () => {
-  if (document.documentElement.clientWidth !== undefined) {
-    clientWidth.value = document.documentElement.clientWidth
-  }
-}
-
-// 启动应用
-const startApp = () => {
-  // TODO: 实现应用启动逻辑
-  console.log('App started')
+  if (resizeTimer) clearTimeout(resizeTimer)
+  resizeTimer = window.setTimeout(() => {
+    if (document.documentElement.clientWidth !== undefined) {
+      clientWidth.value = document.documentElement.clientWidth
+    }
+  }, 150) // 150ms 防抖
 }
 
 // 组件挂载时
 onMounted(() => {
   clientWidth.value = document.documentElement.clientWidth
   window.addEventListener('resize', handleResize)
-  startApp()
 })
 
 // 组件卸载时
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (resizeTimer) clearTimeout(resizeTimer)
 })
 </script>
 

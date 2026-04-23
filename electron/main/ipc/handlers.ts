@@ -153,7 +153,6 @@ function getImageDimensions(filePath: string): Promise<{ width: number; height: 
         }
       } catch (e) {
         // 解析出错，返回默认值而不是拒绝
-        console.warn(`[getImageDimensions] 解析失败 (${filePath}):`, e)
         resolve({ width: 0, height: 0 })
       }
     })
@@ -195,10 +194,8 @@ async function generateThumbnail(imagePath: string, dirPath: string, fileName: s
       .jpeg({ quality: 80 }) // 转换为JPEG，质量80%
       .toFile(thumbnailFilePath)
     
-    console.log(`[Thumbnail] Generated: ${thumbnailFileName}`)
     return thumbnailFilePath
   } catch (error) {
-    console.warn(`[Thumbnail] Failed to generate for ${fileName}:`, error)
     // 失败时返回空字符串，前端将使用原图
     return ''
   }
@@ -296,7 +293,19 @@ ipcMain.handle('set-wallpaper', async (_event, imagePath: string) => {
     }
     
     // 动态导入 wallpaper 包（使用命名导出）
-    const { setWallpaper } = await import('wallpaper')
+    let setWallpaper: any
+    try {
+      const wallpaperModule = await import('wallpaper')
+      // wallpaper 使用命名导出，不是默认导出
+      setWallpaper = (wallpaperModule as any).setWallpaper
+      if (!setWallpaper) {
+        throw new Error('wallpaper 模块未正确导出 setWallpaper 函数')
+      }
+    } catch (importError: any) {
+      console.error('导入 wallpaper 模块失败:', importError.message)
+      return { success: false, error: `wallpaper 模块加载失败: ${importError.message}` }
+    }
+    
     await setWallpaper(imagePath)
     
     return { success: true, error: null }
@@ -355,21 +364,16 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
   filename: string
   saveDir: string
 }) => {
-  console.log('[Main Process] 开始下载任务:', { taskId, url, filename, saveDir })
-  
   try {
     // 确保目录存在
     if (!fs.existsSync(saveDir)) {
-      console.log('[Main Process] 创建下载目录:', saveDir)
       fs.mkdirSync(saveDir, { recursive: true })
     }
     
     const filePath = path.join(saveDir, filename)
-    console.log('[Main Process] 文件路径:', filePath)
     
     // 如果文件已存在，直接完成
     if (fs.existsSync(filePath)) {
-      console.log('[Main Process] 文件已存在，直接完成')
       // 通知渲染进程任务完成
       const { BrowserWindow } = await import('electron')
       const windows = BrowserWindow.getAllWindows()
@@ -393,10 +397,8 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
     
     // 创建临时文件
     const tempPath = filePath + '.download'
-    console.log('[Main Process] 临时文件路径:', tempPath)
     
     // 下载文件并跟踪进度
-    console.log('[Main Process] 开始网络请求:', url)
     const response = await axios({
       method: 'GET',
       url,
@@ -405,7 +407,6 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
     })
     
     const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
-    console.log('[Main Process] 文件大小:', totalSize, 'bytes')
     
     let downloadedSize = 0
     let lastTime = Date.now()
@@ -434,7 +435,6 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
             state: 'downloading',
             totalSize
           }
-          console.log('[Main Process] 发送进度:', progressData.progress.toFixed(2) + '%')
           windows[0].webContents.send('download-progress', progressData)
         }
         
@@ -444,14 +444,12 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
     })
     
     // 使用pipeline确保流正确关闭
-    console.log('[Main Process] 下载完成，重命名文件')
     await streamPipeline(response.data, writer)
     
     // 重命名临时文件为正式文件
     fs.renameSync(tempPath, filePath)
     
     const finalSize = fs.statSync(filePath).size
-    console.log('[Main Process] 文件大小:', finalSize, 'bytes')
     
     // 通知渲染进程任务完成
     const { BrowserWindow } = await import('electron')
@@ -465,7 +463,6 @@ ipcMain.handle('start-download-task', async (_event, { taskId, url, filename, sa
         state: 'completed',
         filePath
       }
-      console.log('[Main Process] 发送完成事件:', completeData)
       windows[0].webContents.send('download-progress', completeData)
     }
     
@@ -522,8 +519,6 @@ ipcMain.handle('wallhaven-api-request', async (_event, { endpoint, params }: {
     // 构建请求URL
     const url = `https://wallhaven.cc/api/v1${endpoint}`
     
-    console.log('[Wallhaven API Proxy] Request:', url, 'Params:', params)
-    
     // 发起请求
     const response = await axios.get(url, {
       params: params ? { ...params, apiKey: undefined } : {}, // 移除 apiKey 参数
@@ -533,8 +528,6 @@ ipcMain.handle('wallhaven-api-request', async (_event, { endpoint, params }: {
       },
       timeout: 15000
     })
-    
-    console.log('[Wallhaven API Proxy] Response status:', response.status)
     
     return {
       success: true,

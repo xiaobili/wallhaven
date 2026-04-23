@@ -1,6 +1,6 @@
 // Wallhaven 壁纸状态定义
 
-import { ref, reactive } from 'vue'
+import { ref, reactive, shallowRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams } from '@/types'
 
 /**
@@ -31,10 +31,11 @@ export function createDefaultSettings(): AppSettings {
 }
 
 /**
- * 创建壁纸状态的初始值
+ * 创建壁纸状态的初始值（优化版 - 使用 shallowRef）
  */
 export function createInitialState() {
-  const totalPageData = reactive<TotalPageData>({
+  // 使用 shallowRef 存储大型数组对象，减少响应式开销
+  const totalPageData = shallowRef<TotalPageData>({
     totalPage: 0,
     currentPage: 0,
     sections: [],
@@ -45,7 +46,7 @@ export function createInitialState() {
   const queryParams = ref<GetParams | null>(null)
   const savedParams = ref<CustomParams | null>(null)
   
-  // 设置状态
+  // 设置状态（小对象可以使用 reactive）
   const settings = reactive<AppSettings>(createDefaultSettings())
 
   return {
