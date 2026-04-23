@@ -3,7 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [main, master]
-    tags: ['v*']
   pull_request:
     branches: [main, master]
 
@@ -34,10 +33,49 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
+  # 自动生成版本号（仅在推送到主分支时）
+  auto-tag:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    outputs:
+      tag_name: ${{ steps.create_tag.outputs.tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version from package.json
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        id: create_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="v${{ steps.get_version.outputs.version }}"
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+          # 检查标签是否已存在
+          if git tag -l "$TAG_NAME" | grep -q .; then
+            echo "Tag $TAG_NAME already exists"
+          else
+            git config user.name "GitHub Actions"
+            git config user.email "actions@github.com"
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            git push origin "$TAG_NAME"
+            echo "Created and pushed tag $TAG_NAME"
+          fi
+
   # Windows 构建
   build-windows:
-    needs: lint-and-test
+    needs: [lint-and-test, auto-tag]
     runs-on: windows-latest
+    if: always() && needs.lint-and-test.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,10 +101,11 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
 
-  # macOS 构建
-  build-macos:
-    needs: lint-and-test
+  # macOS ARM64 (Apple Silicon) 构建
+  build-macos-arm64:
+    needs: [lint-and-test, auto-tag]
     runs-on: macos-latest
+    if: always() && needs.lint-and-test.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,25 +119,59 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Rebuild sharp for macOS
-        run: npm run prebuild:mac
+      - name: Rebuild sharp for macOS ARM64
+        run: npm rebuild sharp --platform=darwin --arch=arm64
 
       - name: Build application
         run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload macOS artifacts
+      - name: Upload macOS ARM64 artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wallhaven-macos
+          name: wallhaven-macos-arm64
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  # macOS x64 (Intel) 构建
+  build-macos-x64:
+    needs: [lint-and-test, auto-tag]
+    runs-on: macos-26-intel
+    if: always() && needs.lint-and-test.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild sharp for macOS x64
+        run: npm rebuild sharp --platform=darwin --arch=x64
+
+      - name: Build application
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS x64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallhaven-macos-x64
           path: dist/*.dmg
           if-no-files-found: error
 
   # Linux 构建
   build-linux:
-    needs: lint-and-test
+    needs: [lint-and-test, auto-tag]
     runs-on: ubuntu-latest
+    if: always() && needs.lint-and-test.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -127,11 +200,11 @@ jobs:
             dist/*.deb
           if-no-files-found: error
 
-  # 发布到 GitHub Releases（仅在推送标签时执行）
+  # 发布到 GitHub Releases
   release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [build-windows, build-macos-arm64, build-macos-x64, build-linux]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: always() && needs.auto-tag.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -141,12 +214,18 @@ jobs:
         with:
           path: artifacts
 
+      - name: Get tag name
+        id: get_tag
+        run: echo "tag_name=${{ needs.auto-tag.outputs.tag_name }}" >> $GITHUB_OUTPUT
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
           files: |
             artifacts/wallhaven-windows/*
-            artifacts/wallhaven-macos/*
+            artifacts/wallhaven-macos-arm64/*
+            artifacts/wallhaven-macos-x64/*
             artifacts/wallhaven-linux/*
           draft: false
           prerelease: false
