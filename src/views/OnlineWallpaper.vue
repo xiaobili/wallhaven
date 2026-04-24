@@ -1,5 +1,8 @@
 <template>
   <div class="online-wallpaper-page">
+    <!-- 加载遮罩层 -->
+    <LoadingOverlay :show="showLoadingOverlay" text="搜索中..." />
+    
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
@@ -70,6 +73,7 @@ import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
+import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/modules/download'
 import type { WallpaperItem, GetParams } from '@/types'
