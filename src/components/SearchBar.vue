@@ -527,6 +527,7 @@ const emit = defineEmits<{
   (e: 'changeParams', value: GetParams | null): void
   (e: 'downloadSelected'): void
   (e: 'clearSelection'): void
+  (e: 'saveParams'): void
 }>()
 
 // 本地参数副本 - 使用 reactive 确保深层响应式
@@ -671,6 +672,7 @@ const resetSelect = async (): Promise<void> => {
 const saveParams = async (): Promise<void> => {
   // 将 params 存储到 electron-store 中
   await wallpaperStore.saveCustomParams({ ...localParams })
+  emit('saveParams')
 }
 
 const handleDownloadSelected = (): void => {

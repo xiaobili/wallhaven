@@ -1,6 +1,10 @@
 # Wallhaven - 在线壁纸浏览器
 
-> 基于 Electron + Vue 3 + Vite + TypeScript 构建的跨平台桌面壁纸应用
+> 基于 Electron + Vue 3 + Vite + TypeScript 构建的跨平台桌面壁纸应用，
+
+> 该项目参考了[leoFitz1024](https://github.com/leoFitz1024) 的 [Wallhaven](https://github.com/leoFitz1024/wallhaven) 项目，并进行了大量优化和扩展。 RESPECT
+
+> 本项目 80% 的功能使用 [Tongyi Lingma](https://help.aliyun.com/zh/lingma/product-overview/changelogs-of-lingma-ide) 插件实现。
 
 ## ✨ 最新优化 (v2.0.0)
 
@@ -11,7 +15,7 @@
 - 🏗️ **架构升级**: Electron + Vue 3 + electron-vite
 - 🛡️ **类型安全**: 100% TypeScript 覆盖
 - 📦 **代码复用**: 创建工具函数库，提高可维护性
-- 🔌 **原生能力**: 文件系统访问、系统托盘、通知等
+- 🔌 **原生能力**: 文件系统访问、通知等
 
 ## 🎯 项目简介
 
@@ -120,6 +124,7 @@ npm run preview
 ### 生产构建
 
 **构建所有平台：**
+
 ```sh
 npm run build
 ```
@@ -127,16 +132,19 @@ npm run build
 **构建特定平台：**
 
 Windows:
+
 ```sh
 npm run build:win
 ```
 
 macOS:
+
 ```sh
 npm run build:mac
 ```
 
 Linux:
+
 ```sh
 npm run build:linux
 ```
@@ -334,6 +342,7 @@ formatResolution('1920x1080') // "1920 × 1080"
 
 ## 🙏 致谢
 
+- [Wallhaven](https://github.com/leoFitz1024/wallhaven)
 - [Vue.js](https://vuejs.org/)
 - [Vite](https://vitejs.dev/)
 - [Pinia](https://pinia.vuejs.org/)

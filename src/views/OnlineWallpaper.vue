@@ -130,8 +130,7 @@ const handleChangeParams = (customParams: GetParams | null): void => {
 }
 
 const saveParams = (): void => {
-  console.log('saveParams 被调用')
-  // TODO: 实现保存参数功能
+  showAlert('参数已保存', 'success')
 }
 
 /**
