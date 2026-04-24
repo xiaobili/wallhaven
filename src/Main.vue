@@ -1,7 +1,7 @@
 <template>
   <div class="left-menu">
     <img class="logo-wrap" src="./static/icons/logo.png"/>
-    <div class="version-wrap">v{{ version }}</div>
+    <div class="version-wrap">{{ version }}</div>
     <div class="menu-wrap">
       <label class="menu-title">我的壁纸</label>
       <ul class="menu-ul">

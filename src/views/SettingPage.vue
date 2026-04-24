@@ -98,6 +98,35 @@
       </div>
     </section>
     
+    <!-- 缓存管理 -->
+    <section class="settings-section">
+      <h3><i class="fas fa-broom"></i> 缓存管理</h3>
+      
+      <div class="setting-item">
+        <label>应用缓存</label>
+        <p class="setting-hint" style="margin-bottom: 1em;">
+          清理应用产生的缓存数据，包括缩略图、临时文件和应用存储数据。<br>
+          注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件。
+        </p>
+        
+        <div class="cache-info" v-if="cacheInfo">
+          <div class="cache-stat">
+            <span class="stat-label">缩略图数量:</span>
+            <span class="stat-value">{{ cacheInfo.thumbnailsCount || 0 }}</span>
+          </div>
+          <div class="cache-stat">
+            <span class="stat-label">临时文件数量:</span>
+            <span class="stat-value">{{ cacheInfo.tempFilesCount || 0 }}</span>
+          </div>
+        </div>
+        
+        <button class="button warning-button" @click="clearCache" :disabled="isClearing">
+          <i class="fas" :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
+          {{ isClearing ? '清理中...' : '清空缓存' }}
+        </button>
+      </div>
+    </section>
+    
     <!-- 操作按钮 -->
     <div class="settings-actions">
       <button class="button restore-button" @click="resetSettings">
@@ -111,7 +140,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, toRaw } from 'vue'
+import { reactive, toRaw, ref } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import type { WallpaperFit } from '@/types'
 import Alert from '@/components/Alert.vue'
@@ -127,6 +156,15 @@ const alert = reactive({
   message: '',
   duration: 3000
 })
+
+// 缓存信息
+const cacheInfo = reactive({
+  thumbnailsCount: 0,
+  tempFilesCount: 0
+})
+
+// 清理状态
+const isClearing = ref(false)
 
 // 显示提示消息
 const showAlert = (
@@ -228,6 +266,113 @@ const getFitDescription = (fit: WallpaperFit): string => {
   }
   return descriptions[fit]
 }
+
+const clearCache = async (): Promise<void> => {
+  const confirmed = window.confirm(
+    '确定要清空应用缓存吗？\n\n' +
+    '这将删除：\n' +
+    '• 缩略图缓存（下次访问时会重新生成）\n' +
+    '• 下载临时文件\n' +
+    '• 应用存储数据（设置将被重置）\n\n' +
+    '注意：不会删除已下载的壁纸文件。'
+  )
+  
+  if (!confirmed) {
+    return
+  }
+  
+  isClearing.value = true
+  
+  try {
+    // 检查 Electron API 是否可用
+    // @ts-ignore
+    if (!window.electronAPI) {
+      showAlert('❌ Electron API 未加载', 'error')
+      isClearing.value = false
+      return
+    }
+    
+    // 1. 清空缩略图和临时文件缓存
+    // @ts-ignore
+    const cacheResult = await window.electronAPI.clearAppCache(settings.downloadPath || undefined)
+    
+    if (!cacheResult.success) {
+      throw new Error(cacheResult.error || '清理缓存失败')
+    }
+    
+    // 2. 清空 Store 数据
+    // @ts-ignore
+    const storeResult = await window.electronAPI.storeClear()
+    
+    if (!storeResult.success) {
+      console.warn('[SettingPage] Store clear failed:', storeResult.error)
+    }
+    
+    // 3. 重置本地设置状态
+    const defaultSettings = {
+      downloadPath: '',
+      maxConcurrentDownloads: 3,
+      apiKey: '',
+      wallpaperFit: 'fill' as WallpaperFit,
+    }
+    Object.assign(settings, defaultSettings)
+    
+    // 4. 更新缓存信息
+    cacheInfo.thumbnailsCount = 0
+    cacheInfo.tempFilesCount = 0
+    
+    // 5. 显示成功消息
+    const details = []
+    if (cacheResult.thumbnailsDeleted > 0) {
+      details.push(`${cacheResult.thumbnailsDeleted} 个缩略图`)
+    }
+    if (cacheResult.tempFilesDeleted > 0) {
+      details.push(`${cacheResult.tempFilesDeleted} 个临时文件`)
+    }
+    
+    const message = details.length > 0 
+      ? `✅ 缓存已清空\n已删除：${details.join('、')}`
+      : '✅ 缓存已清空'
+    
+    showAlert(message, 'success', 5000)
+    
+    // 如果有错误，也显示警告
+    if (cacheResult.errors && cacheResult.errors.length > 0) {
+      console.warn('[SettingPage] Cache clear warnings:', cacheResult.errors)
+      showAlert('⚠️ 部分缓存清理失败\n' + cacheResult.errors.join('\n'), 'warning', 8000)
+    }
+  } catch (error: any) {
+    console.error('[SettingPage] Clear cache error:', error)
+    showAlert('❌ 清空缓存失败: ' + error.message, 'error')
+  } finally {
+    isClearing.value = false
+  }
+}
+
+const fetchCacheInfo = async (): Promise<void> => {
+  try {
+    // 检查 Electron API 是否可用
+    // @ts-ignore
+    if (!window.electronAPI) {
+      return
+    }
+    
+    // @ts-ignore
+    const result = await window.electronAPI.getCacheInfo(settings.downloadPath || undefined)
+    
+    if (result.success && result.info) {
+      cacheInfo.thumbnailsCount = result.info.thumbnailsCount
+      cacheInfo.tempFilesCount = result.info.tempFilesCount
+    }
+  } catch (error: any) {
+    console.error('获取缓存信息失败:', error)
+    // 静默失败，不影响页面显示
+  }
+}
+
+// 初始化获取缓存信息
+fetchCacheInfo()
+
 </script>
 
 <style scoped>
@@ -511,6 +656,73 @@ const getFitDescription = (fit: WallpaperFit): string => {
   font-size: 0.9em;
   color: #aaa;
   font-style: italic;
+}
+
+/* 缓存信息样式 */
+.cache-info {
+  background-color: rgba(30, 30, 30, .5);
+  border-radius: 3px;
+  padding: 1em;
+  margin-bottom: 1em;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .4), 1px 1px 0 rgba(127, 127, 127, .1);
+}
+
+.cache-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 0;
+  border-bottom: 1px solid rgba(127, 127, 127, .1);
+}
+
+.cache-stat:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  color: #85aaaf;
+  font-size: 0.95em;
+}
+
+.stat-value {
+  color: #ddd;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.warning-button {
+  background: linear-gradient(to bottom, #c0392b 0, #a93226 100%);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition-property: color, background, text-shadow, box-shadow, border-color;
+  transition-duration: .25s;
+  box-shadow: 0 2px 0 #8b2a1f, 0 3px 4px -3px #000, 0 1px 2px rgba(0, 0, 0, .2);
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.warning-button:hover:not(:disabled) {
+  background-position: 0 -2.5em;
+}
+
+.warning-button:active:not(:disabled) {
+  box-shadow: 0 1px 0 #8b2a1f, 0 1px 2px rgba(0, 0, 0, .2);
+  transform: translateY(1px);
+}
+
+.warning-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.warning-button i {
+  font-size: 1em;
 }
 
 .settings-actions {

@@ -558,33 +558,76 @@ ipcMain.handle(
       apiKey?: string
     },
   ) => {
-    try {
-      // 构建请求URL
-      const url = `https://wallhaven.cc/api/v1${endpoint}`
+    const maxRetries = 2 // 最大重试次数（总共尝试3次）
+    let lastError: any = null
 
-      // 发起请求
-      const response = await axios.get(url, {
-        params: params,
-        headers: {
-          'User-Agent': 'Wallhaven-Desktop-App/1.0',
-          ...(apiKey ? { 'X-API-Key': apiKey } : {}),
-        },
-        timeout: 15000,
-      })
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        console.log(`[Wallhaven API Proxy] Attempt ${attempt}/${maxRetries + 1}: ${endpoint}`)
+        
+        // 构建请求URL
+        const url = `https://wallhaven.cc/api/v1${endpoint}`
 
-      return {
-        success: true,
-        data: response.data,
+        // 发起请求
+        const response = await axios.get(url, {
+          params: params,
+          headers: {
+            'User-Agent': 'Wallhaven-Desktop-App/1.0',
+            ...(apiKey ? { 'X-API-Key': apiKey } : {}),
+          },
+          timeout: 15000,
+          // 添加 HTTPS Agent 配置以处理 TLS 连接问题
+          httpsAgent: new (await import('https')).Agent({
+            keepAlive: true,
+            keepAliveMsecs: 30000,
+            maxSockets: 10,
+            maxFreeSockets: 5,
+            scheduling: 'fifo',
+          }),
+        })
+
+        if (attempt > 1) {
+          console.log(`[Wallhaven API Proxy] Success on attempt ${attempt}`)
+        }
+
+        return {
+          success: true,
+          data: response.data,
+        }
+      } catch (error: any) {
+        lastError = error
+        console.error(`[Wallhaven API Proxy] Error (attempt ${attempt}):`, error.message)
+
+        // 检查是否是可重试的错误
+        const isRetryableError = 
+          error.code === 'ECONNRESET' ||
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNABORTED' ||
+          error.message.includes('socket disconnected') ||
+          error.message.includes('TLS') ||
+          !error.response // 网络层面的错误
+
+        // 如果不是最后一次尝试且错误可重试，则等待后重试
+        if (attempt <= maxRetries && isRetryableError) {
+          const delay = Math.pow(2, attempt) * 500 // 指数退避：1s, 2s
+          console.log(`[Wallhaven API Proxy] Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
+        }
+
+        // 不可重试的错误或已达到最大重试次数，跳出循环
+        break
       }
-    } catch (error: any) {
-      console.error('[Wallhaven API Proxy] Error:', error.message)
+    }
 
-      return {
-        success: false,
-        error: error.message,
-        status: error.response?.status,
-        data: null,
-      }
+    // 所有尝试都失败了
+    console.error('[Wallhaven API Proxy] All attempts failed:', lastError?.message)
+
+    return {
+      success: false,
+      error: lastError?.message || 'Unknown error',
+      status: lastError?.response?.status,
+      data: null,
     }
   },
 )
@@ -687,3 +730,139 @@ ipcMain.handle('store-clear', async () => {
     return { success: false, error: error.message }
   }
 })
+
+/**
+ * 清空应用缓存
+ * 包括：缩略图缓存、下载临时文件等
+ */
+ipcMain.handle('clear-app-cache', async (_event, downloadPath?: string) => {
+  try {
+    const results = {
+      thumbnailsDeleted: 0,
+      tempFilesDeleted: 0,
+      errors: [] as string[],
+    }
+
+    // 1. 如果提供了下载路径，清理该目录下的缓存
+    if (downloadPath && fs.existsSync(downloadPath)) {
+      // 清理缩略图缓存目录
+      const thumbnailDir = path.join(downloadPath, '.thumbnails')
+      if (fs.existsSync(thumbnailDir)) {
+        try {
+          const files = fs.readdirSync(thumbnailDir)
+          files.forEach(file => {
+            const filePath = path.join(thumbnailDir, file)
+            fs.unlinkSync(filePath)
+            results.thumbnailsDeleted++
+          })
+          // 删除空目录
+          fs.rmdirSync(thumbnailDir)
+          console.log(`[Cache] Deleted ${results.thumbnailsDeleted} thumbnails`)
+        } catch (error: any) {
+          results.errors.push(`清理缩略图缓存失败: ${error.message}`)
+          console.error('[Cache] Failed to clear thumbnails:', error)
+        }
+      }
+
+      // 清理下载临时文件（.download 文件）
+      try {
+        const allFiles = fs.readdirSync(downloadPath)
+        allFiles.forEach(file => {
+          if (file.endsWith('.download')) {
+            const filePath = path.join(downloadPath, file)
+            try {
+              fs.unlinkSync(filePath)
+              results.tempFilesDeleted++
+            } catch (e: any) {
+              results.errors.push(`删除临时文件失败 (${file}): ${e.message}`)
+            }
+          }
+        })
+        if (results.tempFilesDeleted > 0) {
+          console.log(`[Cache] Deleted ${results.tempFilesDeleted} temp files`)
+        }
+      } catch (error: any) {
+        results.errors.push(`清理临时文件失败: ${error.message}`)
+        console.error('[Cache] Failed to clear temp files:', error)
+      }
+    }
+
+    // 2. 清理 Electron 渲染进程缓存（可选）
+    try {
+      const { BrowserWindow } = await import('electron')
+      const windows = BrowserWindow.getAllWindows()
+      for (const win of windows) {
+        await win.webContents.session.clearCache()
+        await win.webContents.session.clearStorageData()
+        console.log('[Cache] Cleared renderer cache and storage')
+      }
+    } catch (error: any) {
+      results.errors.push(`清理渲染缓存失败: ${error.message}`)
+      console.error('[Cache] Failed to clear renderer cache:', error)
+    }
+
+    return {
+      success: true,
+      ...results,
+    }
+  } catch (error: any) {
+    console.error('[Cache] Clear failed:', error)
+    return {
+      success: false,
+      error: error.message,
+      thumbnailsDeleted: 0,
+      tempFilesDeleted: 0,
+      errors: [error.message],
+    }
+  }
+})
+
+/**
+ * 获取缓存信息
+ * 返回缩略图和临时文件的数量
+ */
+ipcMain.handle('get-cache-info', async (_event, downloadPath?: string) => {
+  try {
+    const info = {
+      thumbnailsCount: 0,
+      tempFilesCount: 0,
+    }
+
+    if (!downloadPath || !fs.existsSync(downloadPath)) {
+      return { success: true, info }
+    }
+
+    // 统计缩略图数量
+    const thumbnailDir = path.join(downloadPath, '.thumbnails')
+    if (fs.existsSync(thumbnailDir)) {
+      try {
+        const files = fs.readdirSync(thumbnailDir)
+        info.thumbnailsCount = files.length
+      } catch (error: any) {
+        console.error('[Cache Info] Failed to count thumbnails:', error)
+      }
+    }
+
+    // 统计临时文件数量
+    try {
+      const allFiles = fs.readdirSync(downloadPath)
+      info.tempFilesCount = allFiles.filter(file => file.endsWith('.download')).length
+    } catch (error: any) {
+      console.error('[Cache Info] Failed to count temp files:', error)
+    }
+
+    return {
+      success: true,
+      info,
+    }
+  } catch (error: any) {
+    console.error('[Cache Info] Get failed:', error)
+    return {
+      success: false,
+      error: error.message,
+      info: { thumbnailsCount: 0, tempFilesCount: 0 },
+    }
+  }
+})
+
+

@@ -4,7 +4,7 @@
       <section class="thumb-listing-page" v-for="(sectionItem, i) in pageData.sections" :key="i">
         <header v-if="i !== 0" class="thumb-listing-page-header">
           <h2>Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}</h2>
-          <a class="icon to-top" href="#top" title="Back to top">
+          <a class="icon to-top" href="#top" title="Back to top" @click.prevent="scrollToTop">
             <i class="far fa-lg fa-chevron-up"></i>
           </a>
         </header>
@@ -88,6 +88,16 @@ const toggleSelect = (id: string): void => {
 }
 
 /**
+ * 滚动到顶部
+ */
+const scrollToTop = (): void => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth' // 平滑滚动效果
+  })
+}
+
+/**
  * 使用 IntersectionObserver 优化图片懒加载
  */
 let observer: IntersectionObserver | null = null
@@ -124,6 +134,7 @@ onUnmounted(() => {
     observer = null
   }
 })
+
 </script>
 
 <style scoped>

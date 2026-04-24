@@ -61,6 +61,23 @@ export interface ElectronAPI {
   storeDelete: (key: string) => Promise<{ success: boolean; error?: string }>
   storeClear: () => Promise<{ success: boolean; error?: string }>
   
+  // 缓存管理
+  clearAppCache: (downloadPath?: string) => Promise<{
+    success: boolean
+    thumbnailsDeleted: number
+    tempFilesDeleted: number
+    errors?: string[]
+    error?: string
+  }>
+  getCacheInfo: (downloadPath?: string) => Promise<{
+    success: boolean
+    info: {
+      thumbnailsCount: number
+      tempFilesCount: number
+    }
+    error?: string
+  }>
+  
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void
@@ -171,6 +188,16 @@ const electronAPI: ElectronAPI = {
     return ipcRenderer.invoke('store-clear')
   },
   
+  // 缓存管理
+  clearAppCache: (downloadPath?: string) => {
+    console.log('[Preload] clearAppCache called, downloadPath:', downloadPath)
+    return ipcRenderer.invoke('clear-app-cache', downloadPath)
+  },
+  getCacheInfo: (downloadPath?: string) => {
+    console.log('[Preload] getCacheInfo called, downloadPath:', downloadPath)
+    return ipcRenderer.invoke('get-cache-info', downloadPath)
+  },
+  
   // 通用IPC通信（保留示例功能）
   send: (channel: string, data: any) => {
     const validChannels = ['toMain']
@@ -194,3 +221,11 @@ console.log('[Preload] electronAPI methods:', Object.keys(electronAPI))
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
 
 console.log('[Preload] Done')
+
+
+
+
+
+
+
+

@@ -87,6 +87,7 @@ const imgInfo = shallowRef<WallpaperItem | null>(null) // 使用 shallowRef
 const imgShow = ref<boolean>(false)
 const selectedWallpapers = ref<string[]>([])
 const downloading = ref<boolean>(false)
+const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
 const apiKey = computed(() => wallpaperStore.settings.apiKey)
@@ -126,7 +127,10 @@ onUnmounted(() => {
 
 // Methods
 const handleChangeParams = (customParams: GetParams | null): void => {
-  wallpaperStore.fetchWallpapers(customParams)
+  showLoadingOverlay.value = true // 点击搜索按钮时显示遮罩
+  wallpaperStore.fetchWallpapers(customParams).finally(() => {
+    showLoadingOverlay.value = false // 加载完成后隐藏遮罩
+  })
 }
 
 const saveParams = (): void => {
@@ -315,7 +319,10 @@ const closePreview = (): void => {
  * 重试获取数据
  */
 const retryFetch = (): void => {
-  wallpaperStore.fetchWallpapers(wallpaperStore.queryParams)
+  showLoadingOverlay.value = true
+  wallpaperStore.fetchWallpapers(wallpaperStore.queryParams).finally(() => {
+    showLoadingOverlay.value = false
+  })
 }
 
 /**
