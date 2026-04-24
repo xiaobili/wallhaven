@@ -2,6 +2,7 @@
 
 import axios, { type AxiosResponse, type CancelTokenSource } from 'axios'
 import type { GetParams } from '@/types'
+import { useWallpaperStore } from '@/stores/wallpaper'
 
 /**
  * 创建 axios 实例
@@ -39,13 +40,13 @@ const generateCacheKey = (url: string, params?: any): string => {
 const getFromCache = (key: string): any | null => {
   const item = apiCache.get(key)
   if (!item) return null
-  
+
   // 检查是否过期
   if (Date.now() - item.timestamp > item.ttl) {
     apiCache.delete(key)
     return null
   }
-  
+
   return item.data
 }
 
@@ -58,11 +59,11 @@ const setCache = (key: string, data: any): void => {
     const firstKey = apiCache.keys().next().value
     if (firstKey) apiCache.delete(firstKey)
   }
-  
+
   apiCache.set(key, {
     data,
     timestamp: Date.now(),
-    ttl: CACHE_TTL
+    ttl: CACHE_TTL,
   })
 }
 
@@ -81,7 +82,7 @@ const isProduction = () => {
   // import.meta.env.PROD 是 Vite 提供的环境变量
   const hasElectronAPI = typeof (window as any).electronAPI !== 'undefined'
   const isProd = import.meta.env.PROD
-  
+
   return hasElectronAPI && isProd
 }
 
@@ -90,25 +91,30 @@ const isProduction = () => {
  */
 const callWallhavenAPIViaIPC = async (endpoint: string, params: any) => {
   const electronAPI = (window as any).electronAPI
-  
+
   if (!electronAPI || !electronAPI.wallhavenApiRequest) {
     throw new Error('Electron API not available')
   }
-  
+
   console.log('[API] Using Electron IPC for:', endpoint)
-  
+
+  // 从 Pinia Store 获取 API Key 并添加到参数中
+  const wallpaperStore = useWallpaperStore()
+  const apiKey = wallpaperStore.settings.apiKey
+
   const result = await electronAPI.wallhavenApiRequest({
     endpoint,
-    params
+    params: params,
+    apiKey: apiKey !== '' || apiKey !== null ? apiKey : undefined,
   })
-  
+
   if (!result.success) {
     const error: any = new Error(result.error || 'API request failed')
     error.code = 'ELECTRON_API_ERROR'
     error.response = { status: result.status }
     throw error
   }
-  
+
   return result.data
 }
 
@@ -118,7 +124,14 @@ const callWallhavenAPIViaIPC = async (endpoint: string, params: any) => {
 apiClient.interceptors.request.use(
   (config) => {
     console.log('[API Request]', config.method?.toUpperCase(), config.url, config.params)
-    
+
+    // 从 Pinia Store 获取 API Key 并添加到请求头
+    const wallpaperStore = useWallpaperStore()
+    if (wallpaperStore.settings.apiKey) {
+      config.headers['X-API-Key'] = wallpaperStore.settings.apiKey
+      console.log('[API] Adding X-API-Key header')
+    }
+
     return config
   },
   (error) => {
@@ -133,13 +146,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     console.log('[API Response]', response.config.url, response.status)
-    
+
     // 缓存GET请求的响应
     if (response.config.method === 'get') {
       const cacheKey = generateCacheKey(response.config.url || '', response.config.params)
       setCache(cacheKey, response.data)
     }
-    
+
     return response.data
   },
   (error) => {
@@ -189,33 +202,33 @@ export const searchWallpapers = async (params: GetParams | null): Promise<any> =
   try {
     // 生成缓存key
     const cacheKey = generateCacheKey('/search', params)
-    
+
     // 尝试从缓存获取
     const cachedData = getFromCache(cacheKey)
     if (cachedData) {
       console.log('[API] Using cached data for search')
       return cachedData
     }
-    
+
     // 取消之前的请求
     cancelCurrentRequest()
-    
+
     // 创建新的cancel token
     currentCancelTokenSource = axios.CancelToken.source()
-    
+
     // 生产环境使用 Electron IPC
     if (isProduction()) {
       const data = await callWallhavenAPIViaIPC('/search', params)
       setCache(cacheKey, data)
       return data
     }
-    
+
     // 开发环境使用 axios 代理
-    const response = await apiClient.get('/search', { 
+    const response = await apiClient.get('/search', {
       params,
-      cancelToken: currentCancelTokenSource.token
+      cancelToken: currentCancelTokenSource.token,
     })
-    
+
     return response as unknown as any
   } catch (error: any) {
     // 忽略取消的请求
@@ -223,7 +236,7 @@ export const searchWallpapers = async (params: GetParams | null): Promise<any> =
       console.log('[API] Request cancelled')
       return null
     }
-    
+
     console.error('搜索壁纸失败:', error)
     throw error
   }
@@ -238,21 +251,21 @@ export const getWallpaperDetail = async (id: string): Promise<any> => {
   try {
     // 生成缓存key
     const cacheKey = generateCacheKey(`/w/${id}`, {})
-    
+
     // 尝试从缓存获取
     const cachedData = getFromCache(cacheKey)
     if (cachedData) {
       console.log('[API] Using cached data for wallpaper detail')
       return cachedData
     }
-    
+
     // 生产环境使用 Electron IPC
     if (isProduction()) {
       const data = await callWallhavenAPIViaIPC(`/w/${id}`, {})
       setCache(cacheKey, data)
       return data
     }
-    
+
     // 开发环境使用 axios 代理
     const response = await apiClient.get(`/w/${id}`)
     return response as unknown as any

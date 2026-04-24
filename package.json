@@ -1,7 +1,7 @@
 {
   "name": "wallhaven",
   "author": "BillyJR",
-  "version": "v1.1.0",
+  "version": "v1.1.3",
   "description": "This is a wallhaven client, Build By electron",
   "private": true,
   "type": "module",
