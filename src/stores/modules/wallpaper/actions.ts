@@ -1,6 +1,6 @@
 // Wallhaven 壁纸业务逻辑
 
-import type { Ref, Reactive } from 'vue'
+import type { Ref, Reactive, ShallowRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams, AppSettings } from '@/types'
 import { searchWallpapers } from '@/services/wallpaperApi'
 import { saveCustomParamsToStorage, getSavedParamsFromStorage } from './storage'
@@ -10,7 +10,7 @@ import { saveSettingsToStorage, getSettingsFromStorage } from './settings-storag
  * 创建壁纸 actions（优化版）
  */
 export function createWallpaperActions(
-  totalPageData: any, // shallowRef<TotalPageData>
+  totalPageData: ShallowRef<TotalPageData>,
   loading: Ref<boolean>,
   error: Ref<boolean>,
   queryParams: Ref<GetParams | null>,
