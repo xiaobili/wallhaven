@@ -1,0 +1,251 @@
+/**
+ * 下载管理 Composable
+ *
+ * 封装下载管理逻辑，协调 DownloadService 和 DownloadStore
+ * 管理下载任务生命周期，订阅并处理进度更新
+ *
+ * @example
+ * ```typescript
+ * const {
+ *   downloadingList,
+ *   finishedList,
+ *   addTask,
+ *   startDownload,
+ *   pauseDownload,
+ *   isDownloading,
+ * } = useDownload()
+ *
+ * // 添加下载任务
+ * const taskId = addTask({
+ *   url: 'https://example.com/wallpaper.jpg',
+ *   filename: 'wallpaper.jpg',
+ *   small: 'https://example.com/thumb.jpg',
+ *   resolution: '1920x1080',
+ *   size: 1024000,
+ *   wallpaperId: 'abc123'
+ * })
+ *
+ * // 启动下载
+ * await startDownload(taskId)
+ * ```
+ */
+
+import { computed, onMounted, onUnmounted, type ComputedRef } from 'vue'
+import { useDownloadStore } from '@/stores/modules/download'
+import { downloadService, type DownloadProgressData } from '@/services'
+import { useAlert } from '@/composables'
+import type { DownloadItem, FinishedDownloadItem } from '@/types'
+
+/**
+ * useDownload 返回值接口
+ */
+export interface UseDownloadReturn {
+  // 状态（ComputedRef）
+  downloadingList: ComputedRef<DownloadItem[]>
+  finishedList: ComputedRef<FinishedDownloadItem[]>
+  totalActive: ComputedRef<number>
+  totalPaused: ComputedRef<number>
+  totalFinished: ComputedRef<number>
+
+  // 方法
+  addTask: (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>) => string
+  startDownload: (id: string) => Promise<boolean>
+  pauseDownload: (id: string) => void
+  resumeDownload: (id: string) => void
+  cancelDownload: (id: string) => boolean
+  removeFinished: (id: string) => Promise<boolean>
+  clearFinished: () => Promise<void>
+  isDownloading: (wallpaperId: string) => boolean
+  loadHistory: () => Promise<void>
+}
+
+/**
+ * 下载管理 Composable
+ *
+ * 封装下载管理逻辑，提供统一的下载任务管理接口
+ * 自动处理进度订阅的生命周期
+ */
+export function useDownload(): UseDownloadReturn {
+  const store = useDownloadStore()
+  const { showError } = useAlert()
+
+  // 进度订阅取消函数
+  let unsubscribe: (() => void) | null = null
+
+  /**
+   * 处理进度更新
+   */
+  const handleProgress = (data: DownloadProgressData): void => {
+    const { taskId, progress, offset, speed, state, filePath, error } = data
+
+    if (error) {
+      const task = store.downloadingList.find(item => item.id === taskId)
+      if (task) {
+        task.state = 'waiting'
+        task.progress = 0
+      }
+      showError(`下载失败: ${error}`)
+      return
+    }
+
+    if (state === 'completed' && filePath) {
+      store.completeDownload(taskId, filePath)
+    } else {
+      store.updateProgress(taskId, progress, offset, speed, filePath)
+    }
+  }
+
+  // 生命周期钩子：订阅进度
+  onMounted(() => {
+    unsubscribe = downloadService.onProgress(handleProgress)
+  })
+
+  // 生命周期钩子：取消订阅
+  onUnmounted(() => {
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+  })
+
+  /**
+   * 添加下载任务
+   */
+  const addTask = (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>): string => {
+    // Store 方法返回 Promise，但这里我们需要同步返回 ID
+    // 直接调用 Store 的方法并返回 ID
+    const id = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    const downloadItem: DownloadItem = {
+      id,
+      ...task,
+      offset: 0,
+      progress: 0,
+      speed: 0,
+      state: 'waiting',
+    }
+
+    store.downloadingList.push(downloadItem)
+
+    return id
+  }
+
+  /**
+   * 启动下载
+   */
+  const startDownload = async (id: string): Promise<boolean> => {
+    const task = store.downloadingList.find(item => item.id === id)
+    if (!task) {
+      showError('任务不存在')
+      return false
+    }
+
+    task.state = 'downloading'
+    task.time = new Date().toISOString()
+
+    const result = await downloadService.startDownload(id, task.url, task.filename)
+
+    if (!result.success) {
+      task.state = 'waiting'
+      showError(result.error?.message || '启动下载失败')
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * 暂停下载
+   */
+  const pauseDownload = (id: string): void => {
+    const task = store.downloadingList.find(item => item.id === id)
+    if (task && task.state === 'downloading') {
+      task.state = 'paused'
+    }
+  }
+
+  /**
+   * 恢复下载
+   */
+  const resumeDownload = (id: string): void => {
+    const task = store.downloadingList.find(item => item.id === id)
+    if (task && task.state === 'paused') {
+      task.state = 'downloading'
+    }
+  }
+
+  /**
+   * 取消下载
+   */
+  const cancelDownload = (id: string): boolean => {
+    const index = store.downloadingList.findIndex(item => item.id === id)
+    if (index !== -1) {
+      store.downloadingList.splice(index, 1)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 移除已完成记录
+   */
+  const removeFinished = async (id: string): Promise<boolean> => {
+    const result = await downloadService.removeFinishedRecord(id)
+    if (result.success) {
+      const index = store.finishedList.findIndex(item => item.id === id)
+      if (index !== -1) {
+        store.finishedList.splice(index, 1)
+      }
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 清空已完成列表
+   */
+  const clearFinished = async (): Promise<void> => {
+    const result = await downloadService.clearFinishedRecords()
+    if (result.success) {
+      store.finishedList.length = 0
+    }
+  }
+
+  /**
+   * 检查是否正在下载
+   */
+  const isDownloading = (wallpaperId: string): boolean => {
+    return store.downloadingList.some(item => item.wallpaperId === wallpaperId)
+  }
+
+  /**
+   * 加载历史记录
+   */
+  const loadHistory = async (): Promise<void> => {
+    const result = await downloadService.getFinishedRecords()
+    if (result.success && result.data) {
+      store.finishedList.length = 0
+      store.finishedList.push(...result.data)
+    }
+  }
+
+  return {
+    // 状态
+    downloadingList: computed(() => store.downloadingList),
+    finishedList: computed(() => store.finishedList),
+    totalActive: computed(() => store.totalActive),
+    totalPaused: computed(() => store.totalPaused),
+    totalFinished: computed(() => store.totalFinished),
+
+    // 方法
+    addTask,
+    startDownload,
+    pauseDownload,
+    resumeDownload,
+    cancelDownload,
+    removeFinished,
+    clearFinished,
+    isDownloading,
+    loadHistory,
+  }
+}
