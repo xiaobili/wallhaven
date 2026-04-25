@@ -3,3 +3,6 @@
  */
 
 export { useAlert, type AlertType, type AlertState, type UseAlertReturn } from './core/useAlert'
+
+// Wallpaper
+export { useWallpaperList, type UseWallpaperListReturn } from './wallpaper/useWallpaperList'
