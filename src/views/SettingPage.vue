@@ -142,12 +142,16 @@
 <script lang="ts" setup>
 import { reactive, toRaw, ref } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
+import { useSettings } from '@/composables'
 import type { WallpaperFit } from '@/types'
 import Alert from '@/components/Alert.vue'
 
 // Pinia Store
 const wallpaperStore = useWallpaperStore()
 const settings = wallpaperStore.settings
+
+// Composables
+const { update: updateSettings, reset: resetSettingsComposable } = useSettings()
 
 // Alert 状态管理
 const alert = reactive({
@@ -202,7 +206,7 @@ const browseDownloadPath = async (): Promise<void> => {
     if (selectedPath) {
       settings.downloadPath = selectedPath
       // 自动保存设置到 electron-store
-      await wallpaperStore.updateSettings({ downloadPath: selectedPath })
+      await updateSettings({ downloadPath: selectedPath })
     }
   } catch (error: any) {
     console.error('选择文件夹失败:', error)
@@ -222,7 +226,7 @@ const saveSettings = async (): Promise<void> => {
     const plainSettings = toRaw(settings)
     
     // 保存设置到 electron-store
-    await wallpaperStore.updateSettings(plainSettings)
+    await updateSettings(plainSettings)
     
     console.log('[SettingPage] 设置已保存到 electron-store')
     
@@ -247,7 +251,7 @@ const resetSettings = async (): Promise<void> => {
     wallpaperFit: 'fill' as WallpaperFit,
   }
   
-  await wallpaperStore.updateSettings(defaultSettings)
+  await updateSettings(defaultSettings)
   
   // 同时更新本地显示
   Object.assign(settings, defaultSettings)

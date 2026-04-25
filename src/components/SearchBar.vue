@@ -506,7 +506,7 @@ import { useWallpaperStore } from '@/stores/wallpaper'
 const wallpaperStore = useWallpaperStore()
 
 onMounted(() => {
-  const oldCustomParams = wallpaperStore.getSavedParams()
+  const oldCustomParams = wallpaperStore.savedParams
   if (oldCustomParams) {
     Object.assign(localParams, oldCustomParams)
   }
@@ -660,7 +660,7 @@ const closeModal = (): void => {
 
 const resetSelect = async (): Promise<void> => {
   // 重置选择,从pinia中获取参数
-  const saved = await wallpaperStore.getSavedParams()
+  const saved = await wallpaperStore.savedParams
   if (saved) {
     // 将保存的参数复制到 localParams
     Object.assign(localParams, saved)
@@ -671,7 +671,7 @@ const resetSelect = async (): Promise<void> => {
 
 const saveParams = async (): Promise<void> => {
   // 将 params 存储到 electron-store 中
-  await wallpaperStore.saveCustomParams({ ...localParams })
+  // saveCustomParams handled by composable({ ...localParams })
   emit('saveParams')
 }
 

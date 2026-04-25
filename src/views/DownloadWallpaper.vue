@@ -99,11 +99,15 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import { useDownloadStore } from '@/stores/modules/download'
+import { useDownload } from '@/composables'
 import { formatFileSize, formatResolution, formatSpeed, formatTime } from '@/utils/helpers'
 import Alert from '@/components/Alert.vue'
 
 // Pinia Store
 const downloadStore = useDownloadStore()
+
+// Composables
+const { loadHistory, removeFinished } = useDownload()
 
 // Alert 状态管理
 const alert = reactive({
@@ -134,20 +138,20 @@ const onCancelDownload = async (id: string) => {
   // 使用自定义确认对话框（简单实现，可以后续优化为Modal组件）
   const confirmed = window.confirm('确定要取消这个下载任务吗？')
   if (confirmed) {
-    await downloadStore.cancelDownload(id)
+    downloadStore.cancelDownload(id)
     showAlert('已取消下载', 'info')
   }
 }
 
 // 暂停下载
-const onPauseDownload = async (id: string) => {
-  await downloadStore.pauseDownload(id)
+const onPauseDownload = (id: string) => {
+  downloadStore.pauseDownload(id)
   showAlert('已暂停下载', 'info')
 }
 
 // 恢复下载
-const onResumeDownload = async (id: string) => {
-  await downloadStore.resumeDownload(id)
+const onResumeDownload = (id: string) => {
+  downloadStore.resumeDownload(id)
   showAlert('恢复下载...', 'info')
 }
 
@@ -155,7 +159,7 @@ const onResumeDownload = async (id: string) => {
 const delRecorder = async (id: string) => {
   const confirmed = window.confirm('确定要删除这条记录吗？')
   if (confirmed) {
-    await downloadStore.removeFinishedRecord(id)
+    await removeFinished(id)
     showAlert('记录已删除', 'success')
   }
 }
@@ -186,7 +190,7 @@ const showInFolder = async (path: string) => {
 // 生命周期钩子
 onMounted(() => {
   // 初始化时从存储加载历史记录
-  downloadStore.loadFromStorage()
+  // loadHistory() handled by composable lifecycle
   console.log('下载中心数据已加载')
   
   // 注意：下载进度监听器已在 main.ts 中全局注册，无需在此重复注册

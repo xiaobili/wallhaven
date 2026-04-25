@@ -76,12 +76,18 @@ import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/modules/download'
+import { useWallpaperList, useDownload, useSettings } from '@/composables'
 import type { WallpaperItem, GetParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
 // Pinia Stores
 const wallpaperStore = useWallpaperStore()
 const downloadStore = useDownloadStore()
+
+// Composables
+const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, loadSavedParams } = useWallpaperList()
+const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
+const { update: updateSettings } = useSettings()
 
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
@@ -119,7 +125,7 @@ const showAlert = (
 // Lifecycle hooks
 onMounted(() => {
   // 加载下载历史记录
-  downloadStore.loadFromStorage()
+  loadHistory()
   // 使用节流优化滚动事件（300ms间隔，平衡性能和响应）
   window.addEventListener('scroll', throttledScrollEvent, { passive: true })
 })
@@ -132,7 +138,7 @@ onUnmounted(() => {
 // Methods
 const handleChangeParams = (customParams: GetParams | null): void => {
   showLoadingOverlay.value = true // 点击搜索按钮时显示遮罩
-  wallpaperStore.fetchWallpapers(customParams).finally(() => {
+  fetchWallpapers(customParams).finally(() => {
     showLoadingOverlay.value = false // 加载完成后隐藏遮罩
   })
 }
@@ -170,47 +176,43 @@ const downloadSelected = async (): Promise<void> => {
     showAlert('请先选择要下载的壁纸', 'warning')
     return
   }
-  
+
   downloading.value = true
-  
+
   try {
     // 获取所有选中的壁纸信息
     const allSections = wallpaperStore.totalPageData.sections
     const allWallpapers: WallpaperItem[] = []
-    
+
     // 从所有section中收集壁纸
     allSections.forEach(section => {
       allWallpapers.push(...section.data)
     })
-    
-    const selectedItems = allWallpapers.filter((wp: WallpaperItem) => 
+
+    const selectedItems = allWallpapers.filter((wp: WallpaperItem) =>
       selectedWallpapers.value.includes(wp.id)
     )
-    
+
     if (selectedItems.length === 0) {
       showAlert('未找到选中的壁纸信息', 'error')
       return
     }
-    
-    // 批量添加到下载队列
-    const tasks = selectedItems.map((item: WallpaperItem) => ({
-      url: item.path,
-      filename: generateFilename(item),
-      small: item.thumbs.small,
-      resolution: item.resolution,
-      size: item.file_size,
-      wallpaperId: item.id
-    }))
-    
-    const ids = await downloadStore.addBatchDownloadTasks(tasks)
-    
-    // 自动开始所有下载
-    for (const id of ids) {
-      await downloadStore.startDownload(id)
+
+    // 批量添加到下载队列并启动下载
+    for (const item of selectedItems) {
+      const taskId = addTask({
+        url: item.path,
+        filename: generateFilename(item),
+        small: item.thumbs.small,
+        resolution: item.resolution,
+        size: item.file_size,
+        wallpaperId: item.id
+      })
+      await startDownload(taskId)
     }
-    
+
     showAlert(`✅ 已添加 ${selectedItems.length} 个下载任务到下载中心`, 'success')
-    
+
     // 清空选择
     clearSelection()
   } catch (error: any) {
@@ -287,7 +289,7 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
     }
     
     // 保存下载目录到 electron-store
-    await wallpaperStore.updateSettings({ downloadPath: selectedDir })
+    await updateSettings({ downloadPath: selectedDir })
   }
   
   const saveDir = downloadPath || (await window.electronAPI.selectFolder())
@@ -324,7 +326,7 @@ const closePreview = (): void => {
  */
 const retryFetch = (): void => {
   showLoadingOverlay.value = true
-  wallpaperStore.fetchWallpapers(wallpaperStore.queryParams).finally(() => {
+  fetchWallpapers(wallpaperStore.queryParams).finally(() => {
     showLoadingOverlay.value = false
   })
 }
@@ -346,7 +348,7 @@ const scrollEvent = (): void => {
 
   // 距离底部200px时触发加载（增加阈值以应对快速滚动）
   if (scrollTop + clientHeight >= scrollHeight - 200) {
-    wallpaperStore.loadMoreWallpapers()
+    loadMoreWallpapers()
   }
 }
 
@@ -358,29 +360,26 @@ const throttledScrollEvent = throttle(scrollEvent, 300)
  */
 const addToDownloadQueue = async (imgItem: WallpaperItem): Promise<void> => {
   // 检查是否已在下载队列中
-  if (downloadStore.isDownloading(imgItem.id)) {
+  if (isDownloading(imgItem.id)) {
     throw new Error('该壁纸已在下载队列中')
   }
-  
+
   // 生成文件名
   const filename = generateFilename(imgItem)
-  
+
   // 创建下载任务
-  const task = {
+  const taskId = addTask({
     url: imgItem.path,
     filename,
     small: imgItem.thumbs.small,
     resolution: imgItem.resolution,
     size: Number(imgItem.file_size) || 0,
     wallpaperId: imgItem.id
-  }
-  
-  // 添加到下载队列（现在是异步的）
-  const taskId = await downloadStore.addDownloadTask(task)
-  
+  })
+
   // 自动开始下载
-  await downloadStore.startDownload(taskId)
-  
+  await startDownload(taskId)
+
   console.log('[OnlineWallpaper] 已添加下载任务:', taskId)
 }
 
