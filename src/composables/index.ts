@@ -9,3 +9,6 @@ export { useWallpaperList, type UseWallpaperListReturn } from './wallpaper/useWa
 
 // Download
 export { useDownload, type UseDownloadReturn } from './download/useDownload'
+
+// Settings
+export { useSettings, type UseSettingsReturn } from './settings/useSettings'
