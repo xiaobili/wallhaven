@@ -6,10 +6,21 @@
  */
 
 import { computed, type ComputedRef } from 'vue'
-import type { TotalPageData, GetParams, CustomParams, WallpaperMeta, WallpaperItem } from '@/types'
+import type { TotalPageData, GetParams, CustomParams, PageData } from '@/types'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { wallpaperService, type WallpaperSearchResult } from '@/services'
 import { useAlert } from '@/composables'
+
+/**
+ * 将 WallpaperSearchResult 转换为 PageData 格式
+ */
+function toPageData(result: WallpaperSearchResult): PageData {
+  return {
+    data: result.data,
+    totalPage: result.meta.last_page,
+    currentPage: result.meta.current_page,
+  }
+}
 
 /**
  * useWallpaperList 返回值接口
@@ -69,10 +80,13 @@ export function useWallpaperList(): UseWallpaperListReturn {
     }
 
     store.queryParams = params
+
+    // result.data 已在成功检查后确认存在
+    const pageData = toPageData(result.data!)
     store.totalPageData = {
-      sections: [result.data],
-      totalPage: result.data.meta.last_page,
-      currentPage: result.data.meta.current_page,
+      sections: [pageData],
+      totalPage: pageData.totalPage,
+      currentPage: pageData.currentPage,
     }
     store.loading = false
     return true
@@ -106,10 +120,12 @@ export function useWallpaperList(): UseWallpaperListReturn {
       return false
     }
 
+    // result.data 已在成功检查后确认存在
+    const pageData = toPageData(result.data!)
     store.totalPageData = {
       ...store.totalPageData,
-      sections: [...store.totalPageData.sections, result.data],
-      currentPage: result.data.meta.current_page,
+      sections: [...store.totalPageData.sections, pageData],
+      currentPage: pageData.currentPage,
     }
     store.loading = false
     return true
@@ -164,9 +180,10 @@ export function useWallpaperList(): UseWallpaperListReturn {
 
     if (result.data) {
       store.savedParams = result.data
+      return result.data
     }
 
-    return result.data
+    return null
   }
 
   return {
