@@ -1,0 +1,148 @@
+# 需求：Wallhaven 壁纸浏览器架构重构
+
+**定义时间**：2025-04-25
+**核心价值**：外观行为零感知，内部架构大升级
+
+---
+
+## v1 需求
+
+以下需求映射到路线图的各个阶段。
+
+### 阶段 1：基础设施与类型安全
+
+- [ ] **ARCH-01**: 创建 `src/types/` 目录结构，按领域组织类型定义
+- [ ] **ARCH-02**: 创建 `src/shared/types/ipc.ts`，定义所有 IPC 通道类型
+- [ ] **ARCH-03**: 创建 `src/errors/` 错误类定义，统一错误处理
+- [ ] **ARCH-04**: 创建 `useAlert` composable，解决 Alert 逻辑重复问题
+- [ ] **ARCH-05**: 添加全局错误处理器，处理未捕获的 Promise rejection
+- [ ] **ARCH-06**: 消除 Store 中的 `any` 类型（actions.ts 等）
+
+### 阶段 2：数据层抽象
+
+- [ ] **DATA-01**: 创建 `ElectronClient`，封装 `window.electronAPI` 调用
+- [ ] **DATA-02**: 创建 `ApiClient`，封装 HTTP 请求逻辑
+- [ ] **DATA-03**: 创建 `StoreClient`，封装持久化存储操作
+- [ ] **DATA-04**: 创建 `SettingsRepository`，抽象设置数据访问
+- [ ] **DATA-05**: 创建 `DownloadRepository`，抽象下载数据访问
+- [ ] **DATA-06**: 创建 `WallpaperRepository`，抽象壁纸数据访问
+
+### 阶段 3：业务层与组合层
+
+- [ ] **BIZ-01**: 创建 `WallpaperService`，实现壁纸业务逻辑
+- [ ] **BIZ-02**: 创建 `DownloadService`，实现下载业务逻辑
+- [ ] **BIZ-03**: 创建 `SettingsService`，实现设置业务逻辑
+- [ ] **BIZ-04**: 创建 `useWallpaperList` composable
+- [ ] **BIZ-05**: 创建 `useDownload` composable
+- [ ] **BIZ-06**: 创建 `useSettings` composable
+- [ ] **BIZ-07**: 重构 Store，移除业务逻辑，仅保留响应式状态
+
+### 阶段 4：IPC 模块化重构
+
+- [ ] **IPC-01**: 创建 `electron/main/ipc/base.ts`，定义基础类型和工具函数
+- [ ] **IPC-02**: 创建 `file.handler.ts`，拆分文件操作处理器
+- [ ] **IPC-03**: 创建 `download.handler.ts`，拆分下载管理处理器
+- [ ] **IPC-04**: 创建 `settings.handler.ts`，拆分设置存储处理器
+- [ ] **IPC-05**: 创建 `wallpaper.handler.ts`，拆分壁纸设置处理器
+- [ ] **IPC-06**: 创建 `window.handler.ts`，拆分窗口控制处理器
+- [ ] **IPC-07**: 创建 `cache.handler.ts`，拆分缓存管理处理器
+- [ ] **IPC-08**: 创建 `api.handler.ts`，拆分 API 代理处理器
+- [ ] **IPC-09**: 实现统一错误处理包装器
+- [ ] **IPC-10**: 更新 Preload 脚本类型定义
+
+### 阶段 5：表现层重构与清理
+
+- [ ] **UI-01**: 创建 `ErrorBoundary` 组件，实现组件级错误隔离
+- [ ] **UI-02**: 重构 `OnlineWallpaper.vue` 使用 composables
+- [ ] **UI-03**: 重构 `LocalWallpaper.vue` 使用 composables
+- [ ] **UI-04**: 重构 `DownloadWallpaper.vue` 使用 composables
+- [ ] **UI-05**: 重构 `SettingPage.vue` 使用 composables
+- [ ] **UI-06**: 移除组件中的重复状态代码
+- [ ] **UI-07**: 清理死代码（Test/Demo 组件）
+- [ ] **UI-08**: 配置路由懒加载
+- [ ] **UI-09**: 类型清理和 JSDoc 注释补充
+
+---
+
+## v2 需求（延期）
+
+以下需求在后续迭代中考虑。
+
+### 测试覆盖
+
+- **TEST-01**: 为 Composables 添加单元测试
+- **TEST-02**: 为 Services 添加单元测试
+- **TEST-03**: 为 Repositories 添加单元测试
+- **TEST-04**: 创建 Electron API Mock 服务
+
+### 安全加固
+
+- **SEC-01**: 使用 `safeStorage` 加密 API Key
+- **SEC-02**: 添加 IPC 通道白名单验证
+- **SEC-03**: 输入验证和清理
+
+### 性能优化
+
+- **PERF-01**: 实现虚拟滚动
+- **PERF-02**: 代码分割优化
+- **PERF-03**: 内存泄漏修复
+
+---
+
+## 超出范围
+
+明确排除，防止范围蔓延。
+
+| 功能 | 原因 |
+|------|------|
+| 新功能开发 | 本次为纯重构项目 |
+| UI/UX 变更 | 保持用户体验一致 |
+| 技术栈升级 | 现有版本已最新 |
+| 国际化 | 非架构重构范畴 |
+| 新增设置项 | 保持功能不变 |
+
+---
+
+## 可追溯性
+
+需求与阶段的映射关系。
+
+| 需求 | 阶段 | 状态 |
+|------|------|------|
+| ARCH-01 ~ ARCH-06 | 阶段 1 | 待开始 |
+| DATA-01 ~ DATA-06 | 阶段 2 | 待开始 |
+| BIZ-01 ~ BIZ-07 | 阶段 3 | 待开始 |
+| IPC-01 ~ IPC-10 | 阶段 4 | 待开始 |
+| UI-01 ~ UI-09 | 阶段 5 | 待开始 |
+
+**覆盖率**：
+- v1 需求：28 项
+- 已映射到阶段：28 项
+- 未映射：0 项 ✓
+
+---
+
+## 约束条件
+
+### 不可变更（硬约束）
+
+- 所有用户操作逻辑保持不变
+- 界面布局和 DOM 结构不变
+- UI 显示效果和样式不变
+- 所有现有功能的输入输出行为不变
+- IPC 通道名称和消息格式保持向后兼容
+- electron-store 存储键名不变
+- 自定义协议格式不变
+
+### 可变更（重构范围）
+
+- 代码内部架构和模块划分
+- 类型定义和类型安全
+- 错误处理机制
+- 代码组织和命名规范
+- 文件结构和目录组织
+
+---
+
+*需求定义时间：2025-04-25*
+*最后更新：2025-04-25 项目初始化*
