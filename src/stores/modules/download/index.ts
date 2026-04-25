@@ -25,7 +25,7 @@ export const useDownloadStore = defineStore('download', () => {
   // ==================== 方法 ====================
 
   function generateId(): string {
-    return `dl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `dl_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
   }
 
   function addDownloadTask(

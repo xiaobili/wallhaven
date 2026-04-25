@@ -176,7 +176,7 @@ export interface WallpaperActionInfo {
 /**
  * 下载任务状态
  */
-export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed'
+export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed'
 
 /**
  * 下载任务项

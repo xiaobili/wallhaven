@@ -152,7 +152,7 @@ export interface DownloadProgressData {
   progress: number
   offset: number
   speed: number
-  state: 'downloading' | 'paused' | 'waiting' | 'completed'
+  state: 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed'
   filePath?: string
   error?: string
   totalSize?: number

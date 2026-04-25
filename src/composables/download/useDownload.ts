@@ -81,8 +81,8 @@ export function useDownload(): UseDownloadReturn {
     if (error) {
       const task = store.downloadingList.find(item => item.id === taskId)
       if (task) {
-        task.state = 'waiting'
-        task.progress = 0
+        task.state = 'failed'
+        // 保留 offset，不重置 progress，便于用户恢复下载
       }
       showError(`下载失败: ${error}`)
       return
@@ -114,7 +114,7 @@ export function useDownload(): UseDownloadReturn {
   const addTask = (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>): string => {
     // Store 方法返回 Promise，但这里我们需要同步返回 ID
     // 直接调用 Store 的方法并返回 ID
-    const id = `dl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const id = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
     const downloadItem: DownloadItem = {
       id,

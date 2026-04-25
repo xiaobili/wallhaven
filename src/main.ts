@@ -92,16 +92,23 @@ async function initializeApp() {
     const { taskId, progress, offset, speed, state, filePath, error } = data
 
     if (error) {
-      // 下载失败
+      // 下载失败 - 保留已下载的字节数，便于恢复
       console.error('[Main] 下载失败:', error)
       const task = downloadStore.downloadingList.find((item: any) => item.id === taskId)
       if (task) {
-        task.state = 'waiting'
-        task.progress = 0
+        task.state = 'failed'
+        // 保留 offset，不重置 progress，便于用户恢复下载
       }
     } else if (state === 'completed') {
       // 下载完成 - 先更新进度到100%，再标记为完成
       downloadStore.updateProgress(taskId, 100, offset, 0, filePath)
+      // 持久化已完成记录到 storage
+      const finishedItem = downloadStore.finishedList.find((item: any) => item.id === taskId)
+      if (finishedItem) {
+        downloadService.saveFinishedRecord(finishedItem).catch((err) => {
+          console.error('[Main] 保存已完成记录失败:', err)
+        })
+      }
       console.log('[Main] 下载完成:', filePath)
     } else {
       // 更新进度（downloading, paused, waiting 等状态）
