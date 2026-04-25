@@ -4,6 +4,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { AppError } from './errors'
+import { downloadService } from '@/services'
 
 // 延迟导入stores，减少启动时的模块加载
 let wallpaperStore: any = null
@@ -83,39 +84,32 @@ async function initializeApp() {
   await downloadStore.loadFromStorage()
   
   console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
-  
-  // 如果在 Electron 环境中，注册下载进度监听器
-  if (window.electronAPI) {
-    try {
-      // 注册下载进度监听器
-      window.electronAPI.onDownloadProgress((data) => {
-        console.log('[Main] 收到下载进度:', data)
-        
-        const { taskId, progress, offset, speed, state, filePath, error } = data
-        
-        if (error) {
-          // 下载失败
-          console.error('[Main] 下载失败:', error)
-          const task = downloadStore.downloadingList.find((item: any) => item.id === taskId)
-          if (task) {
-            task.state = 'waiting'
-            task.progress = 0
-          }
-        } else if (state === 'completed') {
-          // 下载完成 - 先更新进度到100%，再标记为完成
-          downloadStore.updateProgress(taskId, 100, offset, 0, filePath)
-          console.log('[Main] 下载完成:', filePath)
-        } else {
-          // 更新进度（downloading, paused, waiting 等状态）
-          downloadStore.updateProgress(taskId, progress, offset, speed)
-        }
-      })
-      
-      console.log('[Main] 下载进度监听器已注册')
-    } catch (error) {
-      console.warn('注册 Electron 监听器失败:', error)
+
+  // 通过 downloadService 注册下载进度监听器
+  downloadService.onProgress((data) => {
+    console.log('[Main] 收到下载进度:', data)
+
+    const { taskId, progress, offset, speed, state, filePath, error } = data
+
+    if (error) {
+      // 下载失败
+      console.error('[Main] 下载失败:', error)
+      const task = downloadStore.downloadingList.find((item: any) => item.id === taskId)
+      if (task) {
+        task.state = 'waiting'
+        task.progress = 0
+      }
+    } else if (state === 'completed') {
+      // 下载完成 - 先更新进度到100%，再标记为完成
+      downloadStore.updateProgress(taskId, 100, offset, 0, filePath)
+      console.log('[Main] 下载完成:', filePath)
+    } else {
+      // 更新进度（downloading, paused, waiting 等状态）
+      downloadStore.updateProgress(taskId, progress, offset, speed)
     }
-  }
+  })
+
+  console.log('[Main] 下载进度监听器已通过 downloadService 注册')
 }
 
 // 非阻塞式初始化
