@@ -120,7 +120,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useWallpaperStore } from '@/stores/wallpaper'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import type { WallpaperItem } from '@/types'
