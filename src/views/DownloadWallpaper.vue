@@ -6,7 +6,7 @@
       :type="alert.type"
       :message="alert.message"
       :duration="alert.duration"
-      @close="alert.visible = false"
+      @close="hideAlert"
     />
     
     <div class="dowloading">
@@ -97,9 +97,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useDownloadStore } from '@/stores/modules/download'
-import { useDownload } from '@/composables'
+import { useDownload, useAlert } from '@/composables'
 import { formatFileSize, formatResolution, formatSpeed, formatTime } from '@/utils/helpers'
 import Alert from '@/components/Alert.vue'
 
@@ -108,26 +108,7 @@ const downloadStore = useDownloadStore()
 
 // Composables
 const { loadHistory, removeFinished } = useDownload()
-
-// Alert 状态管理
-const alert = reactive({
-  visible: false,
-  type: 'info' as 'success' | 'error' | 'warning' | 'info',
-  message: '',
-  duration: 3000
-})
-
-// 显示提示消息
-const showAlert = (
-  message: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'info',
-  duration: number = 3000
-) => {
-  alert.message = message
-  alert.type = type
-  alert.duration = duration
-  alert.visible = true
-}
+const { alert, showSuccess, showError, showInfo, showWarning, hideAlert } = useAlert()
 
 // 从store获取数据（使用computed保持响应式）
 const downloadList = computed(() => downloadStore.downloadingList)
@@ -139,20 +120,20 @@ const onCancelDownload = async (id: string) => {
   const confirmed = window.confirm('确定要取消这个下载任务吗？')
   if (confirmed) {
     downloadStore.cancelDownload(id)
-    showAlert('已取消下载', 'info')
+    showInfo('已取消下载')
   }
 }
 
 // 暂停下载
 const onPauseDownload = (id: string) => {
   downloadStore.pauseDownload(id)
-  showAlert('已暂停下载', 'info')
+  showInfo('已暂停下载')
 }
 
 // 恢复下载
 const onResumeDownload = (id: string) => {
   downloadStore.resumeDownload(id)
-  showAlert('恢复下载...', 'info')
+  showInfo('恢复下载...')
 }
 
 // 删除完成记录
@@ -160,7 +141,7 @@ const delRecorder = async (id: string) => {
   const confirmed = window.confirm('确定要删除这条记录吗？')
   if (confirmed) {
     await removeFinished(id)
-    showAlert('记录已删除', 'success')
+    showSuccess('记录已删除')
   }
 }
 
@@ -175,15 +156,15 @@ const showInFolder = async (path: string) => {
       
       const result = await (window as any).electronAPI.openFolder(dirPath)
       if (!result.success) {
-        showAlert('打开文件夹失败: ' + (result.error || ''), 'error')
+        showError('打开文件夹失败: ' + (result.error || ''))
       }
     } else {
-      showAlert('请在Electron环境中使用此功能', 'warning')
+      showWarning('请在Electron环境中使用此功能')
       console.log('模拟打开文件夹:', path)
     }
   } catch (error: any) {
     console.error('打开文件夹错误:', error)
-    showAlert('打开文件夹失败', 'error')
+    showError('打开文件夹失败')
   }
 }
 
