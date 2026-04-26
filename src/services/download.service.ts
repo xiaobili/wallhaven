@@ -3,7 +3,7 @@
  * 封装下载业务逻辑，包括进度订阅、下载目录管理、已完成记录管理
  */
 
-import type { IpcResponse } from '@/shared/types/ipc'
+import type { IpcResponse, PendingDownload, ResumeDownloadParams } from '@/shared/types/ipc'
 import type { FinishedDownloadItem } from '@/types'
 import { electronClient } from '@/clients'
 import { settingsRepository, downloadRepository } from '@/repositories'
@@ -162,6 +162,34 @@ class DownloadServiceImpl {
    */
   async cancelDownload(taskId: string): Promise<IpcResponse<void>> {
     return electronClient.cancelDownloadTask(taskId)
+  }
+
+  /**
+   * 恢复下载任务（断点续传）
+   * @param taskId - 任务 ID
+   * @param pendingDownload - 待恢复的下载任务信息
+   */
+  async resumeDownload(
+    taskId: string,
+    pendingDownload: PendingDownload,
+  ): Promise<IpcResponse<string>> {
+    const params: ResumeDownloadParams = {
+      taskId,
+      url: pendingDownload.url,
+      filename: pendingDownload.filename,
+      saveDir: pendingDownload.saveDir,
+      offset: pendingDownload.offset,
+    }
+
+    return electronClient.resumeDownloadTask(params)
+  }
+
+  /**
+   * 获取待恢复的下载任务列表
+   * 返回所有未完成的下载任务（暂停状态）
+   */
+  async getPendingDownloads(): Promise<IpcResponse<PendingDownload[]>> {
+    return electronClient.getPendingDownloads()
   }
 
   /**
