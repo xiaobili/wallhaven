@@ -1,1028 +1,417 @@
-# Electron + Vue 3 + TypeScript + Pinia 技术栈最佳实践
+# 断点续传技术栈研究
 
-> 研究时间：2025-04-25
-> 目标版本：Electron v41.2.2, Vue 3.5.32, TypeScript 6.0.0, Pinia 3.0.4
-
----
-
-## 1. IPC 通信的最佳模式
-
-### 1.1 当前架构分析
-
-项目已采用 `contextBridge` 模式，这是正确的安全基础：
-
-```
-Main Process (Node.js) ←→ Preload (contextBridge) ←→ Renderer (Vue)
-```
-
-**现有优点：**
-- ✅ `contextIsolation: true`
-- ✅ `nodeIntegration: false`
-- ✅ 使用 `contextBridge.exposeInMainWorld()` 暴露 API
-- ✅ 已有类型定义 (`window.electronAPI`)
-
-**待改进：**
-- ❌ 单文件 `handlers.ts` 866 行，缺乏模块化
-- ❌ 类型定义分散，未实现主进程/渲染进程类型共享
-- ❌ 缺乏统一的错误处理机制
-
-### 1.2 推荐架构：类型安全的 IPC 层
-
-#### 推荐模式：共享类型定义 + 领域模块化
-
-```
-src/
-├── shared/                    # 主进程和渲染进程共享
-│   └── types/
-│       ├── ipc.ts             # IPC 通道类型定义
-│       ├── electron-api.ts    # ElectronAPI 接口定义
-│       └── index.ts
-│
-electron/
-├── main/
-│   ├── ipc/
-│   │   ├── index.ts           # IPC 注册入口
-│   │   ├── handlers/          # 按领域拆分
-│   │   │   ├── file-system.ts
-│   │   │   ├── download.ts
-│   │   │   ├── settings.ts
-│   │   │   ├── wallpaper.ts
-│   │   │   └── window.ts
-│   │   └── utils/
-│   │       └── error-handler.ts
-│   └── index.ts
-│
-├── preload/
-│   └── index.ts               # 使用共享类型
-```
-
-#### 类型安全 IPC 定义模式
-
-```typescript
-// src/shared/types/ipc.ts
-
-// 定义所有 IPC 通道的输入输出类型
-export interface IpcChannels {
-  // 文件系统
-  'select-folder': {
-    input: void
-    output: string | null
-  }
-  'read-directory': {
-    input: { path: string }
-    output: DirectoryContent[]
-  }
-  // 下载
-  'start-download-task': {
-    input: DownloadTaskInput
-    output: void
-  }
-  // ... 其他通道
-}
-
-// 类型安全的 invoke 包装器
-export type IpcInvoke = {
-  [K in keyof IpcChannels]: (
-    ...args: IpcChannels[K]['input'] extends void ? [] : [IpcChannels[K]['input']]
-  ) => Promise<IpcChannels[K]['output']>
-}
-```
-
-```typescript
-// electron/preload/index.ts
-import type { IpcInvoke } from '../../src/shared/types/ipc'
-
-const electronAPI: IpcInvoke = {
-  selectFolder: () => ipcRenderer.invoke('select-folder'),
-  readDirectory: (params) => ipcRenderer.invoke('read-directory', params),
-  // ... 类型检查确保实现完整
-}
-
-contextBridge.exposeInMainWorld('electronAPI', electronAPI)
-```
-
-#### 领域模块化 handlers
-
-```typescript
-// electron/main/ipc/handlers/file-system.ts
-import { IpcChannels } from '../../../../src/shared/types/ipc'
-
-export function registerFileSystemHandlers(ipcMain: IpcMain) {
-  ipcMain.handle('select-folder', async (event): IpcChannels['select-folder']['output'] => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
-    return result.filePaths[0] || null
-  })
-  
-  ipcMain.handle('read-directory', async (event, params): IpcChannels['read-directory']['output'] => {
-    // 实现...
-  })
-}
-```
-
-```typescript
-// electron/main/ipc/index.ts
-import { registerFileSystemHandlers } from './handlers/file-system'
-import { registerDownloadHandlers } from './handlers/download'
-import { registerSettingsHandlers } from './handlers/settings'
-
-export function registerAllIpcHandlers(ipcMain: IpcMain) {
-  registerFileSystemHandlers(ipcMain)
-  registerDownloadHandlers(ipcMain)
-  registerSettingsHandlers(ipcMain)
-}
-```
-
-### 1.3 错误处理最佳实践
-
-```typescript
-// electron/main/ipc/utils/error-handler.ts
-import { dialog } from 'electron'
-
-export function wrapHandler<T>(
-  handler: (event: IpcMainInvokeEvent, ...args: any[]) => Promise<T>
-) {
-  return async (event: IpcMainInvokeEvent, ...args: any[]): Promise<T> => {
-    try {
-      return await handler(event, ...args)
-    } catch (error) {
-      console.error(`IPC Handler Error:`, error)
-      
-      // 可选：向用户显示错误对话框
-      // dialog.showErrorBox('Error', error.message)
-      
-      // 返回标准化错误对象
-      throw {
-        code: error.code || 'UNKNOWN_ERROR',
-        message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }
-    }
-  }
-}
-
-// 使用
-ipcMain.handle('some-channel', wrapHandler(async (event, params) => {
-  // 业务逻辑
-}))
-```
-
-### 1.4 进度/事件通知模式
-
-当前项目已实现下载进度通知，推荐继续使用此模式：
-
-```typescript
-// 主进程发送
-webContents.send('download-progress', { id, progress, speed })
-
-// Preload 桥接
-onDownloadProgress: (callback) => {
-  const handler = (_event, data) => callback(data)
-  ipcRenderer.on('download-progress', handler)
-  return () => ipcRenderer.removeListener('download-progress', handler)
-}
-
-// 渲染进程使用
-const unsubscribe = window.electronAPI.onDownloadProgress((data) => {
-  downloadStore.updateProgress(data)
-})
-// 组件卸载时清理
-onUnmounted(unsubscribe)
-```
-
-**推荐理由：**
-1. **类型安全**：共享类型定义消除 `any` 类型，编译期发现错误
-2. **模块化**：按领域拆分 handlers，便于维护和测试
-3. **安全**：保持 `contextIsolation` 模式，符合 Electron 官方推荐
-4. **错误处理**：统一的错误包装器，避免异常穿透
+> 研究时间：2026-04-26
+> 目标：为现有下载功能添加断点续传能力
 
 ---
 
-## 2. TypeScript 类型定义的最佳实践
+## 1. 现有技术栈分析
 
-### 2.1 当前问题
+### 1.1 当前下载实现
 
-- 60+ 处 `any` 类型使用
-- 类型定义分散在各处
-- 缺乏共享类型层
+基于代码分析 (`electron/main/ipc/handlers/download.handler.ts`)，现有实现：
 
-### 2.2 推荐类型组织结构
+| 组件 | 技术 | 用途 |
+|------|------|------|
+| HTTP 客户端 | Axios 1.15.0 | 流式下载 |
+| 流处理 | Node.js stream.pipeline | 数据写入 |
+| 取消机制 | AbortController | 暂停/取消下载 |
+| 临时文件 | `.download` 后缀 | 下载中文件存储 |
+| 状态管理 | Pinia Store + IPC | 进度同步 |
 
-```
-src/
-├── types/
-│   ├── index.ts              # 统一导出
-│   ├── api/                  # API 相关类型
-│   │   ├── wallhaven.ts
-│   │   └── responses.ts
-│   ├── domain/               # 领域模型
-│   │   ├── wallpaper.ts
-│   │   ├── download.ts
-│   │   └── settings.ts
-│   ├── ipc/                  # IPC 类型（与 electron/shared 同步）
-│   │   └── index.ts
-│   └── utils/                # 工具类型
-│       └── index.ts
-│
-├── shared/types/             # 主进程和渲染进程共享
-│   ├── ipc.ts
-│   └── electron-api.ts
-```
-
-### 2.3 类型定义最佳实践
-
-#### 使用 `interface` 定义数据结构，`type` 定义联合/工具类型
+### 1.2 当前暂停机制的问题
 
 ```typescript
-// types/domain/wallpaper.ts
-
-// 数据结构用 interface（可扩展）
-export interface Wallpaper {
-  id: string
-  url: string
-  resolution: string
-  // ...
-}
-
-// 联合类型用 type
-export type WallpaperCategory = 'general' | 'anime' | 'people'
-export type WallpaperPurity = 'sfw' | 'sketchy' | 'nsfw'
-
-// 工具类型
-export type WallpaperFit = 'fill' | 'fit' | 'stretch' | 'tile' | 'center' | 'span'
+// 现有暂停实现（download.handler.ts:303-346）
+download.abortController.abort()  // 中断请求
+// 问题：临时文件保留，但无法恢复下载
 ```
 
-#### 使用 `satisfies` 确保类型正确性
+**问题**：
+- 暂停后无法从断点继续，只能重新下载
+- 应用重启后丢失所有下载状态
+- 临时文件被清理，无法恢复
+
+---
+
+## 2. 断点续传所需技术
+
+### 2.1 HTTP Range 请求（核心）
+
+**不需要新增依赖**，Axios 1.15.0 原生支持 Range 请求：
 
 ```typescript
-const ROUTES = {
-  online: { path: '/online', title: '在线壁纸', icon: 'fas fa-cloud' },
-  local: { path: '/switch', title: '本地列表', icon: 'fas fa-folder' },
-  download: { path: '/download', title: '下载中心', icon: 'fas fa-inbox-in' },
-} satisfies Record<string, RouteConfig>
-```
-
-#### 使用 `const assertions` 定义常量
-
-```typescript
-export const DOWNLOAD_STATES = ['downloading', 'paused', 'waiting', 'completed'] as const
-export type DownloadState = typeof DOWNLOAD_STATES[number]
-```
-
-#### 避免类型断言，使用类型守卫
-
-```typescript
-// ❌ 避免
-const wallpaper = data as Wallpaper
-
-// ✅ 推荐
-function isWallpaper(data: unknown): data is Wallpaper {
-  return typeof data === 'object' && 
-         data !== null &&
-         'id' in data &&
-         'url' in data
-}
-
-if (isWallpaper(data)) {
-  // data 类型收窄为 Wallpaper
-}
-```
-
-### 2.4 Vue 组件类型定义
-
-```typescript
-// 使用 defineProps 泛型语法
-const props = defineProps<{
-  wallpaper: Wallpaper
-  selectable?: boolean
-}>()
-
-// 使用 withDefaults
-const props = withDefaults(defineProps<{
-  wallpaper: Wallpaper
-  selectable?: boolean
-}>(), {
-  selectable: false
+// Range 请求示例
+const response = await axios({
+  method: 'GET',
+  url,
+  headers: {
+    Range: `bytes=${startPosition}-`  // 从指定位置开始下载
+  },
+  responseType: 'stream'
 })
 
-// defineEmits 类型安全
-const emit = defineEmits<{
-  select: [wallpaper: Wallpaper]
-  delete: [id: string]
-}>()
+// 服务器必须返回 206 Partial Content
+// 响应头包含: Content-Range: bytes 0-1023/10240
 ```
 
-### 2.5 Store 类型定义
+**关键点**：
+- Wallhaven CDN 支持 Range 请求（需验证）
+- 需要先 HEAD 请求检查 `Accept-Ranges: bytes` 头
+- 使用 `fs.createWriteStream(path, { start, flags: 'r+' })` 追加写入
+
+### 2.2 持久化存储方案
+
+**推荐：继续使用 electron-store 11.0.2**
+
+| 方案 | 优点 | 缺点 | 结论 |
+|------|------|------|------|
+| **electron-store** | 已集成、简单可靠、JSON 存储 | 大量数据性能一般 | ✅ 推荐 |
+| SQLite | 查询性能好、结构化 | 需引入新依赖、过度工程 | ❌ 过度设计 |
+| 低db | 轻量、嵌入式 | 新依赖、学习成本 | ❌ 不必要 |
+| 文件系统 JSON | 无依赖 | 需自己实现读写逻辑 | ❌ 重复造轮 |
+
+**存储数据结构**：
 
 ```typescript
-// stores/modules/download/types.ts
-export interface DownloadItem {
-  id: string
+// 存储键: 'download-tasks'
+interface PersistedDownloadTask {
+  taskId: string
   url: string
   filename: string
-  progress: number
-  state: DownloadState
-  // ...
-}
+  saveDir: string
 
-export interface DownloadState {
-  downloadingList: DownloadItem[]
-  finishedList: FinishedDownloadItem[]
+  // 断点续传关键字段
+  downloadedBytes: number      // 已下载字节数
+  totalBytes: number           // 总字节数（首次下载获取）
+  tempFilePath: string         // 临时文件完整路径
+
+  // 状态
+  state: 'paused' | 'downloading' | 'waiting'
+  createdAt: number
+  updatedAt: number
 }
 ```
 
-**推荐理由：**
-1. **类型组织清晰**：按领域和用途分类
-2. **共享类型**：主进程/渲染进程共享，避免类型不同步
-3. **类型安全**：消除 `any`，使用类型守卫而非断言
-4. **工具类型**：充分利用 TypeScript 类型系统
+**集成方式**：
+- 利用现有 `storeGet`/`storeSet` IPC 通道
+- 存储键使用 `STORAGE_KEYS.DOWNLOAD_TASKS` 常量
+
+### 2.3 文件追加写入
+
+**不需要新增依赖**，Node.js fs 模块原生支持：
+
+```typescript
+import * as fs from 'fs'
+
+// 检查临时文件是否存在
+const tempPath = filePath + '.download'
+let startPosition = 0
+
+if (fs.existsSync(tempPath)) {
+  const stats = fs.statSync(tempPath)
+  startPosition = stats.size  // 从当前位置继续
+}
+
+// 创建可写流，追加模式
+const writer = fs.createWriteStream(tempPath, {
+  start: startPosition,
+  flags: 'r+'  // 读写模式，不覆盖现有内容
+})
+
+// 发起 Range 请求
+const response = await axios({
+  method: 'GET',
+  url,
+  headers: {
+    Range: `bytes=${startPosition}-`
+  },
+  responseType: 'stream'
+})
+
+// 流式追加写入
+await streamPipeline(response.data, writer)
+```
 
 ---
 
-## 3. Pinia Store 的组织模式
+## 3. 需要新增的依赖
 
-### 3.1 当前架构分析
+### 3.1 结论：无需新增依赖
 
-项目已采用 Setup Store 模式，这是正确选择：
+经过分析，断点续传功能**不需要新增任何 npm 依赖**：
 
-```typescript
-// 当前模式 ✅
-export const useDownloadStore = defineStore('download', () => {
-  const downloadingList = ref<DownloadItem[]>([])
-  // ...
-  return { downloadingList, startDownload, ... }
-})
-```
+| 功能 | 现有能力 | 方案 |
+|------|----------|------|
+| HTTP Range 请求 | Axios 1.15.0 | 设置 `Range` header |
+| 持久化存储 | electron-store 11.0.2 | 已集成，直接使用 |
+| 文件追加写入 | Node.js fs | `createWriteStream({ start, flags: 'r+' })` |
+| 进度管理 | 现有 IPC + Pinia | 扩展现有结构 |
 
-**现有优点：**
-- ✅ 使用 Setup Store（Composition API 风格）
-- ✅ 按领域分模块
-- ✅ 分离 state/actions 文件
+### 3.2 可选增强（非必需）
 
-**待改进：**
-- ❌ 缺乏 Getters 的组织
-- ❌ Store 直接调用 IPC，缺乏抽象层
+如果需要更强大的功能，可考虑：
 
-### 3.2 推荐组织结构
-
-```
-src/stores/
-├── index.ts                  # 统一导出
-├── modules/
-│   ├── wallpaper/
-│   │   ├── index.ts          # Store 定义
-│   │   ├── types.ts          # 类型定义
-│   │   ├── state.ts          # State 工厂
-│   │   ├── getters.ts        # Getters
-│   │   ├── actions.ts        # Actions
-│   │   └── repository.ts     # 数据访问层
-│   │
-│   ├── download/
-│   │   ├── index.ts
-│   │   ├── types.ts
-│   │   ├── state.ts
-│   │   ├── getters.ts
-│   │   ├── actions.ts
-│   │   └── repository.ts
-│   │
-│   └── settings/
-│       ├── index.ts
-│       └── ...
-│
-└── utils/
-    └── store-helpers.ts      # Store 工具函数
-```
-
-### 3.3 Setup Store 最佳实践
-
-#### 完整的 Store 定义模式
-
-```typescript
-// stores/modules/download/index.ts
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { DownloadItem, DownloadState } from './types'
-import { createInitialState } from './state'
-import { useDownloadRepository } from './repository'
-
-export const useDownloadStore = defineStore('download', () => {
-  // ========== State ==========
-  const downloadingList = ref<DownloadItem[]>([])
-  const finishedList = ref<FinishedDownloadItem[]>([])
-  
-  // ========== Repository ==========
-  const repository = useDownloadRepository()
-  
-  // ========== Getters ==========
-  const activeDownloads = computed(() => 
-    downloadingList.value.filter(item => item.state === 'downloading')
-  )
-  
-  const pausedDownloads = computed(() =>
-    downloadingList.value.filter(item => item.state === 'paused')
-  )
-  
-  const totalActive = computed(() => activeDownloads.value.length)
-  const totalPaused = computed(() => pausedDownloads.value.length)
-  const totalFinished = computed(() => finishedList.value.length)
-  
-  // ========== Actions ==========
-  async function addDownloadTask(task: DownloadTaskInput) {
-    const item: DownloadItem = {
-      id: generateId(),
-      ...task,
-      progress: 0,
-      state: 'waiting'
-    }
-    downloadingList.value.push(item)
-    await repository.save(downloadingList.value)
-    return item.id
-  }
-  
-  async function startDownload(id: string) {
-    const item = downloadingList.value.find(i => i.id === id)
-    if (!item) return
-    
-    item.state = 'downloading'
-    await repository.startDownload(item)
-  }
-  
-  function reset() {
-    downloadingList.value = []
-    finishedList.value = []
-  }
-  
-  // ========== Return ==========
-  return {
-    // State
-    downloadingList,
-    finishedList,
-    
-    // Getters
-    activeDownloads,
-    pausedDownloads,
-    totalActive,
-    totalPaused,
-    totalFinished,
-    
-    // Actions
-    addDownloadTask,
-    startDownload,
-    reset,
-    
-    // Lifecycle
-    $reset: reset
-  }
-})
-```
-
-#### Repository 模式（数据访问层）
-
-```typescript
-// stores/modules/download/repository.ts
-import { downloadService } from '@/services/download'
-
-export function useDownloadRepository() {
-  return {
-    async save(list: DownloadItem[]) {
-      await window.electronAPI.storeSet('downloadingList', JSON.parse(JSON.stringify(list)))
-    },
-    
-    async load(): Promise<DownloadItem[]> {
-      const data = await window.electronAPI.storeGet('downloadingList')
-      return data || []
-    },
-    
-    async startDownload(item: DownloadItem) {
-      await window.electronAPI.startDownloadTask({
-        id: item.id,
-        url: item.url,
-        filename: item.filename,
-        path: item.path
-      })
-    }
-  }
-}
-```
-
-### 3.4 Store 组合模式
-
-```typescript
-// 在一个 Store 中使用另一个 Store
-export const useDownloadStore = defineStore('download', () => {
-  const wallpaperStore = useWallpaperStore()
-  
-  async function downloadSelected() {
-    const selected = wallpaperStore.selectedWallpapers
-    for (const wallpaper of selected) {
-      await addDownloadTask(wallpaper)
-    }
-  }
-  
-  return { downloadSelected }
-})
-```
-
-### 3.5 持久化策略
-
-```typescript
-// 使用 $subscribe 监听变化自动保存
-export const useDownloadStore = defineStore('download', () => {
-  // ... state 定义
-  
-  // 自动持久化
-  watch([downloadingList, finishedList], () => {
-    repository.save(downloadingList.value, finishedList.value)
-  }, { deep: true })
-  
-  // 或使用 $subscribe（Pinia 内置）
-  // store.$subscribe((mutation, state) => {
-  //   repository.save(state)
-  // })
-})
-```
-
-**推荐理由：**
-1. **Setup Store**：更好的 TypeScript 推断，符合 Composition API 风格
-2. **Repository 模式**：分离数据访问逻辑，便于测试和替换存储实现
-3. **Getters 组织**：集中定义计算属性，提高可读性
-4. **模块化**：按领域划分，清晰的职责边界
+| 库 | 版本 | 用途 | 是否必需 |
+|-----|------|------|----------|
+| 无 | - | 当前技术栈已足够 | ✅ |
 
 ---
 
-## 4. Vue 3 Composition API 的架构模式
+## 4. 实现方案
 
-### 4.1 Composables 组织结构
+### 4.1 架构变更
 
 ```
-src/
-├── composables/
-│   ├── index.ts               # 统一导出
-│   ├── core/                  # 核心 composables
-│   │   ├── useAlert.ts
-│   │   ├── useLoading.ts
-│   │   └── useNotification.ts
-│   │
-│   ├── domain/                # 领域 composables
-│   │   ├── useWallpaper.ts
-│   │   ├── useDownload.ts
-│   │   └── useLocalFiles.ts
-│   │
-│   └── utils/                 # 工具 composables
-│       ├── useDebounce.ts
-│       ├── useThrottle.ts
-│       └── useInfiniteScroll.ts
+┌─────────────────────────────────────────────────────────────┐
+│                   Download Handler                           │
+├─────────────────────────────────────────────────────────────┤
+│  新增功能：                                                  │
+│  1. RESUME_DOWNLOAD_TASK IPC 通道                           │
+│  2. Range 请求支持                                          │
+│  3. 临时文件追加写入                                         │
+│  4. 下载状态持久化                                           │
+└─────────────────────────────────────────────────────────────┘
+         │                              │
+         ▼                              ▼
+┌─────────────────┐          ┌─────────────────────────────┐
+│ electron-store  │          │   File System               │
+│ (持久化状态)    │          │   (临时文件保留)            │
+│                 │          │                             │
+│ download-tasks  │          │   file.jpg.download         │
+│ {               │          │   (保留已下载部分)          │
+│   taskId,       │          │                             │
+│   downloadedBytes,│        └─────────────────────────────┘
+│   totalBytes,   │
+│   ...           │
+│ }               │
+└─────────────────┘
 ```
 
-### 4.2 Composable 最佳实践
+### 4.2 IPC 通道变更
 
-#### 命名规范
+| 通道 | 变更 | 说明 |
+|------|------|------|
+| `START_DOWNLOAD_TASK` | 修改 | 支持 Range 请求、保留临时文件 |
+| `RESUME_DOWNLOAD_TASK` | **新增** | 恢复暂停的下载 |
+| `PAUSE_DOWNLOAD_TASK` | 修改 | 保留临时文件、持久化状态 |
+| `CANCEL_DOWNLOAD_TASK` | 修改 | 清理持久化数据 |
+
+### 4.3 关键代码变更
+
+#### 4.3.1 暂停时持久化状态
 
 ```typescript
-// ✅ 以 use 开头
-export function useAlert() { ... }
-export function useWallpaperList() { ... }
+// electron/main/ipc/handlers/download.handler.ts
 
-// ❌ 避免
-export function alert() { ... }
-export function getAlert() { ... }
+ipcMain.handle(IPC_CHANNELS.PAUSE_DOWNLOAD_TASK, async (_event, taskId: string) => {
+  const download = activeDownloads.get(taskId)
+  if (!download) return { success: false, error: 'Task not found' }
+
+  download.abortController.abort()
+
+  // 获取已下载大小
+  const downloadedBytes = fs.existsSync(download.tempPath)
+    ? fs.statSync(download.tempPath).size
+    : 0
+
+  // 持久化任务状态
+  const { store } = await import('../../index')
+  const tasks = store.get('download-tasks') || {}
+  tasks[taskId] = {
+    ...tasks[taskId],
+    downloadedBytes,
+    state: 'paused',
+    updatedAt: Date.now()
+  }
+  store.set('download-tasks', tasks)
+
+  return { success: true }
+})
 ```
 
-#### 返回值模式
+#### 4.3.2 Range 请求恢复下载
 
 ```typescript
-// composables/useAlert.ts
-import { ref, computed } from 'vue'
+async function resumeDownload(taskId: string): Promise<DownloadResult> {
+  const { store } = await import('../../index')
+  const tasks = store.get('download-tasks') || {}
+  const task = tasks[taskId]
 
-export function useAlert() {
-  // 内部状态（私有）
-  const alerts = ref<AlertItem[]>([])
-  
-  // Getters
-  const visibleAlerts = computed(() => 
-    alerts.value.filter(a => a.visible)
-  )
-  
-  // Actions
-  function show(message: string, type: AlertType = 'info') {
-    const alert: AlertItem = {
-      id: generateId(),
-      message,
-      type,
-      visible: true
-    }
-    alerts.value.push(alert)
-    
-    // 自动消失
-    setTimeout(() => dismiss(alert.id), 3000)
+  if (!task || !fs.existsSync(task.tempFilePath)) {
+    return { success: false, error: 'Task or temp file not found' }
   }
-  
-  function dismiss(id: string) {
-    const index = alerts.value.findIndex(a => a.id === id)
-    if (index > -1) {
-      alerts.value.splice(index, 1)
-    }
-  }
-  
-  // 返回响应式引用和函数
-  return {
-    alerts,           // 只读状态
-    visibleAlerts,    // 计算属性
-    show,             // 方法
-    dismiss           // 方法
-  }
-}
-```
 
-#### 响应式参数
+  const startPosition = fs.statSync(task.tempFilePath).size
 
-```typescript
-// 接受响应式参数
-export function useWallpaperList(source: Ref<Wallpaper[]>) {
-  const filtered = computed(() => 
-    source.value.filter(w => w.selected)
-  )
-  
-  // 监听参数变化
-  watch(source, (newList) => {
-    console.log('List changed:', newList.length)
+  // 验证服务器支持 Range
+  const headResponse = await axios.head(task.url)
+  if (headResponse.headers['accept-ranges'] !== 'bytes') {
+    return { success: false, error: 'Server does not support Range requests' }
+  }
+
+  // 发起 Range 请求
+  const response = await axios({
+    method: 'GET',
+    url: task.url,
+    headers: { Range: `bytes=${startPosition}-` },
+    responseType: 'stream'
   })
-  
-  return { filtered }
-}
 
-// 使用
-const wallpapers = ref<Wallpaper[]>([])
-const { filtered } = useWallpaperList(wallpapers)
-```
-
-### 4.3 当前项目 Composables 重构建议
-
-#### 统一 Alert 管理（高优先级）
-
-当前 Alert 状态在 4+ 个组件中重复，建议提取为 composable：
-
-```typescript
-// composables/core/useAlert.ts
-import { ref, computed } from 'vue'
-import type { AlertType } from '@/types'
-
-interface AlertItem {
-  id: string
-  message: string
-  type: AlertType
-  visible: boolean
-  timeout?: number
-}
-
-export function useAlert() {
-  const alerts = ref<AlertItem[]>([])
-  
-  const latest = computed(() => alerts.value[alerts.value.length - 1])
-  
-  function show(message: string, type: AlertType = 'info', timeout = 3000) {
-    const id = crypto.randomUUID()
-    alerts.value.push({ id, message, type, visible: true })
-    
-    if (timeout > 0) {
-      setTimeout(() => dismiss(id), timeout)
-    }
-    
-    return id
-  }
-  
-  function dismiss(id: string) {
-    const index = alerts.value.findIndex(a => a.id === id)
-    if (index > -1) {
-      alerts.value[index].visible = false
-      setTimeout(() => {
-        alerts.value = alerts.value.filter(a => a.id !== id)
-      }, 300) // 等待动画完成
-    }
-  }
-  
-  function clear() {
-    alerts.value = []
-  }
-  
-  // 便捷方法
-  const success = (msg: string) => show(msg, 'success')
-  const error = (msg: string) => show(msg, 'error')
-  const warning = (msg: string) => show(msg, 'warning')
-  const info = (msg: string) => show(msg, 'info')
-  
-  return {
-    alerts,
-    latest,
-    show,
-    dismiss,
-    clear,
-    success,
-    error,
-    warning,
-    info
-  }
-}
-```
-
-#### 无限滚动 Composable
-
-```typescript
-// composables/utils/useInfiniteScroll.ts
-import { ref, onMounted, onUnmounted } from 'vue'
-
-interface InfiniteScrollOptions {
-  threshold?: number      // 距离底部多少像素触发
-  throttle?: number       // 节流时间
-}
-
-export function useInfiniteScroll(
-  loader: () => Promise<void>,
-  options: InfiniteScrollOptions = {}
-) {
-  const { threshold = 200, throttle = 300 } = options
-  const isLoading = ref(false)
-  const hasMore = ref(true)
-  
-  let lastTrigger = 0
-  
-  async function handleScroll() {
-    const now = Date.now()
-    if (now - lastTrigger < throttle) return
-    
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement
-    const nearBottom = scrollHeight - scrollTop - clientHeight < threshold
-    
-    if (nearBottom && !isLoading.value && hasMore.value) {
-      lastTrigger = now
-      isLoading.value = true
-      try {
-        await loader()
-      } finally {
-        isLoading.value = false
-      }
-    }
-  }
-  
-  onMounted(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true })
+  // 追加写入临时文件
+  const writer = fs.createWriteStream(task.tempFilePath, {
+    start: startPosition,
+    flags: 'r+'
   })
-  
-  onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll)
-  })
-  
-  return {
-    isLoading,
-    hasMore,
-    reset: () => {
-      hasMore.value = true
-      isLoading.value = false
-    }
-  }
+
+  // ... 流式下载和进度回调
 }
 ```
 
-### 4.4 服务层抽象
+---
+
+## 5. 集成点分析
+
+### 5.1 与现有 Axios 流式下载的集成
+
+现有代码 (`download.handler.ts:180-226`)：
 
 ```typescript
-// services/electron/index.ts
-import type { IpcInvoke } from '@/shared/types/ipc'
-
-class ElectronService {
-  private api: IpcInvoke
-  
-  constructor() {
-    this.api = window.electronAPI
-  }
-  
-  // 文件系统
-  async selectFolder() {
-    return this.api.selectFolder()
-  }
-  
-  async readDirectory(path: string) {
-    return this.api.readDirectory({ path })
-  }
-  
-  // 下载
-  onDownloadProgress(callback: (data: DownloadProgress) => void) {
-    return this.api.onDownloadProgress(callback)
-  }
-  
-  // ... 其他方法
-}
-
-export const electronService = new ElectronService()
-
-// 在组件中使用
-const folder = await electronService.selectFolder()
+const response = await axios({
+  method: 'GET',
+  url,
+  responseType: 'stream',
+  timeout: 60000,
+  signal: abortController.signal,
+})
 ```
 
-### 4.5 组件设计模式
-
-#### 视图组件（View/Page）
+**集成方式**：添加 `headers` 参数支持 Range
 
 ```typescript
-// views/OnlineWallpaper.vue
-<script setup lang="ts">
-import { useWallpaperStore } from '@/stores/wallpaper'
-import { useInfiniteScroll } from '@/composables/utils/useInfiniteScroll'
-import { useAlert } from '@/composables/core/useAlert'
+const headers: Record<string, string> = {}
+if (startPosition > 0) {
+  headers.Range = `bytes=${startPosition}-`
+}
 
-// Store
-const store = useWallpaperStore()
+const response = await axios({
+  method: 'GET',
+  url,
+  headers,  // 新增
+  responseType: 'stream',
+  timeout: 60000,
+  signal: abortController.signal,
+})
+```
 
-// Composables
-const { isLoading, hasMore } = useInfiniteScroll(() => store.loadMore())
-const alert = useAlert()
+### 5.2 与现有 electron-store 的集成
 
-// 生命周期
-onMounted(async () => {
+现有代码 (`electron/main/index.ts`)：
+
+```typescript
+import Store from 'electron-store'
+export const store = new Store()
+```
+
+**集成方式**：直接使用现有 store 实例
+
+```typescript
+// 在 download.handler.ts 中
+import { store } from '../../index'
+
+// 存储
+store.set('download-tasks', tasks)
+
+// 读取
+const tasks = store.get('download-tasks') as Record<string, PersistedDownloadTask>
+```
+
+### 5.3 与现有 Pinia Store 的集成
+
+需要修改 `src/stores/modules/download/`：
+
+```typescript
+// 新增 actions
+async loadPersistedTasks() {
+  const response = await electronClient.storeGet<PersistedDownloadTask[]>('download-tasks')
+  if (response.success && response.data) {
+    // 恢复到 downloadingList
+  }
+}
+
+async resumeDownload(taskId: string) {
+  await electronClient.resumeDownloadTask(taskId)
+}
+```
+
+---
+
+## 6. 不需要添加的内容
+
+### 6.1 避免过度工程
+
+| 方案 | 原因 |
+|------|------|
+| 多线程下载 | 复杂度高，单线程流式下载足够 |
+| 下载队列管理 | 当前聚焦断点续传，队列管理可后续迭代 |
+| SQLite / LowDB | electron-store 已足够，无需引入新依赖 |
+| 专用下载库 (turbodownload 等) | Axios 流式下载已满足需求 |
+| 文件校验 (MD5/SHA) | 增加复杂度，当前非必要 |
+
+### 6.2 保持最小变更原则
+
+- 不改变用户操作逻辑
+- 不改变界面布局
+- 不新增 UI 组件
+- 不新增 npm 依赖
+
+---
+
+## 7. 置信度评估
+
+| 评估项 | 置信度 | 理由 |
+|--------|--------|------|
+| Axios Range 支持 | 高 | Axios 官方支持，HTTP 标准功能 |
+| electron-store 适用性 | 高 | 已集成，存储少量任务状态足够 |
+| Node.js fs 追加写入 | 高 | Node.js 原生支持，稳定可靠 |
+| Wallhaven CDN Range 支持 | 中 | 需实际测试验证 |
+| 整体方案可行性 | 高 | 技术栈成熟，无新增依赖 |
+
+---
+
+## 8. 验证清单
+
+### 8.1 实施前验证
+
+- [ ] 测试 Wallhaven CDN 是否支持 Range 请求
+- [ ] 验证临时文件追加写入的正确性
+- [ ] 测试应用重启后状态恢复
+
+### 8.2 验证代码
+
+```typescript
+// 验证 Range 支持
+async function checkRangeSupport(url: string): Promise<boolean> {
   try {
-    await store.fetchWallpapers()
-  } catch (e) {
-    alert.error('加载壁纸失败')
+    const response = await axios.head(url)
+    return response.headers['accept-ranges'] === 'bytes'
+  } catch {
+    return false
   }
-})
-</script>
-```
-
-#### 可复用组件
-
-```typescript
-// components/WallpaperList.vue
-<script setup lang="ts">
-import type { Wallpaper } from '@/types'
-
-const props = defineProps<{
-  wallpapers: Wallpaper[]
-  loading?: boolean
-  selectable?: boolean
-}>()
-
-const emit = defineEmits<{
-  select: [wallpaper: Wallpaper]
-  preview: [wallpaper: Wallpaper]
-  download: [wallpaper: Wallpaper]
-}>()
-
-// 组件内部逻辑
-</script>
-```
-
-**推荐理由：**
-1. **Composables 复用逻辑**：避免组件间代码重复
-2. **服务层抽象**：统一管理外部依赖，便于测试和替换
-3. **清晰的职责分离**：视图负责展示，Composable 负责逻辑，Store 负责状态
-4. **类型安全**：Composition API 配合 TypeScript 获得完整类型推断
-
----
-
-## 5. 项目架构总览
-
-### 推荐的整体架构
-
-```
-src/
-├── main.ts                    # 应用入口
-├── App.vue                    # 根组件
-│
-├── views/                     # 页面视图
-│   ├── OnlineWallpaper.vue
-│   ├── LocalWallpaper.vue
-│   └── ...
-│
-├── components/                # 可复用组件
-│   ├── common/               # 通用组件
-│   │   ├── Alert.vue
-│   │   └── LoadingOverlay.vue
-│   └── wallpaper/            # 壁纸相关组件
-│       ├── WallpaperList.vue
-│       └── ImagePreview.vue
-│
-├── composables/              # 组合式函数
-│   ├── core/
-│   │   ├── useAlert.ts
-│   │   └── useLoading.ts
-│   ├── domain/
-│   │   └── useWallpaper.ts
-│   └── utils/
-│       └── useInfiniteScroll.ts
-│
-├── stores/                   # Pinia 状态管理
-│   └── modules/
-│       ├── wallpaper/
-│       └── download/
-│
-├── services/                 # 服务层
-│   ├── electron/             # Electron API 封装
-│   └── api/                  # 外部 API 封装
-│
-├── types/                    # 类型定义
-│   ├── domain/
-│   ├── api/
-│   └── utils/
-│
-├── shared/                   # 主进程/渲染进程共享
-│   └── types/
-│       └── ipc.ts
-│
-├── utils/                    # 工具函数
-│   ├── format.ts
-│   └── validation.ts
-│
-└── router/                   # 路由配置
-    └── index.ts
-
-electron/
-├── main/
-│   ├── index.ts              # 主进程入口
-│   └── ipc/
-│       ├── index.ts          # IPC 注册
-│       └── handlers/         # 按领域拆分
-│
-└── preload/
-    └── index.ts              # Preload 脚本
-```
-
-### 数据流向
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        Renderer Process                       │
-├──────────────────────────────────────────────────────────────┤
-│  Views → Composables → Stores → Services → ElectronAPI       │
-│                           ↓                                   │
-│                     Pinia Store                               │
-│                           ↓                                   │
-│                      Services                                 │
-└───────────────────────────┬──────────────────────────────────┘
-                            │ IPC
-                            ↓
-┌──────────────────────────────────────────────────────────────┐
-│                        Main Process                           │
-├──────────────────────────────────────────────────────────────┤
-│  Preload (contextBridge) → IPC Handlers → Node.js APIs       │
-└──────────────────────────────────────────────────────────────┘
+}
 ```
 
 ---
 
-## 6. 置信度评估
-
-| 主题 | 置信度 | 理由 |
-|------|--------|------|
-| IPC 类型安全模式 | 高 | 基于官方推荐和行业标准实践 |
-| TypeScript 组织 | 高 | 符合 TypeScript 官方指南 |
-| Pinia Setup Store | 高 | Pinia 3.x 推荐模式 |
-| Composables 架构 | 高 | Vue 3 官方推荐的代码复用方式 |
-| 整体架构 | 中高 | 基于项目实际情况和最佳实践综合 |
-
----
-
-## 7. 与 Vue 3 / Electron 最新版本兼容性
+## 9. 版本兼容性
 
 | 技术 | 当前版本 | 最新版本 | 兼容性 |
 |------|----------|----------|--------|
-| Electron | v41.2.2 | v33+ | ✅ 完全兼容 |
-| Vue | v3.5.32 | v3.4+ | ✅ 完全兼容 |
-| Pinia | v3.0.4 | v2.1+ | ✅ 完全兼容 |
-| TypeScript | v6.0.0 | v5.x | ✅ 完全兼容 |
-
-**说明：**
-- 项目版本均为最新稳定版
-- 推荐模式与这些版本完全兼容
-- 无需考虑版本迁移问题
-
----
-
-## 8. 实施优先级建议
-
-### 第一阶段：类型安全基础
-
-1. 创建 `src/shared/types/ipc.ts` - IPC 类型定义
-2. 重构 Preload 使用共享类型
-3. 创建 `src/types/` 目录结构
-
-### 第二阶段：IPC 模块化
-
-1. 将 `handlers.ts` 按领域拆分
-2. 实现统一的错误处理
-3. 更新 Preload API
-
-### 第三阶段：Composables 提取
-
-1. 创建 `useAlert` composable
-2. 提取 `useInfiniteScroll`
-3. 创建服务层抽象
-
-### 第四阶段：Store 重构
-
-1. 为 Store 添加 Repository 层
-2. 优化 Getters 组织
-3. 实现持久化策略
+| Axios | 1.15.0 | 1.15.2 | ✅ 兼容，Range 支持稳定 |
+| electron-store | 11.0.2 | 11.0.2 | ✅ 最新版 |
+| Node.js fs | - | - | ✅ 稳定 API |
 
 ---
 
 *文档版本：v1.0*
-*创建时间：2025-04-25*
+*创建时间：2026-04-26*

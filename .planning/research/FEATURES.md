@@ -1,428 +1,352 @@
-# 功能架构改进分类
+# 下载断点续传功能 — 功能研究
 
-本文档基于代码库分析，对重构改进项进行优先级分类和依赖关系梳理。
-
----
-
-## 分类标准
-
-| 分类 | 定义 | 特征 |
-|------|------|------|
-| **基础必备** | 不做会影响代码质量和可维护性 | 阻塞后续改进、存在明显缺陷、违反设计原则 |
-| **推荐改进** | 显著提升可维护性和开发效率 | 有明确收益、中等复杂度、独立可行 |
-| **可选优化** | 锦上添花，边际收益递减 | 复杂度较高、收益有限、依赖其他改进 |
-| **反模式** | 应该避免的做法 | 违背项目约束、引入新问题、过度工程化 |
+> 研究目标：为 v2.1 里程碑添加下载断点续传能力
 
 ---
 
-## 一、IPC 模块化
+## 一、功能分类
 
-### 1.1 基础必备
+### 1.1 Table Stakes（基础必备）
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **handlers.ts 按领域拆分** | 中 | 单文件 866 行，维护困难。拆分为独立模块 | 无 |
+这些是断点续传功能的核心能力，不做就不叫「断点续传」：
 
-**推荐拆分方案：**
+| 功能 | 说明 | 复杂度 | 依赖 |
+|------|------|--------|------|
+| **HTTP Range 请求** | 使用 Range header 从指定字节位置继续下载 | 中 | 服务器支持 |
+| **临时文件保留** | 暂停时保留 `.download` 临时文件，不删除 | 低 | 无 |
+| **进度持久化** | 将下载进度（offset、totalSize）持久化到存储 | 中 | electron-store |
+| **恢复下载** | 从暂停点继续，而非重新开始 | 中 | Range + 临时文件 |
+| **暂停时记录 offset** | 暂停时准确记录已下载字节数 | 低 | 无 |
+
+### 1.2 Differentiators（差异化功能）
+
+提升用户体验，但不是必需的：
+
+| 功能 | 说明 | 复杂度 | 依赖 |
+|------|------|--------|------|
+| **应用重启恢复** | 应用重启后自动恢复未完成任务 | 高 | 进度持久化 + 任务队列持久化 |
+| **网络中断自动恢复** | 网络中断后自动重试继续下载 | 中 | 重试机制 |
+| **服务器不支持提示** | 服务器不支持 Range 时明确告知用户 | 低 | 无 |
+| **文件变更检测** | 检测服务器文件是否已变更 | 高 | ETag/Last-Modified |
+
+### 1.3 Anti-features（应避免的功能）
+
+这些功能看似合理，但会带来问题：
+
+| 功能 | 为什么是 Anti-feature |
+|------|----------------------|
+| **多线程分片下载** | 复杂度过高，壁纸文件通常不会太大（<50MB），收益有限 |
+| **自动重试无限次** | 可能导致服务器压力过大，应限制重试次数 |
+| **断点续传队列调度** | 当前只需要单任务断点续传，队列管理可后续迭代 |
+| **下载限速** | 非核心需求，且增加复杂度 |
+
+---
+
+## 二、断点续传工作原理
+
+### 2.1 正常流程（用户暂停后恢复）
 
 ```
-electron/main/ipc/
-├── index.ts           # 统一注册入口
-├── handlers/
-│   ├── file.ts        # 文件操作：read-directory, delete-file, open-folder
-│   ├── download.ts    # 下载相关：download-wallpaper, start-download-task
-│   ├── settings.ts    # 设置管理：save-settings, load-settings, store-*
-│   ├── wallpaper.ts   # 壁纸操作：set-wallpaper
-│   ├── cache.ts       # 缓存管理：clear-app-cache, get-cache-info
-│   ├── window.ts      # 窗口控制：minimize, maximize, close
-│   └── api-proxy.ts   # API代理：wallhavenApiRequest
+用户点击下载
+    │
+    ▼
+开始下载 → 创建 .download 临时文件 → 持续写入 + 发送进度
+    │
+    ▼ (用户点击暂停)
+记录当前 offset → 中止 HTTP 请求 → 保留临时文件 → 更新状态为 'paused'
+    │
+    ▼ (用户点击恢复)
+检查临时文件存在 → 获取文件当前大小 → 发送 Range 请求 (Range: bytes=offset-)
+    │
+    ▼
+从断点继续写入 → 进度从 offset 开始计算 → 完成后重命名文件
 ```
 
-**理由：**
-- 单文件过大违反单一职责原则
-- 领域边界清晰，便于独立测试
-- 降低代码审查和合并冲突成本
+### 2.2 异常流程（应用崩溃/重启）
 
-### 1.2 推荐改进
+```
+应用崩溃/关闭
+    │
+    ▼
+临时文件保留在磁盘 → 进度记录在 electron-store
+    │
+    ▼ (应用重新启动)
+读取 store 中的未完成任务列表 → 检查临时文件是否存在
+    │
+    ▼ (临时文件存在)
+显示任务为 'paused' 状态 → 用户可点击恢复
+    │
+    ▼ (临时文件不存在或损坏)
+显示任务为 'failed' 状态 → 提示用户重新下载
+```
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **IPC 消息类型定义** | 低 | 为所有 IPC 消息添加 TypeScript 接口 | handlers 拆分 |
-| **Preload 类型同步** | 低 | 确保主进程和渲染进程类型一致 | IPC 类型定义 |
-| **错误响应标准化** | 低 | 统一错误返回格式 `{ success, error, code }` | handlers 拆分 |
+### 2.3 网络中断处理
 
-### 1.3 可选优化
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **IPC 通道验证白名单** | 中 | 为 invoke 添加类似 send/receive 的白名单验证 | 无 |
-| **请求超时配置化** | 低 | 允许不同 IPC 调用配置不同超时 | 无 |
-
-### 1.4 反模式
-
-| 做法 | 原因 |
-|------|------|
-| 创建 IPC 路由框架 | 过度工程化，当前规模不需要 |
-| 改变现有通道名称 | 违反 API 兼容约束 |
-| 引入 IPC 中间件链 | 增加理解成本，收益不明显 |
+```
+网络中断 → axios 抛出错误 → 捕获错误 → 检查是否可恢复
+    │
+    ├── 临时文件完整 → 自动重试（最多 3 次）
+    │
+    └── 临时文件损坏 → 标记失败，提示用户
+```
 
 ---
 
-## 二、Composables 最佳实践
+## 三、服务器兼容性处理
 
-### 2.1 基础必备
+### 3.1 服务器支持 Range（最佳情况）
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **创建 useAlert composable** | 低 | Alert 逻辑在 4+ 组件中重复实现 | 无 |
+**请求头：**
+```
+GET /wallpaper.jpg HTTP/1.1
+Range: bytes=1048576-
+```
 
-**当前重复情况：**
-- `OnlineWallpaper.vue` (行 100-115)
-- `DownloadWallpaper.vue` (行 109-124)
-- `LocalWallpaper.vue` (行 132-147)
-- `SettingPage.vue` (行 153-158)
-- `Diagnostic.vue` (行 53-68)
+**响应头：**
+```
+HTTP/1.1 206 Partial Content
+Content-Range: bytes 1048576-5242880/5242881
+Content-Length: 4194305
+```
 
-**推荐实现：**
+**行为：** 正常从断点继续下载
 
+### 3.2 服务器不支持 Range（降级处理）
+
+**检测方式：**
+1. 首次下载时检查响应头 `Accept-Ranges: bytes`
+2. 或发送 HEAD 请求检测
+
+**响应：**
+```
+HTTP/1.1 200 OK
+# 没有 Accept-Ranges 或 Content-Range
+```
+
+**降级行为：**
+1. 提示用户「服务器不支持断点续传，将重新下载」
+2. 删除临时文件，从头开始
+3. 更新 UI 显示「不支持断点续传」标签
+
+### 3.3 文件在服务器上已变更（边缘情况）
+
+**检测方式：**
+1. 首次下载记录 `ETag` 或 `Last-Modified`
+2. 恢复时发送 `If-Range` 头
+
+**请求：**
+```
+GET /wallpaper.jpg HTTP/1.1
+Range: bytes=1048576-
+If-Range: "abc123etag"
+```
+
+**服务器文件未变更：**
+```
+HTTP/1.1 206 Partial Content  # 继续下载
+```
+
+**服务器文件已变更：**
+```
+HTTP/1.1 200 OK  # 返回完整新文件
+```
+
+**处理逻辑：**
+- 如果返回 206：继续断点续传
+- 如果返回 200：删除临时文件，从头下载新文件
+
+---
+
+## 四、UI/UX 预期
+
+### 4.1 进度显示
+
+| 状态 | UI 表现 |
+|------|---------|
+| downloading | 进度条动画 + 百分比 + 速度 |
+| paused | 进度条静止（显示已下载百分比）+ 「恢复」按钮 |
+| waiting | 进度条为 0 + 等待状态 |
+| failed | 进度条变红 + 「重试」按钮 |
+| completed | 进度条 100% + 「打开文件夹」按钮 |
+
+### 4.2 用户操作
+
+| 操作 | 预期行为 |
+|------|---------|
+| 点击暂停 | 立即停止下载，保留进度，按钮变为「恢复」 |
+| 点击恢复 | 从断点继续下载，按钮变为「暂停」 |
+| 点击取消 | 删除临时文件，从列表移除任务 |
+| 关闭应用 | 保留任务状态，下次打开可恢复 |
+| 网络断开 | 显示「网络中断，等待恢复」提示 |
+
+### 4.3 错误提示
+
+| 场景 | 提示信息 |
+|------|---------|
+| 服务器不支持 Range | 「服务器不支持断点续传，将重新下载」 |
+| 临时文件损坏 | 「下载文件已损坏，请重新下载」 |
+| 网络中断 | 「网络连接中断，点击恢复继续下载」 |
+| 服务器文件变更 | 「文件已更新，正在重新下载」 |
+
+---
+
+## 五、技术实现要点
+
+### 5.1 数据结构变更
+
+**DownloadItem 新增字段：**
 ```typescript
-// src/composables/useAlert.ts
-import { reactive } from 'vue'
-
-export type AlertType = 'success' | 'error' | 'warning' | 'info'
-
-interface AlertState {
-  visible: boolean
-  type: AlertType
-  message: string
-  duration: number
-}
-
-export function useAlert(defaultDuration = 3000) {
-  const alert = reactive<AlertState>({
-    visible: false,
-    type: 'info',
-    message: '',
-    duration: defaultDuration
-  })
-
-  const showAlert = (
-    message: string,
-    type: AlertType = 'info',
-    duration: number = defaultDuration
-  ) => {
-    alert.message = message
-    alert.type = type
-    alert.duration = duration
-    alert.visible = true
-  }
-
-  const hideAlert = () => {
-    alert.visible = false
-  }
-
-  return {
-    alert,
-    showAlert,
-    hideAlert
-  }
+interface DownloadItem {
+  // ... 现有字段
+  offset: number          // 已下载字节数
+  totalSize?: number      // 文件总大小
+  tempPath?: string       // 临时文件路径
+  etag?: string           // 用于检测文件变更
+  lastModified?: string   // 用于检测文件变更
+  supportsRange?: boolean // 服务器是否支持断点续传
 }
 ```
 
-### 2.2 推荐改进
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **创建 useInfiniteScroll** | 低 | 提取滚动加载逻辑，当前仅在 OnlineWallpaper 中使用但可复用 | 无 |
-| **创建 useImagePreview** | 低 | 图片预览状态管理可提取为独立 composable | 无 |
-
-### 2.3 可选优化
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **创建 useElectron** | 中 | 封装 Electron API 可用性检测和环境判断 | 无 |
-| **创建 useKeyboard** | 中 | 键盘快捷键管理（如需要添加） | 无 |
-
-### 2.4 反模式
-
-| 做法 | 原因 |
-|------|------|
-| 全局状态 composable | Alert 等组件级状态不应全局化 |
-| 过度抽象的 composable | 如 `useAsync` 泛化处理，增加理解成本 |
-| Composable 调用 Store | 破坏单向数据流，应由组件调用 |
-
----
-
-## 三、服务层抽象
-
-### 3.1 基础必备
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **创建 ElectronService** | 中 | 统一封装 Electron API 调用，提供类型安全接口 | 无 |
-
-**当前问题：**
-- `window.electronAPI` 散落在各组件和 store 中
-- 环境检测逻辑重复（`isProduction` 函数在多处定义）
-- 无法在没有 Electron 环境时进行单元测试
-
-**推荐结构：**
-
+**新增持久化数据：**
 ```typescript
-// src/services/electronService.ts
-import type { ElectronAPI } from '@/types/electron'
-
-class ElectronService {
-  private api: ElectronAPI | null = null
-
-  constructor() {
-    this.api = (window as any).electronAPI ?? null
-  }
-
-  get isAvailable(): boolean {
-    return this.api !== null
-  }
-
-  // 文件操作
-  async selectFolder(): Promise<string | null> {
-    if (!this.api) throw new Error('Electron API not available')
-    return this.api.selectFolder()
-  }
-
-  // ... 其他方法
+interface PersistedDownloadTask {
+  id: string
+  url: string
+  filename: string
+  offset: number
+  totalSize: number
+  tempPath: string
+  etag?: string
+  lastModified?: string
+  state: 'paused' | 'failed'
 }
-
-export const electronService = new ElectronService()
 ```
 
-### 3.2 推荐改进
+### 5.2 关键代码修改点
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **分离 API 缓存策略** | 低 | wallpaperApi.ts 中缓存逻辑可独立为 CacheService | 无 |
-| **创建 Repository 接口** | 低 | 定义数据访问抽象层接口 | ElectronService |
+| 文件 | 修改内容 |
+|------|---------|
+| `download.handler.ts` | 添加 Range 请求逻辑，保留临时文件 |
+| `useDownload.ts` | 修改 resumeDownload 方法，传递 offset |
+| `download.service.ts` | 添加 resumeDownload 方法 |
+| `electron.client.ts` | 添加 resumeDownloadTask 方法 |
+| `download.store.ts` | 持久化未完成任务 |
 
-### 3.3 可选优化
+### 5.3 实现复杂度评估
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **Mock 服务实现** | 中 | 为测试提供 Electron API mock | ElectronService |
-| **服务依赖注入** | 高 | 使用 provide/inject 或 DI 容器 | 无需 |
+| 任务 | 复杂度 | 工时估计 |
+|------|--------|----------|
+| Range 请求支持 | 中 | 4h |
+| 临时文件管理 | 低 | 2h |
+| 进度持久化 | 中 | 3h |
+| 应用重启恢复 | 高 | 4h |
+| 错误处理与 UI 反馈 | 中 | 3h |
+| 测试与边界情况 | 中 | 4h |
+| **总计** | — | **~20h** |
 
-### 3.4 反模式
+---
 
-| 做法 | 原因 |
+## 六、依赖关系
+
+### 6.1 现有功能依赖
+
+| 现有功能 | 断点续传依赖方式 |
+|----------|-----------------|
+| 下载任务管理 | 复用现有 DownloadStore |
+| 进度回调机制 | 复用现有 IPC 通道 |
+| 临时文件命名 | 扩展现有 `.download` 后缀 |
+| AbortController | 继续使用，暂停时不删除临时文件 |
+
+### 6.2 新增依赖
+
+| 依赖 | 用途 |
 |------|------|
-| Store 继承 Service | 应为组合关系，继承会导致紧耦合 |
-| Service 直接操作 DOM | 违反职责分离 |
-| 全局单例 Service（非必要） | 增加测试难度，应优先使用 composable |
+| electron-store | 持久化未完成任务 |
+| HTTP Range 支持 | 服务器端支持（Wallhaven 支持） |
 
 ---
 
-## 四、Store 重构
+## 七、边界情况与风险
 
-### 4.1 基础必备
+### 7.1 边界情况
 
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **消除 actions.ts 中的 any** | 低 | 第 13 行 `totalPageData: any` 应使用正确类型 | 无 |
-| **统一 Store 类型定义** | 低 | state、actions、getters 类型完整导出 | 无 |
+| 情况 | 处理方式 |
+|------|---------|
+| 临时文件被用户手动删除 | 检测文件不存在，标记失败，提示重新下载 |
+| 服务器返回 416 Range Not Satisfiable | 删除临时文件，从头下载 |
+| 磁盘空间不足 | 检测空间，提前提示用户 |
+| 并发多个下载恢复 | 支持多任务并行恢复（当前架构已支持） |
+| 下载路径被用户修改 | 检测路径变更，提示用户选择新路径或删除任务 |
 
-**当前状态：**
-```
-src/stores/
-├── wallpaper.ts           # 重导出入口
-└── modules/
-    ├── wallpaper/
-    │   ├── index.ts       # Store 定义
-    │   ├── actions.ts     # ⚠️ 存在 any 类型
-    │   ├── state.ts       # 状态工厂
-    │   ├── storage.ts     # 持久化
-    │   └── settings-storage.ts
-    └── download/
-        └── index.ts
-```
+### 7.2 风险评估
 
-### 4.2 推荐改进
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **分离数据访问层** | 中 | storage.ts 抽象为 Repository，降低 Store 与 Electron API 耦合 | ElectronService |
-| **提取 Getters** | 低 | 将计算属性单独文件管理，提升可读性 | 无 |
-| **添加 Store 初始化钩子** | 低 | 统一初始化流程，处理加载失败场景 | 无 |
-
-**推荐 Store 结构：**
-
-```
-src/stores/
-├── index.ts                    # 统一导出
-└── modules/
-    ├── wallpaper/
-    │   ├── index.ts            # Store 组装
-    │   ├── state.ts            # 状态定义
-    │   ├── getters.ts          # 计算属性（新增）
-    │   ├── actions.ts          # 业务逻辑
-    │   └── repository.ts       # 数据访问（重命名 storage.ts）
-    └── download/
-        └── index.ts
-```
-
-### 4.3 可选优化
-
-| 改进项 | 复杂度 | 说明 | 依赖 |
-|--------|--------|------|------|
-| **Store 持久化插件** | 中 | 使用 pinia-plugin-persistedstate 替代手动持久化 | 无 |
-| **状态快照/回滚** | 高 | 支持操作撤销，当前场景不需要 | 无 |
-| **Store 分片** | 高 | 超大规模状态才需要，当前规模无需 | 无 |
-
-### 4.4 反模式
-
-| 做法 | 原因 |
-|------|------|
-| Store 之间直接调用 | 应通过事件或 composable 协调 |
-| 在 Store 中处理 UI 逻辑 | 如 showAlert，应由组件处理 |
-| 过度细分 Store | 增加维护成本，当前模块划分合理 |
-| 直接修改 state（非 action） | 破坏响应式追踪 |
+| 风险 | 概率 | 影响 | 缓解措施 |
+|------|------|------|---------|
+| Wallhaven 不支持 Range | 低 | 高 | 首次下载时检测，不支持则降级 |
+| 临时文件损坏 | 中 | 中 | 恢复时校验文件大小，异常则重新下载 |
+| 进度持久化失败 | 低 | 中 | 多重保存机制，失败时提示用户 |
+| 应用崩溃时数据不一致 | 低 | 中 | 恢复时校验数据完整性 |
 
 ---
 
-## 五、其他架构改进
+## 八、Wallhaven 服务器兼容性验证
 
-### 5.1 基础必备
+**需要验证的问题：**
+1. Wallhaven 是否支持 HTTP Range 请求？
+2. Wallhaven 是否返回 Accept-Ranges 头？
+3. Wallhaven 是否提供 ETag 或 Last-Modified？
 
-| 改进项 | 分类 | 复杂度 | 说明 |
-|--------|------|--------|------|
-| **添加 Vue Error Boundary** | 鲁棒性 | 中 | 防止组件错误导致整应用崩溃 |
-| **全局错误处理器** | 鲁棒性 | 低 | 处理未捕获的 Promise rejection |
+**验证方法：**
+```bash
+curl -I https://w.wallhaven.cc/full/xx/wallhaven-xxxxxx.jpg
+```
 
-### 5.2 推荐改进
+**预期结果：**
+```
+Accept-Ranges: bytes
+ETag: "xxxxx"
+```
 
-| 改进项 | 分类 | 复杂度 | 说明 |
-|--------|------|--------|------|
-| **路由懒加载** | 性能 | 低 | 当前路由未使用动态导入 |
-| **清理死代码** | 可维护性 | 低 | 移除 Test/Demo 组件 |
-| **统一错误类型** | 鲁棒性 | 低 | 定义 AppError 类型体系 |
-
-### 5.3 可选优化
-
-| 改进项 | 分类 | 复杂度 | 说明 |
-|--------|------|--------|------|
-| **虚拟滚动** | 性能 | 高 | 大列表优化，当前分页实现已足够 |
-| **代码分割策略** | 性能 | 中 | 路由级分割后评估需求 |
-| **JSDoc 注释** | 文档 | 低 | 逐步补充核心函数注释 |
-
-### 5.4 反模式
-
-| 做法 | 原因 |
-|------|------|
-| 引入额外的状态管理库 | Pinia 已足够，无需 Zustand/Jotai 等 |
-| 创建「上帝类」Service | 服务应按职责拆分 |
-| 过度使用 provide/inject | 增加 debug 难度，优先 props/emit |
-| 为重构而重构的抽象 | 每个抽象应有明确使用场景 |
+如果支持，断点续传可行；如果不支持，需要降级处理。
 
 ---
 
-## 六、实施路线图
+## 九、实施建议
 
-### 阶段 1：基础必备（预计 2-3 天）
+### 9.1 最小可行实现（MVP）
 
-```
-□ 创建 useAlert composable
-□ 消除 Store 中的 any 类型
-□ 添加全局错误处理器
-□ 统一 Store 类型导出
-```
+第一阶段聚焦核心功能：
+1. ✅ Range 请求支持
+2. ✅ 暂停时保留临时文件
+3. ✅ 恢复时从断点继续
+4. ✅ 基础 UI 反馈
 
-### 阶段 2：核心重构（预计 3-5 天）
+### 9.2 后续迭代
 
-```
-□ 拆分 IPC handlers（依赖阶段 1 完成）
-□ 创建 ElectronService
-□ 分离 Store 数据访问层
-□ 添加 Vue Error Boundary
-```
-
-### 阶段 3：质量提升（预计 2-3 天）
-
-```
-□ IPC 消息类型定义
-□ Preload 类型同步
-□ 路由懒加载
-□ 清理死代码
-```
-
-### 阶段 4：可选优化（按需）
-
-```
-□ 创建其他 composables
-□ Mock 服务实现
-□ JSDoc 注释补充
-```
+第二阶段增强：
+1. 进度持久化
+2. 应用重启恢复
+3. 网络中断自动恢复
+4. 完整的错误处理
 
 ---
 
-## 七、依赖关系图
+## 十、结论
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         阶段 1：基础必备                          │
-├─────────────────────────────────────────────────────────────────┤
-│  useAlert ◄──────────────────────────────────────────────────┐  │
-│  Store 类型修复                                               │  │
-│  全局错误处理器                                               │  │
-└─────────────────────────────────────────────────────────────────┘  │
-                              ↓                                      │
-┌─────────────────────────────────────────────────────────────────┐  │
-│                         阶段 2：核心重构                          │  │
-├─────────────────────────────────────────────────────────────────┤  │
-│  IPC handlers 拆分 ──────────► ElectronService                  │  │
-│         │                           │                           │  │
-│         ↓                           ↓                           │  │
-│  IPC 类型定义 ◄──────────── Store Repository 重构 ── useAlert ──┘  │
-│                                   │                              │
-│                                   ↓                              │
-│                         Vue Error Boundary                       │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                         阶段 3：质量提升                          │
-├─────────────────────────────────────────────────────────────────┤
-│  路由懒加载 ◄──── Preload 类型同步 ◄──── IPC 类型定义            │
-│  清理死代码                                                      │
-│  错误响应标准化                                                   │
-└─────────────────────────────────────────────────────────────────┘
-```
+断点续传功能的核心是 **HTTP Range 请求 + 临时文件保留**，复杂度中等。
+
+**推荐实施路径：**
+1. 先验证 Wallhaven 服务器是否支持 Range
+2. 实现 MVP（暂停/恢复断点续传）
+3. 添加持久化（应用重启恢复）
+4. 完善错误处理和边界情况
+
+**关键成功因素：**
+- 服务器支持 Range（需验证）
+- 临时文件管理正确
+- 进度数据一致性
 
 ---
 
-## 八、风险评估
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|----------|
-| IPC 拆分后遗漏注册 | 高 | 在 index.ts 统一导入，添加完整性测试 |
-| Store 重构破坏持久化 | 高 | 保持向后兼容的存储格式，添加迁移逻辑 |
-| Service 层引入 bug | 中 | 保持简单封装，不改变原有逻辑 |
-| Composable 状态混乱 | 低 | 明确作用域，避免全局状态 |
-
----
-
-## 九、验收标准
-
-### 阶段验收
-
-- [ ] 所有现有功能正常运行
-- [ ] 无 any 类型新增
-- [ ] ESLint/TSC 无错误
-- [ ] 构建产物大小无明显增长
-
-### 最终验收
-
-- [ ] IPC handlers 文件均 < 200 行
-- [ ] 无重复代码块 > 10 行
-- [ ] Store 与 Electron API 无直接耦合
-- [ ] Alert 等通用逻辑可复用
-
----
-
-*创建时间：2025-04-25*
-*基于：CONCERNS.md、CONVENTIONS.md、PROJECT.md 分析结果*
+*创建时间：2026-04-26*
+*研究范围：v2.1 下载断点续传功能*

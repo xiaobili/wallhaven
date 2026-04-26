@@ -1,74 +1,57 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: 架构重构
-status: complete
-last_updated: "2026-04-26T15:00:00.000Z"
+milestone: v2.1
+milestone_name: 下载断点续传
+status: planning
+last_updated: "2026-04-26T16:00:00.000Z"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 35
-  completed_plans: 35
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-26
-> 当前阶段：里程碑完成
-> 项目状态：✅ 完成
+> 当前阶段：里程碑规划
+> 项目状态：◆ 规划中
 
 ---
 
-## 项目参考
+## Project Reference
 
 参见：.planning/PROJECT.md (更新于 2026-04-26)
 
-**核心价值**：外观行为零感知，内部架构大升级
-**当前焦点**：v2.0 里程碑已完成，可开始下一里程碑规划
+**Core value**：断点续传，下载无忧 — 大文件下载不再担心中断，随时随地暂停恢复
+**Current focus**：v2.1 里程碑规划中
 
 ---
 
-## 里程碑状态
+## Current Position
 
-**v2.0 架构重构** — ✅ SHIPPED 2026-04-26
-
-| 阶段 | 名称 | 状态 | 进度 | 完成时间 |
-|------|------|------|------|----------|
-| 1 | 基础设施与类型安全 | ✅ 完成 | 6/6 | 2025-04-25 |
-| 2 | 数据层抽象 | ✅ 完成 | 8/8 | 2025-04-25 |
-| 3 | 业务层与组合层 | ✅ 完成 | 8/8 | 2025-04-25 |
-| 4 | IPC 模块化重构 | ✅ 完成 | 6/6 | 2026-04-26 |
-| 5 | 表现层重构与清理 | ✅ 完成 | 7/7 | 2026-04-26 |
-
-**总进度**：35/35 (100%)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-26 — Milestone v2.1 下载断点续传 started
 
 ---
 
-## 关键成果
+## Accumulated Context
 
-1. **类型安全** — 消除 60+ 处 `any` 类型，建立完整类型定义体系
-2. **错误处理** — 全局错误处理器 + 组件级 ErrorBoundary
-3. **分层架构** — Client → Repository → Service → Composable → View
-4. **IPC 模块化** — 866 行单文件拆分为 8 个独立 handler
-5. **代码复用** — useAlert 消除 76 行重复代码
-6. **死代码清理** — 删除 5 个测试/演示文件
+### Decisions
+(None yet for this milestone)
 
----
+### Blockers
+(None)
 
-## 已知问题
+### Todos
+(None)
 
-| 问题 | 状态 | 说明 |
-|------|------|------|
-| Phase 2 缺少 VERIFICATION.md | 已知 | 文档缺口，非实现问题 |
-| electron.client.ts 类型错误 | 已知 | 预存在问题，非阻塞 |
-
----
-
-## 下一步
-
-运行 `/gsd-new-milestone` 开始规划下一里程碑。
+### Roadmap Evolution
+- 2026-04-26: Milestone v2.1 下载断点续传 started
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 v2.0 里程碑完成*
+*最后更新：2026-04-26 v2.1 里程碑启动*

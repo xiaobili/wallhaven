@@ -32,7 +32,7 @@
      READ_DIRECTORY: 'read-directory',
      // ...
    } as const
-   
+
    export type IpcChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS]
    ```
 3. 在 preload 中添加通道名称验证，拒绝未知的通道调用
@@ -69,7 +69,7 @@
    export interface ReadDirectoryRequest {
      dirPath: string
    }
-   
+
    export interface ReadDirectoryResponse {
      error: string | null
      files: FileDetail[]
@@ -107,7 +107,7 @@ removeDownloadProgressListener: (callback: (data: any) => void) => {
    onMounted(() => {
      window.electronAPI.onDownloadProgress(handleProgress)
    })
-   
+
    onUnmounted(() => {
      window.electronAPI.removeDownloadProgressListener(handleProgress)
    })
@@ -187,7 +187,7 @@ const totalPageData = shallowRef<TotalPageData>({
    ```typescript
    // 错误：不会触发更新
    totalPageData.value.currentPage = 5
-   
+
    // 正确：创建新对象
    totalPageData.value = {
      ...totalPageData.value,
@@ -230,7 +230,7 @@ const startDownload = async (id: string): Promise<void> => {
      startDownloadTask(params: DownloadParams): Promise<DownloadResult>
      // ...
    }
-   
+
    export const electronService: IElectronService = {
      selectFolder: () => window.electronAPI.selectFolder(),
      // ...
@@ -311,7 +311,7 @@ if (finishedList.value.length > 50) {
 1. 将限制值提取为可配置常量：
    ```typescript
    const MAX_FINISHED_ITEMS = 50
-   
+
    if (finishedList.value.length > MAX_FINISHED_ITEMS) {
      finishedList.value = finishedList.value.slice(0, MAX_FINISHED_ITEMS)
    }
@@ -350,11 +350,11 @@ if (finishedList.value.length > 50) {
        // ...
      }
    }
-   
+
    // 第二步：定义具体类型并添加类型守卫
    function isWallpaperItem(data: unknown): data is WallpaperItem {
-     return typeof data === 'object' 
-       && data !== null 
+     return typeof data === 'object'
+       && data !== null
        && 'id' in data
        && 'path' in data
    }
@@ -464,7 +464,7 @@ storeGet: (key: string) => {
      loading: boolean
    }
    const props = defineProps<Props>()
-   
+
    // 或使用 withDefaults
    const props = withDefaults(defineProps<Props>(), {
      loading: false
@@ -629,14 +629,14 @@ const finalParams = params
        message: '',
        duration: 3000
      })
-     
+
      const showAlert = (message: string, type: AlertType = 'info', duration = 3000) => {
        alert.message = message
        alert.type = type
        alert.duration = duration
        alert.visible = true
      }
-     
+
      return { alert, showAlert }
    }
    ```
@@ -671,7 +671,7 @@ if (typeof window === 'undefined' || !window.electronAPI) {
    export function isElectronEnv(): boolean {
      return typeof window !== 'undefined' && !!window.electronAPI
    }
-   
+
    export function getElectronAPI(): ElectronAPI | null {
      return isElectronEnv() ? window.electronAPI : null
    }
@@ -708,6 +708,392 @@ const plainValue = JSON.parse(JSON.stringify(value))
 3. 在服务层统一处理此转换
 
 **阶段映射**：阶段 1（服务层抽象）
+
+---
+
+## 6. 断点续传功能陷阱（v2.1 里程碑）
+
+> 研究：在现有 Electron 应用中添加断点续传功能时可能遇到的问题
+
+### 研究背景
+
+**当前里程碑**: v2.1 下载断点续传
+**目标**: 为现有下载功能添加断点续传能力
+
+**当前实现状态**:
+- 现有下载功能使用 `axios` + `stream` 流式下载
+- 支持暂停/取消功能，使用 `AbortController` 实现
+- 暂停后恢复会**重新开始下载**，不支持断点续传
+- 临时文件命名为 `.download` 后缀，但暂停时会被删除
+
+---
+
+### 6.1 文件损坏风险（File Corruption During Partial Writes）
+
+**陷阱描述**: 暂停下载时，临时文件可能处于不完整状态。如果写入流未正确关闭，文件可能损坏。
+
+**当前代码风险点** (`download.handler.ts:194-225`):
+```typescript
+const writer = fs.createWriteStream(tempPath)
+// ... 流式写入
+await streamPipeline(response.data, writer)
+```
+
+**潜在问题**:
+- `streamPipeline` 在 abort 时可能留下不完整文件
+- 未使用 `flags: 'a'` 追加模式，恢复时无法续写
+- 没有文件完整性校验机制
+
+**警告信号**:
+- 恢复下载后文件大小异常
+- 图片无法打开或显示损坏
+- 文件大小与预期不符
+
+**预防策略**:
+1. 使用追加写入模式 `fs.createWriteStream(tempPath, { flags: 'a' })`
+2. 记录已下载字节数，恢复时验证临时文件大小
+3. 实现文件哈希校验（如 ETag/Content-MD5）
+4. 写入完成后进行原子重命名（当前已实现）
+
+**应对阶段**: 阶段 1 - 断点续传核心实现
+
+---
+
+### 6.2 服务器不支持 Range 请求（Server Range Support）
+
+**陷阱描述**: 并非所有服务器都支持 HTTP Range 请求头，断点续传依赖服务器返回 `206 Partial Content`。
+
+**Wallhaven API 情况**:
+- Wallhaven 图片服务器（CDN）通常支持 Range 请求
+- 但第三方图床链接可能不支持
+
+**当前代码缺失**:
+```typescript
+// 当前实现未检查服务器是否支持 Range
+const response = await axios({
+  method: 'GET',
+  url,
+  // 缺少 Range 头设置
+})
+```
+
+**警告信号**:
+- 恢复下载时服务器返回 200 而非 206
+- 下载进度超过 100%
+- 文件大小与预期不符
+
+**预防策略**:
+1. 下载前发送 HEAD 请求检查 `Accept-Ranges: bytes` 响应头
+2. 如不支持 Range，标记任务为"不支持续传"，暂停后只能重新下载
+3. 缓存服务器能力信息，避免重复检查
+4. 用户界面提示哪些任务支持续传
+
+**检测逻辑**:
+```typescript
+async function checkRangeSupport(url: string): Promise<boolean> {
+  const response = await axios.head(url)
+  return response.headers['accept-ranges'] === 'bytes'
+}
+```
+
+**应对阶段**: 阶段 1 - 断点续传核心实现
+
+---
+
+### 6.3 服务器文件变更（File Changed Between Pause and Resume）
+
+**陷阱描述**: 暂停期间服务器上的文件可能已更新，恢复下载会导致文件内容混乱。
+
+**检测方法**:
+- 比较 `Content-Length` 是否变化
+- 使用 ETag 或 Last-Modified 头验证
+
+**当前代码缺失**:
+```typescript
+const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+// 未保存 ETag 或 Last-Modified
+```
+
+**警告信号**:
+- 恢复下载后图片显示异常
+- 文件大小与实际内容不匹配
+- 图片部分区域显示错误
+
+**预防策略**:
+1. 首次下载时保存 `ETag` 和 `Last-Modified` 头
+2. 恢复下载时发送条件请求 `If-Match` 或 `If-Unmodified-Since`
+3. 如果验证失败，提示用户文件已更新，需重新下载
+4. 将元数据存储在持久化存储中
+
+**存储结构建议**:
+```typescript
+interface DownloadMetadata {
+  taskId: string
+  url: string
+  etag?: string
+  lastModified?: string
+  contentLength: number
+  downloadedBytes: number
+  tempPath: string
+}
+```
+
+**应对阶段**: 阶段 2 - 进度持久化
+
+---
+
+### 6.4 临时文件清理问题（Temp File Cleanup Issues）
+
+**陷阱描述**: 临时文件可能因为各种原因未被正确清理，占用磁盘空间。
+
+**当前实现问题** (`download.handler.ts:39-52`):
+```typescript
+function cleanupDownload(taskId: string): void {
+  // 暂停时也会删除临时文件！
+  if (fs.existsSync(download.tempPath)) {
+    fs.unlinkSync(download.tempPath) // 这会阻止续传
+  }
+}
+```
+
+**风险场景**:
+- 应用崩溃时临时文件残留
+- 暂停后取消任务，临时文件可能残留
+- 磁盘空间不足时无法创建新文件
+
+**警告信号**:
+- 下载目录存在大量 `.download` 文件
+- 磁盘空间异常占用
+- 恢复下载失败找不到临时文件
+
+**预防策略**:
+1. 暂停时**保留**临时文件，仅取消时删除
+2. 应用启动时扫描并清理孤立临时文件（超过一定时间）
+3. 提供手动清理功能
+4. 设置临时文件过期时间（如 7 天）
+
+**清理策略**:
+```typescript
+// 应用启动时清理孤立临时文件
+function cleanOrphanedTempFiles(downloadDir: string): void {
+  const files = fs.readdirSync(downloadDir)
+  const now = Date.now()
+
+  files
+    .filter(f => f.endsWith('.download'))
+    .forEach(f => {
+      const stat = fs.statSync(path.join(downloadDir, f))
+      const age = now - stat.mtimeMs
+      // 清理超过 7 天的临时文件
+      if (age > 7 * 24 * 60 * 60 * 1000) {
+        fs.unlinkSync(path.join(downloadDir, f))
+      }
+    })
+}
+```
+
+**应对阶段**: 阶段 2 - 进度持久化
+
+---
+
+### 6.5 状态持久化竞态条件（State Persistence Race Conditions）
+
+**陷阱描述**: 多进程/多线程环境下，状态持久化可能导致数据不一致。
+
+**当前架构风险**:
+- `downloadRepository` 和 `downloadStore` 可能同时更新
+- `finishedList` 和 `downloadingList` 存储在不同位置
+- 缺少持久化任务状态（重启后丢失）
+
+**当前存储状态**:
+- `downloadingList`: 仅在内存（Pinia Store）
+- `finishedList`: 持久化到 `electron-store`
+- 断点续传需要持久化进行中任务
+
+**警告信号**:
+- 重启应用后下载进度丢失
+- 同一任务多个副本
+- 进度数据不一致
+
+**预防策略**:
+1. 使用单一数据源原则，统一持久化入口
+2. 实现原子写入，避免部分更新
+3. 添加版本号和校验和
+4. 使用文件锁或队列机制防止并发写入
+
+**持久化策略**:
+```typescript
+interface PersistedDownloadState {
+  version: number
+  tasks: DownloadItem[]
+  metadata: Map<string, DownloadMetadata>
+  lastUpdated: string
+}
+```
+
+**应对阶段**: 阶段 2 - 进度持久化
+
+---
+
+### 6.6 流处理内存泄漏（Memory Leaks from Incomplete Stream Handling）
+
+**陷阱描述**: 下载中断时，如果流未正确关闭，会导致内存泄漏和文件句柄泄漏。
+
+**当前实现风险** (`download.handler.ts:194-225`):
+```typescript
+const writer = fs.createWriteStream(tempPath)
+response.data.on('data', ...)
+await streamPipeline(response.data, writer)
+```
+
+**风险点**:
+- `AbortError` 发生时，事件监听器可能未移除
+- `response.data.on('data', ...)` 监听器未显式移除
+- 异常路径下可能留下打开的文件句柄
+
+**警告信号**:
+- 长时间运行后内存占用持续上升
+- 文件句柄数不断增加
+- 控制台出现 `EMFILE` 错误
+
+**预防策略**:
+1. 使用 `pipeline()` 而非手动 pipe（当前已使用）
+2. 在 finally 块中清理所有事件监听器
+3. 使用 `destroy()` 方法确保流完全关闭
+4. 添加超时机制防止无限等待
+
+**安全的流处理**:
+```typescript
+try {
+  const response = await axios({ ... })
+  const writer = fs.createWriteStream(tempPath, { flags: 'a' })
+
+  // 设置超时
+  const timeout = setTimeout(() => {
+    writer.destroy(new Error('Write timeout'))
+  }, 30000)
+
+  try {
+    await pipeline(response.data, writer)
+  } finally {
+    clearTimeout(timeout)
+    response.data.destroy()
+    writer.destroy()
+  }
+} catch (error) {
+  // 确保清理
+  if (response?.data) response.data.destroy()
+  if (writer) writer.destroy()
+}
+```
+
+**应对阶段**: 阶段 1 - 断点续传核心实现
+
+---
+
+### 6.7 应用崩溃时的写入操作（App Crash During Write Operations）
+
+**陷阱描述**: 应用崩溃时，正在进行的写入操作可能导致文件损坏或数据丢失。
+
+**崩溃场景**:
+- 用户强制退出应用
+- 系统崩溃或断电
+- 渲染进程崩溃
+- 主进程崩溃
+
+**当前实现风险**:
+- 进度数据仅在内存，崩溃后丢失
+- 临时文件可能处于不一致状态
+- 重启后无法恢复下载
+
+**警告信号**:
+- 重启应用后下载任务消失
+- 临时文件存在但无法恢复
+- 进度显示异常
+
+**预防策略**:
+1. 实现定期持久化进度（如每 1MB 或每 5 秒）
+2. 使用原子写入模式（先写临时文件，再重命名）
+3. 应用启动时检查并恢复未完成任务
+4. 实现写前日志（WAL）或检查点机制
+
+**恢复策略**:
+```typescript
+// 应用启动时
+async function recoverDownloads(): Promise<void> {
+  const persisted = await loadPersistedDownloads()
+
+  for (const task of persisted.tasks) {
+    // 验证临时文件
+    if (fs.existsSync(task.tempPath)) {
+      const actualSize = fs.statSync(task.tempPath).size
+      if (actualSize === task.downloadedBytes) {
+        // 恢复下载
+        resumeDownload(task)
+      } else {
+        // 文件不一致，需要重新下载
+        task.state = 'failed'
+      }
+    } else {
+      // 临时文件丢失，需要重新下载
+      task.state = 'failed'
+    }
+  }
+}
+```
+
+**应对阶段**: 阶段 2 - 进度持久化
+
+---
+
+### 断点续传风险矩阵
+
+| 陷阱 | 影响程度 | 发生概率 | 检测难度 | 应对阶段 |
+|------|---------|---------|---------|---------|
+| 文件损坏 | 高 | 中 | 中 | 阶段 1 |
+| 服务器不支持 Range | 中 | 低 | 低 | 阶段 1 |
+| 服务器文件变更 | 高 | 低 | 中 | 阶段 2 |
+| 临时文件清理 | 低 | 高 | 低 | 阶段 2 |
+| 状态竞态条件 | 高 | 低 | 高 | 阶段 2 |
+| 流内存泄漏 | 中 | 中 | 高 | 阶段 1 |
+| 崩溃写入问题 | 高 | 低 | 中 | 阶段 2 |
+
+---
+
+### 断点续传预防检查清单
+
+#### 阶段 1: 断点续传核心
+
+- [ ] 检查服务器 Range 支持（HEAD 请求）
+- [ ] 实现追加写入模式
+- [ ] 正确处理 AbortError 清理流
+- [ ] 保存和验证 Content-Length
+- [ ] 错误处理：不支持续传时提示用户
+
+#### 阶段 2: 进度持久化
+
+- [ ] 设计持久化数据结构
+- [ ] 实现定期进度保存
+- [ ] 应用启动时恢复未完成任务
+- [ ] 清理孤立临时文件
+- [ ] 验证临时文件完整性
+
+#### 测试验证
+
+- [ ] 单元测试：Range 请求构建
+- [ ] 集成测试：暂停/恢复流程
+- [ ] 边界测试：服务器不支持 Range
+- [ ] 压力测试：多任务并行下载
+- [ ] 恢复测试：应用崩溃后重启
+
+---
+
+### 断点续传参考资料
+
+- [HTTP Range Requests - MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
+- [Electron net Module](https://www.electronjs.org/docs/latest/api/net)
+- [Node.js Stream Best Practices](https://nodejs.org/api/stream.html)
+- [Handling Aborted Requests in Axios](https://axios-http.com/docs/cancellation)
 
 ---
 
@@ -754,3 +1140,4 @@ const plainValue = JSON.parse(JSON.stringify(value))
 
 *创建时间：2025-04-25*
 *基于项目代码库分析生成*
+*更新时间：2026-04-26 - 新增断点续传陷阱（v2.1 里程碑）*

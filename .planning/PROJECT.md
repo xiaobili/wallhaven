@@ -1,20 +1,25 @@
-# Wallhaven 壁纸浏览器 — 架构重构项目
+# Wallhaven 壁纸浏览器 — 功能增强项目
 
-## 项目概述
+## What This Is
 
-这是一个针对现有 Wallhaven 壁纸浏览器应用的**纯重构项目**，目标是优化代码架构、增强可读性和鲁棒性，同时保持所有现有功能和用户体验不变。
+Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载应用。用户可以浏览 Wallhaven 在线壁纸库，将喜欢的壁纸下载到本地收藏。
 
-**项目已于 2026-04-26 完成 v2.0 里程碑。**
+## Core Value
 
-## 核心价值
+**断点续传，下载无忧** — 大文件下载不再担心中断，随时随地暂停恢复
 
-**外观行为零感知，内部架构大升级**
+## Current Milestone: v2.1 下载断点续传
 
-在不改变任何用户操作逻辑、界面布局、UI 显示的前提下，完成代码架构的全面优化，为未来功能扩展奠定坚实基础。
+**Goal:** 为下载功能添加完整的断点续传能力，用户中断后可从暂停点继续下载
 
-## 需求范围
+**Target features:**
+- 断点续传核心：暂停后恢复下载时从断点继续，而非重新开始
+- 进度持久化：应用重启后自动恢复未完成的下载任务
+- 暂停功能改进：改进现有暂停功能以支持断点续传
 
-### 已验证
+## Requirements
+
+### Validated
 
 以下需求已在 v2.0 里程碑中完成并验证：
 
@@ -27,9 +32,17 @@
 - ✓ 代码规范化 — 统一命名规范、清理死代码 (v2.0)
 - ✓ 文件组织优化 — 分层架构清晰 (v2.0)
 
-### 活跃
+### Active
 
-以下需求可在后续里程碑考虑：
+v2.1 里程碑需求：
+
+- [ ] 下载中断后可从断点继续下载（断点续传核心）
+- [ ] 应用重启后自动恢复未完成的下载任务（进度持久化）
+- [ ] 保留已下载的临时文件，支持恢复时追加写入
+
+### Future
+
+以下需求在后续里程碑考虑：
 
 - [ ] 为 Composables 添加单元测试
 - [ ] 为 Services 添加单元测试
@@ -39,10 +52,19 @@
 - [ ] 实现虚拟滚动
 - [ ] 代码分割优化
 
-### 超出范围
+### Out of Scope
+
+v2.1 里程碑排除范围：
 
 | 功能 | 原因 |
 |------|------|
+| 下载队列管理 | 当前仅聚焦断点续传，队列管理可后续迭代 |
+| 批量下载优化 | 非核心需求，可后续迭代 |
+| 下载限速功能 | 非核心需求，可后续迭代 |
+| 多线程下载 | 复杂度高，当前使用单线程流式下载 |
+
+v2.0 架构重构排除范围（已归档）：
+
 | 新功能开发 | 本次为纯重构项目 |
 | UI/UX 变更 | 保持用户体验一致 |
 | 性能优化 | 非本次重构重点，可在后续迭代 |
@@ -145,5 +167,25 @@
 - Pre-existing TypeScript errors in electron.client.ts and download.repository.ts (non-blocking)
 
 ---
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 v2.0 里程碑完成*
+*最后更新：2026-04-26 v2.1 里程碑启动*
