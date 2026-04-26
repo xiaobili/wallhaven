@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-26T15:19:00.000Z"
-last_activity: 2026-04-26 — Phase 7 complete (auto mode)
+last_updated: "2026-04-26T16:00:00.000Z"
+last_activity: 2026-04-26 — Phase 8 context gathered (auto mode)
 progress:
   total_phases: 9
   completed_phases: 7
@@ -33,9 +33,9 @@ progress:
 ## Current Position
 
 Phase: 8 - Renderer Integration
-Status: Ready to discuss
-Next: /gsd-discuss-phase 8
-Last activity: 2026-04-26 — Phase 7 complete (auto mode)
+Status: Context gathered, ready for planning
+Next: /gsd-plan-phase 8
+Last activity: 2026-04-26 — Phase 8 context gathered (auto mode)
 
 ---
 
@@ -67,17 +67,29 @@ Last activity: 2026-04-26 — Phase 7 complete (auto mode)
 - D-07: 基础验证深度，复杂业务验证留给 Phase 7
 - D-08: 复用并扩展 IpcErrorInfo 错误结构
 
+### Phase 8 Decisions (carried forward)
+
+- D-01: resumeDownload() 方法包装 IPC 调用，透传错误
+- D-02: getPendingDownloads() 方法直接调用 electronClient
+- D-03: 应用启动自动恢复策略（静默添加到列表）
+- D-04: 恢复任务去重逻辑（检查 taskId）
+- D-05: PendingDownload 到 DownloadItem 字段映射
+- D-06: 修改现有 resumeDownload 方法支持断点续传
+- D-07: 进度处理复用现有 handleProgress 逻辑
+- D-08: UI 复用现有进度条显示
+- D-09: 恢复失败调用 showError 显示错误消息
+
 ### Blockers
 
 (None)
 
 ### Todos
 
-- Phase 7: Implement Range request support
-- Phase 7: Implement state persistence
-- Phase 7: Modify pause handler to preserve temp file
-- Phase 7: Implement resume-download-task handler
-- Phase 7: Implement get-pending-downloads handler
+- Phase 8: Add resumeDownload() method to DownloadService
+- Phase 8: Add getPendingDownloads() method to DownloadService
+- Phase 8: Update useDownload composable with resume functionality
+- Phase 8: Implement auto-restore of pending downloads on app mount
+- Phase 8: Add UI state handling for resumed downloads
 
 ### Roadmap Evolution
 
@@ -87,14 +99,16 @@ Last activity: 2026-04-26 — Phase 7 complete (auto mode)
 - 2026-04-26: Phase 6 executed (9/9 tasks complete)
 - 2026-04-26: Phase 7 context gathered (auto mode)
 - 2026-04-26: Phase 7 planned (4 tasks, 2 waves)
+- 2026-04-26: Phase 7 executed (4/4 tasks complete)
+- 2026-04-26: Phase 8 context gathered (auto mode)
 
 ---
 
 ## Resume File
 
-`.planning/phases/07-main-process-implementation/07-CONTEXT.md`
+`.planning/phases/08-renderer-integration/08-CONTEXT.md`
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 Phase 7 context gathered*
+*最后更新：2026-04-26 Phase 8 context gathered*
