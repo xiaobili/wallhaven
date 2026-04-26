@@ -7,6 +7,7 @@ import { ipcMain, BrowserWindow } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { logHandler } from './base'
+import { IPC_CHANNELS } from '../../../../src/shared/types/ipc'
 
 export function registerCacheHandlers(): void {
   /**
@@ -138,6 +139,89 @@ export function registerCacheHandlers(): void {
         success: false,
         error: error.message,
         info: { thumbnailsCount: 0, tempFilesCount: 0 },
+      }
+    }
+  })
+
+  /**
+   * 清理孤儿临时文件
+   * 删除超过 7 天的 .download 和 .download.json 文件
+   */
+  ipcMain.handle(IPC_CHANNELS.CLEANUP_ORPHAN_FILES, async (_event, downloadPath: string) => {
+    try {
+      // Constants
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+      const now = Date.now()
+
+      const results = {
+        filesDeleted: 0,
+        stateFilesDeleted: 0,
+        errors: [] as string[],
+      }
+
+      // Validation: download path exists
+      if (!downloadPath || !fs.existsSync(downloadPath)) {
+        return { success: true, ...results }
+      }
+
+      // Scan for .download files
+      const files = fs.readdirSync(downloadPath)
+      const downloadFiles = files.filter(f => f.endsWith('.download'))
+
+      for (const downloadFile of downloadFiles) {
+        const tempPath = path.join(downloadPath, downloadFile)
+        const statePath = tempPath + '.json'
+
+        try {
+          const stat = fs.statSync(tempPath)
+          const fileAge = now - stat.mtimeMs
+
+          // Check if state file exists
+          const stateExists = fs.existsSync(statePath)
+          let shouldDelete = false
+
+          if (stateExists) {
+            // Parse state file to check updatedAt
+            const content = fs.readFileSync(statePath, 'utf-8')
+            const state = JSON.parse(content)
+            const updatedAt = new Date(state.updatedAt).getTime()
+            const stateAge = now - updatedAt
+
+            if (stateAge > SEVEN_DAYS_MS) {
+              shouldDelete = true
+            }
+          } else {
+            // No state file, check temp file age
+            if (fileAge > SEVEN_DAYS_MS) {
+              shouldDelete = true
+            }
+          }
+
+          if (shouldDelete) {
+            // Delete temp file
+            fs.unlinkSync(tempPath)
+            results.filesDeleted++
+            logHandler('cleanup-orphan-files', `Deleted orphan temp file: ${downloadFile}`)
+
+            // Delete state file if exists
+            if (stateExists) {
+              fs.unlinkSync(statePath)
+              results.stateFilesDeleted++
+            }
+          }
+        } catch (error: any) {
+          results.errors.push(`Error processing ${downloadFile}: ${error.message}`)
+        }
+      }
+
+      return { success: true, ...results }
+    } catch (error: any) {
+      logHandler('cleanup-orphan-files', `Cleanup failed: ${error.message}`, 'error')
+      return {
+        success: false,
+        filesDeleted: 0,
+        stateFilesDeleted: 0,
+        errors: [error.message],
       }
     }
   })

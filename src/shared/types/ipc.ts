@@ -53,6 +53,9 @@ export const IPC_CHANNELS = {
   // 缓存管理
   CLEAR_APP_CACHE: 'clear-app-cache',
   GET_CACHE_INFO: 'get-cache-info',
+
+  // 孤儿文件清理
+  CLEANUP_ORPHAN_FILES: 'cleanup-orphan-files',
 } as const
 
 // ==================== IPC 响应类型 ====================
@@ -318,6 +321,16 @@ export interface ClearCacheResponse {
   tempFilesDeleted: number
   errors?: string[]
   error?: string
+}
+
+/**
+ * 清理孤儿文件响应
+ */
+export interface CleanupOrphanFilesResponse {
+  success: boolean
+  filesDeleted: number
+  stateFilesDeleted: number
+  errors?: string[]
 }
 
 // ==================== 类型守卫 ====================

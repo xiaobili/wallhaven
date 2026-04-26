@@ -69,6 +69,11 @@ async function initializeApp() {
 
   await useSettings().load()
   await useDownload().loadHistory()
+
+  // 清理孤儿临时文件（在恢复待处理下载之前）
+  await useDownload().cleanupOrphanFiles()
+
+  // 恢复待处理的下载任务
   await useDownload().restorePendingDownloads()
   console.log('[Main] 应用初始化完成，已从 electron-store 加载数据，并恢复待处理下载任务')
 

@@ -221,6 +221,22 @@ class DownloadServiceImpl {
   async clearFinishedRecords(): Promise<IpcResponse<void>> {
     return downloadRepository.clear()
   }
+
+  /**
+   * 清理孤儿临时文件
+   * 删除超过 7 天的临时文件和状态文件
+   */
+  async cleanupOrphanFiles(): Promise<IpcResponse<{ filesDeleted: number; stateFilesDeleted: number }>> {
+    // 获取下载目录
+    const pathResult = await this.getDownloadPath()
+
+    if (!pathResult.success || !pathResult.data) {
+      // No download path configured, nothing to clean
+      return { success: true, data: { filesDeleted: 0, stateFilesDeleted: 0 } }
+    }
+
+    return electronClient.cleanupOrphanFiles(pathResult.data)
+  }
 }
 
 export const downloadService = new DownloadServiceImpl()

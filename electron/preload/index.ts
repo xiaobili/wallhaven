@@ -92,6 +92,14 @@ export interface ElectronAPI {
     error?: string
   }>
 
+  // 孤儿文件清理
+  cleanupOrphanFiles: (downloadPath: string) => Promise<{
+    success: boolean
+    filesDeleted: number
+    stateFilesDeleted: number
+    errors?: string[]
+  }>
+
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void
@@ -234,6 +242,12 @@ const electronAPI: ElectronAPI = {
   getCacheInfo: (downloadPath?: string) => {
     console.log('[Preload] getCacheInfo called, downloadPath:', downloadPath)
     return ipcRenderer.invoke(IPC_CHANNELS.GET_CACHE_INFO, downloadPath)
+  },
+
+  // 孤儿文件清理
+  cleanupOrphanFiles: (downloadPath: string) => {
+    console.log('[Preload] cleanupOrphanFiles called, downloadPath:', downloadPath)
+    return ipcRenderer.invoke(IPC_CHANNELS.CLEANUP_ORPHAN_FILES, downloadPath)
   },
 
   // 通用IPC通信（保留示例功能）

@@ -712,6 +712,40 @@ class ElectronClientImpl {
       }
     }
   }
+
+  /**
+   * 清理孤儿临时文件
+   * 删除超过 7 天的临时文件和状态文件
+   */
+  async cleanupOrphanFiles(
+    downloadPath: string,
+  ): Promise<IpcResponse<{ filesDeleted: number; stateFilesDeleted: number }>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<{ filesDeleted: number; stateFilesDeleted: number }>()
+    }
+
+    try {
+      const result = await window.electronAPI.cleanupOrphanFiles(downloadPath)
+      if (result.success) {
+        return {
+          success: true,
+          data: {
+            filesDeleted: result.filesDeleted,
+            stateFilesDeleted: result.stateFilesDeleted,
+          },
+        }
+      }
+      return {
+        success: false,
+        error: { code: 'CLEANUP_ERROR', message: result.errors?.join('; ') || 'Cleanup failed' },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: { code: 'CLEANUP_ERROR', message: String(error) },
+      }
+    }
+  }
 }
 
 export const electronClient = new ElectronClientImpl()

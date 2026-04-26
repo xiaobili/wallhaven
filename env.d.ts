@@ -134,6 +134,14 @@ interface ElectronAPI {
     error?: string
   }>
 
+  // 孤儿文件清理
+  cleanupOrphanFiles: (downloadPath: string) => Promise<{
+    success: boolean
+    filesDeleted: number
+    stateFilesDeleted: number
+    errors?: string[]
+  }>
+
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void

@@ -58,6 +58,7 @@ export interface UseDownloadReturn {
   isDownloading: (wallpaperId: string) => boolean
   loadHistory: () => Promise<void>
   restorePendingDownloads: () => Promise<void>
+  cleanupOrphanFiles: () => Promise<void>
 }
 
 /**
@@ -388,6 +389,26 @@ export function useDownload(): UseDownloadReturn {
     }
   }
 
+  /**
+   * 清理孤儿临时文件
+   * 删除超过 7 天的临时文件和状态文件
+   */
+  const cleanupOrphanFiles = async (): Promise<void> => {
+    const result = await downloadService.cleanupOrphanFiles()
+    if (result.success && result.data) {
+      const { filesDeleted, stateFilesDeleted } = result.data
+      if (filesDeleted > 0 || stateFilesDeleted > 0) {
+        console.log(
+          '[useDownload] 已清理孤儿文件:',
+          filesDeleted,
+          '个临时文件,',
+          stateFilesDeleted,
+          '个状态文件',
+        )
+      }
+    }
+  }
+
   return {
     // 状态
     downloadingList: computed(() => store.downloadingList),
@@ -407,5 +428,6 @@ export function useDownload(): UseDownloadReturn {
     isDownloading,
     loadHistory,
     restorePendingDownloads,
+    cleanupOrphanFiles,
   }
 }
