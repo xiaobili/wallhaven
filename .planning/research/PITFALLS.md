@@ -1097,29 +1097,501 @@ async function recoverDownloads(): Promise<void> {
 
 ---
 
+## 7. Store-to-Composable 迁移陷阱（v2.2 里程碑）
+
+> 研究：将 views 中直接使用的 store 迁移到 composables 层时可能遇到的问题
+
+### 研究背景
+
+**当前里程碑**: v2.2 Store 分层迁移
+**目标**: 将 views 中直接使用的 store 全部迁移到 composables，强化 View → Composable → Store 分层架构
+
+**当前实现状态**:
+- 已有部分 composables：`useWallpaperList`, `useDownload`, `useSettings`, `useAlert`
+- 但 views 仍存在直接访问 store 的情况
+- 需要完成完整的抽象层迁移
+
+---
+
+### 7.1 迁移过程中破坏响应式
+
+**陷阱描述**: 在迁移过程中，computed 属性包装 store 状态时可能丢失响应式。
+
+**当前代码模式**（OnlineWallpaper.vue:38）:
+```vue
+<div v-if="wallpaperStore.error" class="error-container">
+```
+
+**迁移后正确模式**:
+```vue
+<!-- In composable -->
+const error = computed(() => store.error)
+
+<!-- In view -->
+<div v-if="error" class="error-container">
+```
+
+**常见错误**:
+```typescript
+// 错误：返回静态值，非响应式
+const error = store.error
+
+// 错误：双重 .value 导致响应式丢失
+const error = computed(() => store.error.value)
+```
+
+**警告信号**:
+- UI 不随 store 状态更新
+- 需要手动刷新才能看到变化
+- Vue DevTools 显示状态但视图不响应
+
+**预防策略**:
+1. 始终从 composables 返回 `ComputedRef`，不返回原始值
+2. 使用 `computed(() => store.property)` 模式保持一致
+3. 迁移后用 Vue DevTools 验证响应式
+
+**应对阶段**: 阶段 2（数据层抽象）— 验证所有 computed 返回值
+
+---
+
+### 7.2 状态访问模式不一致
+
+**陷阱描述**: 部分操作使用 composable，部分直接访问 store，导致状态管理混乱。
+
+**当前不一致模式**（OnlineWallpaper.vue）:
+```typescript
+// Composable 用于部分操作
+const { fetch: fetchWallpapers } = useWallpaperList()
+
+// 直接访问 store 用于其他操作
+const wallpaperStore = useWallpaperStore()
+const apiKey = computed(() => wallpaperStore.settings.apiKey)
+```
+
+**警告信号**:
+- 同一 store 的操作来自多个来源
+- 调试时难以追踪状态变更来源
+- 不同视图的相同功能实现不一致
+
+**预防策略**:
+1. 单个 store 的所有访问在单次原子提交中迁移
+2. 使用 TypeScript 接口强制 composable 返回类型
+3. 添加 ESLint 规则警告视图文件中的直接 store 导入
+
+**应对阶段**: 阶段 3（业务层）— 每个 store 的迁移必须完整
+
+---
+
+### 7.3 Composable 与 Store 重复状态
+
+**陷阱描述**: Composable 引入本地状态复制 store 状态，导致同步问题。
+
+**反模式**:
+```typescript
+export function useWallpaperList() {
+  const store = useWallpaperStore()
+
+  // 错误：重复的本地状态
+  const localWallpapers = ref<TotalPageData>({ ... })
+
+  // 同步逻辑变得复杂且容易出错
+  watch(() => store.totalPageData, (val) => {
+    localWallpapers.value = val
+  })
+}
+```
+
+**正确模式**（已在 useWallpaperList.ts:189 中实现）:
+```typescript
+export function useWallpaperList(): UseWallpaperListReturn {
+  const store = useWallpaperStore()
+
+  // 正确：从 store 计算，单一数据源
+  return {
+    wallpapers: computed(() => store.totalPageData),
+    loading: computed(() => store.loading),
+    // ...
+  }
+}
+```
+
+**预防策略**:
+1. Composables 不应持有重复状态
+2. 使用 computed 属性暴露 store 状态
+3. Store 保持单一数据源
+
+**应对阶段**: 阶段 2（数据层）— composable 审查时强制执行
+
+---
+
+### 7.4 生命周期钩子迁移遗漏
+
+**陷阱描述**: 事件监听器和订阅在视图中设置，但未随业务逻辑一起移动到 composables。
+
+**当前模式**（OnlineWallpaper.vue:111-123）:
+```typescript
+onActivated(() => {
+  window.addEventListener('scroll', throttledScrollEvent, { passive: true })
+})
+
+onDeactivated(() => {
+  window.removeEventListener('scroll', throttledScrollEvent)
+})
+```
+
+**风险**:
+- 如果滚动逻辑移到 composable 但生命周期钩子留在视图中
+- 事件监听器可能多次注册或未正确清理
+
+**正确模式**（useDownload.ts:119-130）:
+```typescript
+export function useDownload(): UseDownloadReturn {
+  let unsubscribe: (() => void) | null = null
+
+  // Composable 管理自己的生命周期
+  onMounted(() => {
+    unsubscribe = downloadService.onProgress(handleProgress)
+  })
+
+  onUnmounted(() => {
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
+    }
+  })
+}
+```
+
+**预防策略**:
+1. 迁移前审计视图中的所有生命周期钩子
+2. 将相关生命周期逻辑与业务逻辑一起移动
+3. 测试组件挂载/卸载周期
+
+**应对阶段**: 阶段 3（业务层）— 每个组件的生命周期审计
+
+---
+
+### 7.5 KeepAlive 缓存状态破坏
+
+**陷阱描述**: 使用 `<KeepAlive>` 的视图在 composable 模式变更时丢失缓存状态。
+
+**当前架构**（router/index.ts）:
+```vue
+<KeepAlive>
+  <router-view />
+</KeepAlive>
+```
+
+**缓存内容**: `OnlineWallpaper`, `LocalWallpaper`, `DownloadWallpaper` 组件实例
+
+**风险**:
+- Composables 在 `setup()` 内创建，是实例级的
+- Composable 中的状态不跨 KeepAlive 实例共享
+- 如果 store 状态被重置，所有缓存组件都会看到变化
+
+**常见错误**:
+```typescript
+// 在 composable 中
+const localCache = ref<TotalPageData>({ ... })  // 错误：实例级
+
+// Store 状态是共享的，本地 composable 状态不是
+```
+
+**预防策略**:
+1. 所有共享状态必须保留在 Pinia stores 中
+2. Composables 不应本地缓存 store 数据
+3. 测试 KeepAlive 行为：导航离开、返回、验证状态保留
+
+**应对阶段**: 阶段 5（表现层）— KeepAlive 集成测试
+
+---
+
+### 7.6 IPC 调用绕过服务层
+
+**陷阱描述**: 视图直接调用 `window.electronAPI` 而非通过 composables。
+
+**当前直接 IPC 调用**（OnlineWallpaper.vue:239, 302）:
+```typescript
+// 直接 IPC 调用 - 应通过 service/composable
+const setResult = await window.electronAPI.setWallpaper(downloadResult.filePath)
+return await window.electronAPI.downloadWallpaper({ ... })
+```
+
+**风险**:
+- IPC 逻辑分散在视图中
+- 错误处理不一致
+- 无法为测试进行 mock
+
+**目标架构**:
+```typescript
+// 在 composable 中
+const setWallpaper = async (filePath: string): Promise<boolean> => {
+  const result = await wallpaperService.setWallpaper(filePath)
+  if (!result.success) {
+    showError(result.error?.message || '设置壁纸失败')
+    return false
+  }
+  return true
+}
+
+// 在视图中
+const { setWallpaper } = useWallpaper()
+await setWallpaper(filePath)
+```
+
+**预防策略**:
+1. 为视图中使用的所有 IPC 操作创建 composable 方法
+2. 添加 linting 检测视图文件中的 `window.electronAPI`
+3. 服务层已存在 — composables 应使用服务
+
+**应对阶段**: 阶段 3 & 4 — 创建缺失的 composable 方法
+
+---
+
+### 7.7 Alert 状态重复
+
+**陷阱描述**: 视图和 composables 之间出现多个 alert 状态实例。
+
+**当前模式**（已提取到 useAlert.ts）:
+```typescript
+// 在视图中 - 已建立正确模式
+const { alert, showSuccess, showError, hideAlert } = useAlert()
+```
+
+**当前状态**: 所有视图（LocalWallpaper, SettingPage, DownloadWallpaper, OnlineWallpaper）都正确使用 `useAlert()`
+
+**迁移风险**:
+- 如果 composable 创建新的 alert 状态实例
+- 来自不同视图的 alert 将相互独立
+- 用户可能同时看到多个 alert
+
+**预防策略**:
+1. `useAlert` 已使用共享 store — 保持此模式
+2. 不要在其他 composables 中创建本地 alert 状态
+3. Composables 应调用 `useAlert()` 显示错误，不管理 alert 状态
+
+**应对阶段**: 阶段 2 — 验证 alert 状态共享
+
+---
+
+### 7.8 类型安全退化
+
+**陷阱描述**: 迁移期间 TypeScript 接口变得不够严格。
+
+**当前良好模式**（useWallpaperList.ts:27-42）:
+```typescript
+export interface UseWallpaperListReturn {
+  // 状态（ComputedRef）
+  wallpapers: ComputedRef<TotalPageData>
+  loading: ComputedRef<boolean>
+  // ...显式类型
+}
+```
+
+**常见错误**:
+```typescript
+// 错误：隐式 any，丢失类型检查
+export function useWallpaperList() {
+  return {
+    wallpapers: computed(() => store.totalPageData),  // 推断类型
+    // ...
+  }
+}
+```
+
+**预防策略**:
+1. 为所有 composables 定义显式返回类型接口
+2. 启用严格 TypeScript 检查
+3. 在 CI 中运行类型检查
+
+**应对阶段**: 阶段 1（类型安全）— 先建立接口
+
+---
+
+## 8. 集成陷阱
+
+### 8.1 组件测试 Mocking 复杂度
+
+**陷阱描述**: 直接访问 store 时测试变得难以编写。
+
+**迁移前（视图直接使用 store）**:
+```typescript
+// 测试设置 - 必须模拟 Pinia store
+const mockStore = {
+  totalPageData: { sections: [], totalPage: 0, currentPage: 0 },
+  loading: false,
+}
+vi.mock('@/stores/wallpaper', () => ({
+  useWallpaperStore: () => mockStore
+}))
+```
+
+**迁移后（视图使用 composable）**:
+```typescript
+// 测试设置 - 模拟 composable
+const mockComposable = {
+  wallpapers: computed(() => mockData),
+  loading: computed(() => false),
+}
+vi.mock('@/composables', () => ({
+  useWallpaperList: () => mockComposable
+}))
+```
+
+**风险**:
+- 现有测试（如有）将失败
+- 测试迁移工作量被低估
+
+**预防策略**:
+1. 视图迁移同时迁移测试
+2. Composables 应更易于测试（单元测试友好）
+3. 视图变成薄展示层
+
+**应对阶段**: 阶段 5 — 更新测试文件
+
+---
+
+### 8.2 循环依赖引入
+
+**陷阱描述**: composables 和 stores 之间出现导入循环。
+
+**风险模式**:
+```typescript
+// 在 store 文件中
+import { useAlert } from '@/composables'  // Store 导入 composable
+
+// 在 composable 文件中
+import { useWallpaperStore } from '@/stores'  // Composable 导入 store
+
+// 循环依赖！
+```
+
+**当前安全模式**:
+```typescript
+// Stores 不导入 composables
+// Composables 导入 stores
+// Services 被 composables 导入，不被 stores 导入
+```
+
+**预防策略**:
+1. 保持单向依赖：View → Composable → Store → Service
+2. Stores 永远不应从 composables 导入
+3. 如需跨层通信，使用依赖注入
+
+**应对阶段**: 阶段 1 — 验证导入结构
+
+---
+
+## 9. Store-to-Composable 迁移检查清单
+
+### 迁移前（阶段 1）
+
+- [ ] 审计所有视图中的直接 store 导入
+- [ ] 映射每个视图的当前 store 访问模式
+- [ ] 识别需要迁移的生命周期钩子
+- [ ] 记录视图中的所有 IPC 调用
+- [ ] 验证现有 composable 模式正确工作
+
+### 迁移中（阶段 2-4）
+
+- [ ] 实现前先创建 composable 接口
+- [ ] 所有状态属性返回 `ComputedRef`
+- [ ] Composables 中不重复本地状态
+- [ ] 将生命周期钩子与相关业务逻辑一起移动
+- [ ] 每次更改后验证 KeepAlive 状态保留
+- [ ] 每次提交后运行类型检查
+- [ ] 检查循环依赖
+
+### 迁移后（阶段 5）
+
+- [ ] 视图文件中无直接 `useXxxStore()` 调用
+- [ ] 视图文件中无 `window.electronAPI` 调用
+- [ ] 所有生命周期钩子正确管理
+- [ ] KeepAlive 缓存验证
+- [ ] TypeScript 严格模式通过
+- [ ] 所有受影响功能的手动测试
+
+---
+
+## 10. 迁移警告信号
+
+### 运行时警告
+
+1. **"Getters should be pure functions"** — Store getter 访问 composable
+2. **"Cannot read property of undefined"** — Composable 未正确初始化
+3. **响应式不更新 UI** — Computed 未正确包装 store ref
+4. **内存泄漏警告** — 生命周期钩子未清理
+
+### 构建时警告
+
+1. **computed 返回的类型错误** — 缺少 `ComputedRef` 类型
+2. **循环依赖警告** — 导入方向错误
+3. **未使用的导入警告** — 迁移后视图仍有 store 导入
+
+### 测试失败
+
+1. **"Cannot read property of null"** — Mock 未匹配预期形状
+2. **测试超时** — 异步操作未正确等待
+3. **状态不更新** — Mock store 非响应式
+
+---
+
+## 11. 阶段分配汇总
+
+| 陷阱 | 主要阶段 | 预防类型 |
+|------|---------|---------|
+| 响应式破坏 | 阶段 2 | 代码审查 |
+| 状态访问不一致 | 阶段 3 | 原子迁移 |
+| 重复状态 | 阶段 2 | 架构强制 |
+| 生命周期钩子遗漏 | 阶段 3 | 审计 & 测试 |
+| KeepAlive 破坏 | 阶段 5 | 集成测试 |
+| IPC 绕过服务 | 阶段 3-4 | Linting |
+| Alert 状态重复 | 阶段 2 | 使用现有模式 |
+| 类型安全退化 | 阶段 1 | 接口优先 |
+| 测试 Mocking 复杂度 | 阶段 5 | 迁移测试 |
+| 循环依赖 | 阶段 1 | 导入审计 |
+
+---
+
 ## 陷阱检查清单
 
 在重构的每个阶段，使用以下清单检查是否触发了陷阱：
 
-### 阶段 1：IPC 模块化拆分
+### 阶段 1：IPC 模块化拆分 / 类型安全
 - [ ] 所有 IPC 通道名称是否保持不变
 - [ ] 新增的消息字段是否为可选属性
 - [ ] 错误返回格式是否统一
 - [ ] 类型定义是否在 preload 和 env.d.ts 同步更新
 - [ ] 存储键名是否变更
+- [ ] 导入结构是否单向（无循环）
 
-### 阶段 2：Store 重构 / Composables 抽象
+### 阶段 2：Store 重构 / Composables 抽象 / 数据层
 - [ ] shallowRef 更新是否使用对象替换
 - [ ] Store 中的 Electron API 调用是否通过服务层
 - [ ] Alert composable 是否在所有视图统一使用
 - [ ] 事件监听器是否在组件销毁时移除
 - [ ] finishedList 数量限制是否保留
+- [ ] Composables 是否返回 `ComputedRef`
+- [ ] Composables 是否有重复本地状态
 
-### 阶段 3：类型安全强化
+### 阶段 3：类型安全强化 / 业务层
 - [ ] any 替换后是否添加运行时类型检查
 - [ ] 类型定义是否集中管理避免重复
 - [ ] Props 类型定义是否正确
 - [ ] 是否有新增类型测试
+- [ ] 每个 store 的迁移是否完整
+- [ ] 生命周期钩子是否正确移动
+
+### 阶段 4：IPC 模块化重构
+- [ ] IPC 处理器是否按领域拆分
+- [ ] 错误处理是否统一
+- [ ] 通道白名单是否完整
+
+### 阶段 5：表现层重构与清理
+- [ ] 视图中无直接 store 导入
+- [ ] 视图中无直接 IPC 调用
+- [ ] KeepAlive 行为验证
+- [ ] 测试更新完成
 
 ### 所有阶段
 - [ ] 升级后用户数据是否保留
@@ -1133,11 +1605,15 @@ async function recoverDownloads(): Promise<void> {
 
 - [Electron IPC 文档](https://www.electronjs.org/docs/latest/tutorial/ipc)
 - [Vue 3 响应式 API](https://vuejs.org/api/reactivity-api.html)
+- [Vue 3 Composables 最佳实践](https://vuejs.org/guide/reusability/composables.html)
 - [TypeScript 类型守卫](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
 - [Pinia 最佳实践](https://pinia.vuejs.org/core-concepts/)
+- [HTTP Range Requests - MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
+- [Node.js Stream Best Practices](https://nodejs.org/api/stream.html)
+- [Handling Aborted Requests in Axios](https://axios-http.com/docs/cancellation)
 
 ---
 
 *创建时间：2025-04-25*
 *基于项目代码库分析生成*
-*更新时间：2026-04-26 - 新增断点续传陷阱（v2.1 里程碑）*
+*更新时间：2026-04-27 - 新增 Store-to-Composable 迁移陷阱（v2.2 里程碑）*
