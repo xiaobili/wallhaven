@@ -60,16 +60,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SMIG-01 | Phase 10 | Pending |
-| SMIG-02 | Phase 10 | Pending |
-| SMIG-03 | Phase 11 | Pending |
-| CMIG-01 | Phase 11 | Pending |
-| CMIG-02 | Phase 12 | Pending |
-| CMIG-03 | Phase 12 | Pending |
-| CLUP-01 | Phase 13 | Pending |
-| CLUP-02 | Phase 13 | Pending |
-| CLUP-03 | Phase 13 | Pending |
-| CLUP-04 | Phase 13 | Pending |
+| SMIG-01 | Phase 10 | ⏳ Pending |
+| SMIG-02 | Phase 10 | ⏳ Pending |
+| SMIG-03 | Phase 11 | ⏳ Pending |
+| CMIG-01 | Phase 11 | ⏳ Pending |
+| CMIG-02 | Phase 12 | ⏳ Pending |
+| CMIG-03 | Phase 12 | ⏳ Pending |
+| CLUP-01 | Phase 13 | ⏳ Pending |
+| CLUP-02 | Phase 13 | ⏳ Pending |
+| CLUP-03 | Phase 13 | ⏳ Pending |
+| CLUP-04 | Phase 13 | ⏳ Pending |
 
 **Coverage:**
 - v2.2 requirements: 10 total
@@ -79,4 +79,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 
 *Requirements defined: 2026-04-27*
-*Last updated: 2026-04-27 after v2.2 milestone start*
+*Last updated: 2026-04-27 roadmap created*
