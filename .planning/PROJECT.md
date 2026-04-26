@@ -8,37 +8,37 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **断点续传，下载无忧** — 大文件下载不再担心中断，随时随地暂停恢复
 
-## Current Milestone: v2.1 下载断点续传
+## Current Milestone: Planning Next
 
-**Goal:** 为下载功能添加完整的断点续传能力，用户中断后可从暂停点继续下载
+**Goal:** Define next milestone scope and requirements
 
-**Target features:**
-- 断点续传核心：暂停后恢复下载时从断点继续，而非重新开始
-- 进度持久化：应用重启后自动恢复未完成的下载任务
-- 暂停功能改进：改进现有暂停功能以支持断点续传
+**Shipped:**
+- v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
+- v2.1 下载断点续传 (2026-04-27) — 9 requirements, 4 phases
 
 ## Requirements
 
 ### Validated
 
-以下需求已在 v2.0 里程碑中完成并验证：
+**v2.0 架构重构 (shipped 2026-04-26):**
+- ✓ IPC 模块化拆分 — 866 行 handlers.ts 拆分为 8 个领域模块
+- ✓ Composables 抽象 — useAlert 等重复逻辑提取为可复用组合式函数
+- ✓ 服务层抽象 — Electron API 统一服务层
+- ✓ Store 重构 — 分离数据访问逻辑，实现 Repository 模式
+- ✓ 类型安全强化 — 消除 60+ 处 `any` 类型
+- ✓ 错误边界与处理 — Vue ErrorBoundary + 全局错误处理
+- ✓ 代码规范化 — 统一命名规范、清理死代码
+- ✓ 文件组织优化 — 分层架构清晰
 
-- ✓ IPC 模块化拆分 — 866 行 handlers.ts 拆分为 8 个领域模块 (v2.0)
-- ✓ Composables 抽象 — useAlert 等重复逻辑提取为可复用组合式函数 (v2.0)
-- ✓ 服务层抽象 — Electron API 统一服务层 (v2.0)
-- ✓ Store 重构 — 分离数据访问逻辑，实现 Repository 模式 (v2.0)
-- ✓ 类型安全强化 — 消除 60+ 处 `any` 类型 (v2.0)
-- ✓ 错误边界与处理 — Vue ErrorBoundary + 全局错误处理 (v2.0)
-- ✓ 代码规范化 — 统一命名规范、清理死代码 (v2.0)
-- ✓ 文件组织优化 — 分层架构清晰 (v2.0)
+**v2.1 下载断点续传 (shipped 2026-04-27):**
+- ✓ 断点续传核心 — 暂停后恢复下载时从断点继续
+- ✓ 进度持久化 — 应用重启后自动恢复未完成的下载任务
+- ✓ Range 请求支持 — HTTP Range header 实现增量下载
+- ✓ 错误处理增强 — 中文错误消息，孤儿文件清理
 
 ### Active
 
-v2.1 里程碑需求：
-
-- [ ] 下载中断后可从断点继续下载（断点续传核心）
-- [ ] 应用重启后自动恢复未完成的下载任务（进度持久化）
-- [ ] 保留已下载的临时文件，支持恢复时追加写入
+(None — run /gsd-new-milestone to define next milestone)
 
 ### Future
 
@@ -154,17 +154,18 @@ v2.0 架构重构排除范围（已归档）：
 
 ## Context
 
-**Shipped**: v2.0 架构重构 (2026-04-26)
+**Shipped**: v2.0 架构重构 (2026-04-26), v2.1 下载断点续传 (2026-04-27)
 
 **Statistics**:
-- Timeline: 7 days (2026-04-19 → 2026-04-26)
-- Files modified: 77
-- Lines of code: ~8,729 (TypeScript + Vue)
-- Requirements: 38/38 complete
+- v2.0 Timeline: 7 days (2026-04-19 → 2026-04-26)
+- v2.1 Timeline: 2 days (2026-04-26 → 2026-04-27)
+- Total Files modified: 92
+- Lines of code: ~9,000 (TypeScript + Vue)
+- Requirements: 47 total (38 v2.0 + 9 v2.1)
 
 **Known Technical Debt**:
-- Phase 2 missing VERIFICATION.md (documentation gap only)
-- Pre-existing TypeScript errors in electron.client.ts and download.repository.ts (non-blocking)
+- Type duplication between `env.d.ts` and `src/shared/types/ipc.ts` (code review finding)
+- Phase 6 uses PLAN.md format instead of SUMMARY.md
 
 ---
 
