@@ -45,6 +45,35 @@ function getStateFilePath(tempPath: string): string {
 }
 
 /**
+ * State file read result type
+ */
+type StateFileResult =
+  | { success: true; data: PendingDownload }
+  | { success: false; error: 'NOT_FOUND' | 'PARSE_ERROR' | 'VALIDATION_ERROR' }
+
+/**
+ * Error codes with Chinese messages for resume failures
+ */
+const RESUME_ERRORS = {
+  FILE_NOT_FOUND: {
+    code: 'RESUME_FILE_NOT_FOUND',
+    message: '临时文件不存在，无法恢复下载',
+  },
+  INVALID_OFFSET: {
+    code: 'RESUME_INVALID_OFFSET',
+    message: '临时文件已损坏，已自动清理',
+  },
+  STATE_CORRUPTED: {
+    code: 'RESUME_STATE_CORRUPTED',
+    message: '下载记录已损坏，无法恢复',
+  },
+  FAILED: {
+    code: 'RESUME_FAILED',
+    message: '恢复下载失败',
+  },
+} as const
+
+/**
  * Write state file atomically (write to temp, then rename)
  */
 function writeStateFile(statePath: string, state: PendingDownload): void {
@@ -54,16 +83,24 @@ function writeStateFile(statePath: string, state: PendingDownload): void {
 }
 
 /**
- * Read and parse state file
+ * Read and parse state file with detailed error info
  */
-function readStateFile(statePath: string): PendingDownload | null {
+function readStateFile(statePath: string): StateFileResult {
   try {
-    if (!fs.existsSync(statePath)) return null
+    if (!fs.existsSync(statePath)) {
+      return { success: false, error: 'NOT_FOUND' }
+    }
+
     const content = fs.readFileSync(statePath, 'utf-8')
     const state = JSON.parse(content)
-    return isPendingDownload(state) ? state : null
+
+    if (!isPendingDownload(state)) {
+      return { success: false, error: 'VALIDATION_ERROR' }
+    }
+
+    return { success: true, data: state }
   } catch {
-    return null
+    return { success: false, error: 'PARSE_ERROR' }
   }
 }
 
@@ -549,10 +586,7 @@ export function registerDownloadHandlers(): void {
       if (!fs.existsSync(tempPath)) {
         return {
           success: false,
-          error: {
-            code: 'RESUME_FILE_NOT_FOUND',
-            message: 'Temp file not found',
-          },
+          error: RESUME_ERRORS.FILE_NOT_FOUND,
         }
       }
 
@@ -570,10 +604,7 @@ export function registerDownloadHandlers(): void {
         }
         return {
           success: false,
-          error: {
-            code: 'RESUME_INVALID_OFFSET',
-            message: 'Temp file smaller than offset',
-          },
+          error: RESUME_ERRORS.INVALID_OFFSET,
         }
       }
 
@@ -797,9 +828,13 @@ export function registerDownloadHandlers(): void {
 
         try {
           // 3. Parse JSON and validate
-          const state = readStateFile(statePath)
-          if (!state) {
-            // Invalid state file, delete it
+          const result = readStateFile(statePath)
+          if (!result.success) {
+            // Log specific error
+            if (result.error === 'PARSE_ERROR') {
+              logHandler('get-pending-downloads', `Corrupted state file: ${stateFile}`, 'warn')
+            }
+            // Delete invalid state file
             try {
               fs.unlinkSync(statePath)
             } catch {
@@ -821,10 +856,10 @@ export function registerDownloadHandlers(): void {
 
           // 5. Update offset from actual temp file size
           const actualSize = fs.statSync(tempPath).size
-          state.offset = actualSize
-          state.updatedAt = new Date().toISOString()
+          result.data.offset = actualSize
+          result.data.updatedAt = new Date().toISOString()
 
-          pendingDownloads.push(state)
+          pendingDownloads.push(result.data)
 
         } catch (parseError) {
           // Corrupted state file, delete it
