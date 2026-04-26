@@ -8,14 +8,14 @@
 ### Core (核心需求)
 
 - [ ] **CORE-01**: User can pause download and resume from breakpoint (not restart from 0)
-- [ ] **CORE-02**: Application persists download progress to survive restart
+- [x] **CORE-02**: Application persists download progress to survive restart
 - [ ] **CORE-03**: Incomplete downloads auto-restore when app launches
 
 ### Infrastructure (基础设施)
 
-- [ ] **INFR-01**: IPC channels for resume-download-task and get-pending-downloads
-- [ ] **INFR-02**: HTTP Range request support in download handler
-- [ ] **INFR-03**: Temporary .download file preserved on pause (not deleted)
+- [x] **INFR-01**: IPC channels for resume-download-task and get-pending-downloads
+- [x] **INFR-02**: HTTP Range request support in download handler
+- [x] **INFR-03**: Temporary .download file preserved on pause (not deleted)
 
 ### Error Handling (错误处理)
 
@@ -56,11 +56,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CORE-01 | Phase 8 | Pending |
-| CORE-02 | Phase 7 | Pending |
+| CORE-02 | Phase 7 | ✅ Complete |
 | CORE-03 | Phase 8 | Pending |
 | INFR-01 | Phase 6 | ✅ Complete |
-| INFR-02 | Phase 7 | Pending |
-| INFR-03 | Phase 7 | Pending |
+| INFR-02 | Phase 7 | ✅ Complete |
+| INFR-03 | Phase 7 | ✅ Complete |
 | ERRH-01 | Phase 9 | Pending |
 | ERRH-02 | Phase 9 | Pending |
 | ERRH-03 | Phase 9 | Pending |
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v2.1 requirements: 9 total
 - Mapped to phases: 9
-- Complete: 1
+- Complete: 4
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-26*
-*Last updated: 2026-04-26 after roadmap creation*
+*Last updated: 2026-04-26 Phase 7 complete*

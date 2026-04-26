@@ -56,13 +56,13 @@
 
 **Requirements:** INFR-02, INFR-03, CORE-02
 
+**Status:** Complete (2026-04-26)
+
 **Plans:**
-1. Implement HTTP Range request support in download handler
-2. Modify pause handler to preserve .download temp file instead of deleting
-3. Implement state persistence to .download.json companion file
-4. Create resume-download-task handler with byte offset support
-5. Create get-pending-downloads handler to list incomplete tasks
-6. Update download progress to persist offset/totalSize on each chunk
+1. ✅ Add state persistence utility functions
+2. ✅ Modify pause handler and add progress state persistence
+3. ✅ Implement RESUME_DOWNLOAD_TASK handler with Range support
+4. ✅ Implement GET_PENDING_DOWNLOADS handler
 
 **Success Criteria:**
 - ✓ Paused download retains .download temp file in filesystem
@@ -126,7 +126,7 @@
 | 4 | IPC 模块化重构 | v2.0 | 6/6 | Complete | 2026-04-26 |
 | 5 | 表现层重构与清理 | v2.0 | 7/7 | Complete | 2026-04-26 |
 | 6 | Core Resume Infrastructure | v2.1 | 9/9 | Complete | 2026-04-26 |
-| 7 | Main Process Implementation | v2.1 | 0/6 | Pending | — |
+| 7 | Main Process Implementation | v2.1 | 4/4 | Complete | 2026-04-26 |
 | 8 | Renderer Integration | v2.1 | 0/5 | Pending | — |
 | 9 | Error Handling & Edge Cases | v2.1 | 0/5 | Pending | — |
 
@@ -134,21 +134,21 @@
 
 ## Requirement Traceability
 
-| Requirement | Phase | Description |
-|-------------|-------|-------------|
-| CORE-01 | Phase 8 | User can pause download and resume from breakpoint |
-| CORE-02 | Phase 7 | Application persists download progress to survive restart |
-| CORE-03 | Phase 8 | Incomplete downloads auto-restore when app launches |
-| INFR-01 | Phase 6 | IPC channels for resume-download-task and get-pending-downloads |
-| INFR-02 | Phase 7 | HTTP Range request support in download handler |
-| INFR-03 | Phase 7 | Temporary .download file preserved on pause |
-| ERRH-01 | Phase 9 | Graceful degradation when server doesn't support Range |
-| ERRH-02 | Phase 9 | File integrity validation before resume |
-| ERRH-03 | Phase 9 | Orphan temp file cleanup on app startup |
+| Requirement | Phase | Description | Status |
+|-------------|-------|-------------|--------|
+| CORE-01 | Phase 8 | User can pause download and resume from breakpoint | Pending |
+| CORE-02 | Phase 7 | Application persists download progress to survive restart | ✅ Complete |
+| CORE-03 | Phase 8 | Incomplete downloads auto-restore when app launches | Pending |
+| INFR-01 | Phase 6 | IPC channels for resume-download-task and get-pending-downloads | ✅ Complete |
+| INFR-02 | Phase 7 | HTTP Range request support in download handler | ✅ Complete |
+| INFR-03 | Phase 7 | Temporary .download file preserved on pause | ✅ Complete |
+| ERRH-01 | Phase 9 | Graceful degradation when server doesn't support Range | Pending |
+| ERRH-02 | Phase 9 | File integrity validation before resume | Pending |
+| ERRH-03 | Phase 9 | Orphan temp file cleanup on app startup | Pending |
 
 **Coverage:** 9/9 requirements mapped ✓
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 v2.1 里程碑路线图创建*
+*最后更新：2026-04-26 Phase 7 complete*
