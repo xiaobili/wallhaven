@@ -8,6 +8,8 @@ import type {
   DownloadProgressData,
   LocalFile,
   CacheInfo,
+  ResumeDownloadParams,
+  PendingDownload,
 } from '@/shared/types/ipc'
 import { ErrorCodes } from '@/errors'
 
@@ -365,6 +367,64 @@ class ElectronClientImpl {
       return {
         success: false,
         error: { code: 'DOWNLOAD_CANCEL_ERROR', message: String(error) },
+      }
+    }
+  }
+
+  /**
+   * 恢复下载任务
+   */
+  async resumeDownloadTask(params: ResumeDownloadParams): Promise<IpcResponse<string>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<string>()
+    }
+
+    try {
+      const result = await window.electronAPI.resumeDownloadTask(params)
+      if (result.success && result.data) {
+        return { success: true, data: result.data }
+      }
+      return {
+        success: false,
+        error: {
+          code: result.error?.code || 'DOWNLOAD_RESUME_ERROR',
+          message: result.error?.message || 'Resume download failed',
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: { code: 'DOWNLOAD_RESUME_ERROR', message: String(error) },
+      }
+    }
+  }
+
+  /**
+   * 获取待恢复的下载任务列表
+   */
+  async getPendingDownloads(): Promise<IpcResponse<PendingDownload[]>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<PendingDownload[]>()
+    }
+
+    try {
+      const result = await window.electronAPI.getPendingDownloads()
+      if (result.success) {
+        return { success: true, data: result.data || [] }
+      }
+      return {
+        success: false,
+        data: [],
+        error: {
+          code: result.error?.code || 'GET_PENDING_DOWNLOADS_ERROR',
+          message: result.error?.message || 'Get pending downloads failed',
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        error: { code: 'GET_PENDING_DOWNLOADS_ERROR', message: String(error) },
       }
     }
   }
