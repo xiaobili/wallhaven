@@ -8,7 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
 import { streamPipeline, logHandler } from './base'
-import { IPC_CHANNELS } from '../../../../src/shared/types/ipc'
+import { IPC_CHANNELS, type ResumeDownloadParams, type PendingDownload } from '../../../../src/shared/types/ipc'
 
 // /**
 //  * IPC Channel names (duplicated from shared/types/ipc.ts to avoid cross-directory imports)
@@ -385,6 +385,36 @@ export function registerDownloadHandlers(): void {
         success: false,
         error: error.message,
       }
+    }
+  })
+
+  /**
+   * 恢复下载任务（占位实现）
+   * Phase 7 将实现完整逻辑
+   */
+  ipcMain.handle(
+    IPC_CHANNELS.RESUME_DOWNLOAD_TASK,
+    async (_event, params: ResumeDownloadParams) => {
+      logHandler('resume-download-task', `Placeholder called for task: ${params.taskId}`)
+      return {
+        success: false,
+        error: {
+          code: 'NOT_IMPLEMENTED',
+          message: 'Resume download - Phase 7',
+        },
+      }
+    },
+  )
+
+  /**
+   * 获取待恢复的下载任务列表（占位实现）
+   * Phase 7 将实现完整逻辑
+   */
+  ipcMain.handle(IPC_CHANNELS.GET_PENDING_DOWNLOADS, async () => {
+    logHandler('get-pending-downloads', 'Placeholder called')
+    return {
+      success: true,
+      data: [] as PendingDownload[],
     }
   })
 }
