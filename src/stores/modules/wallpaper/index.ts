@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, reactive, shallowRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams, AppSettings, WallpaperFit } from '@/types'
+import { settingsService } from '@/services'
 
 /**
  * 创建默认设置
@@ -50,6 +51,21 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     error.value = false
   }
 
+  /**
+   * 从持久化存储加载应用设置
+   */
+  async function loadSettings(): Promise<void> {
+    const result = await settingsService.get()
+    if (result.success && result.data) {
+      Object.assign(settings, result.data)
+      console.log('[WallpaperStore] 已从存储加载设置')
+    } else {
+      // 加载失败时使用默认值
+      Object.assign(settings, settingsService.getDefaults())
+      console.warn('[WallpaperStore] 加载设置失败，使用默认值:', result.error)
+    }
+  }
+
   return {
     // 状态
     totalPageData,
@@ -61,5 +77,6 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
 
     // 方法
     resetState,
+    loadSettings,
   }
 })

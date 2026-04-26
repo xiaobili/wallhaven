@@ -73,16 +73,16 @@ async function initializeApp() {
   // 动态导入stores
   const wallpaperModule = await import('./stores/wallpaper')
   const downloadModule = await import('./stores/modules/download')
-  
+
   wallpaperStore = wallpaperModule.useWallpaperStore()
   downloadStore = downloadModule.useDownloadStore()
-  
+
   // 从 electron-store 加载设置
   await wallpaperStore.loadSettings()
-  
+
   // 从 electron-store 加载下载历史记录
-  await downloadStore.loadFromStorage()
-  
+  await downloadStore.loadDownloadHistory()
+
   console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
 
   // 通过 downloadService 注册下载进度监听器

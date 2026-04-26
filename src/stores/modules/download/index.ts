@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DownloadItem, FinishedDownloadItem } from '@/types'
+import { downloadService } from '@/services'
 
 export const useDownloadStore = defineStore('download', () => {
   // ==================== 状态 ====================
@@ -11,11 +12,11 @@ export const useDownloadStore = defineStore('download', () => {
   // ==================== 计算属性 ====================
 
   const activeDownloads = computed(() =>
-    downloadingList.value.filter(item => item.state === 'downloading')
+    downloadingList.value.filter((item) => item.state === 'downloading'),
   )
 
   const pausedDownloads = computed(() =>
-    downloadingList.value.filter(item => item.state === 'paused')
+    downloadingList.value.filter((item) => item.state === 'paused'),
   )
 
   const totalActive = computed(() => activeDownloads.value.length)
@@ -28,8 +29,21 @@ export const useDownloadStore = defineStore('download', () => {
     return `dl_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
   }
 
+  /**
+   * 从持久化存储加载已完成下载记录
+   */
+  async function loadDownloadHistory(): Promise<void> {
+    const result = await downloadService.getFinishedRecords()
+    if (result.success && result.data) {
+      finishedList.value = result.data
+      console.log('[DownloadStore] 已从存储加载下载记录:', result.data.length, '条')
+    } else {
+      console.warn('[DownloadStore] 加载下载记录失败:', result.error)
+    }
+  }
+
   function addDownloadTask(
-    task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>
+    task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>,
   ): string {
     const id = generateId()
 
@@ -39,7 +53,7 @@ export const useDownloadStore = defineStore('download', () => {
       offset: 0,
       progress: 0,
       speed: 0,
-      state: 'waiting'
+      state: 'waiting',
     }
 
     downloadingList.value.push(downloadItem)
@@ -53,9 +67,9 @@ export const useDownloadStore = defineStore('download', () => {
     progress: number,
     offset: number,
     speed: number,
-    filePath?: string
+    filePath?: string,
   ): void {
-    const task = downloadingList.value.find(item => item.id === id)
+    const task = downloadingList.value.find((item) => item.id === id)
     if (task) {
       task.progress = progress
       task.offset = offset
@@ -68,7 +82,7 @@ export const useDownloadStore = defineStore('download', () => {
   }
 
   function completeDownload(id: string, filePath?: string): void {
-    const index = downloadingList.value.findIndex(item => item.id === id)
+    const index = downloadingList.value.findIndex((item) => item.id === id)
     if (index === -1) return
 
     const task = downloadingList.value[index]
@@ -87,7 +101,7 @@ export const useDownloadStore = defineStore('download', () => {
       state: 'completed',
       path: filePath || task.path || '',
       time: new Date().toISOString(),
-      wallpaperId: task.wallpaperId
+      wallpaperId: task.wallpaperId,
     }
 
     finishedList.value.unshift(finishedItem)
@@ -97,21 +111,21 @@ export const useDownloadStore = defineStore('download', () => {
   }
 
   function pauseDownload(id: string): void {
-    const task = downloadingList.value.find(item => item.id === id)
+    const task = downloadingList.value.find((item) => item.id === id)
     if (task && task.state === 'downloading') {
       task.state = 'paused'
     }
   }
 
   function resumeDownload(id: string): void {
-    const task = downloadingList.value.find(item => item.id === id)
+    const task = downloadingList.value.find((item) => item.id === id)
     if (task && task.state === 'paused') {
       task.state = 'downloading'
     }
   }
 
   function cancelDownload(id: string): boolean {
-    const index = downloadingList.value.findIndex(item => item.id === id)
+    const index = downloadingList.value.findIndex((item) => item.id === id)
     if (index !== -1) {
       downloadingList.value.splice(index, 1)
       return true
@@ -120,7 +134,7 @@ export const useDownloadStore = defineStore('download', () => {
   }
 
   function isDownloading(wallpaperId: string): boolean {
-    return downloadingList.value.some(item => item.wallpaperId === wallpaperId)
+    return downloadingList.value.some((item) => item.wallpaperId === wallpaperId)
   }
 
   return {
@@ -136,6 +150,7 @@ export const useDownloadStore = defineStore('download', () => {
     totalFinished,
 
     // 方法
+    loadDownloadHistory,
     addDownloadTask,
     updateProgress,
     completeDownload,

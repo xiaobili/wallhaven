@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { existsSync, readFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from 'electron-store'
-// import icon from '../../resources/icon.png?asset'
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url)
@@ -19,8 +18,8 @@ const store = new Store({
     // 应用设置
     appSettings: null,
     // 下载完成列表
-    downloadFinishedList: []
-  }
+    downloadFinishedList: [],
+  },
 })
 
 // 将 store 实例导出供其他模块使用
@@ -50,25 +49,25 @@ function registerLocalFileProtocol() {
     const url = request.url.replace(/^wallhaven:\/\//, '')
     try {
       const filePath = decodeURIComponent(url)
-      
+
       // 检查文件是否存在
       if (!existsSync(filePath)) {
         return new Response(null, { status: 404 })
       }
-      
+
       // 读取文件内容
       const fileContent = readFileSync(filePath)
-      
+
       // 检测 MIME 类型
       const ext = extname(filePath).toLowerCase()
       const mimeType = mimeTypes[ext] || 'application/octet-stream'
-      
+
       // 返回文件内容
       return new Response(fileContent, {
         status: 200,
         headers: {
-          'Content-Type': mimeType
-        }
+          'Content-Type': mimeType,
+        },
       })
     } catch (error) {
       console.error('[Protocol] Failed to handle request:', error)
