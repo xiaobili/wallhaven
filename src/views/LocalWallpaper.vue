@@ -124,9 +124,9 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import type { WallpaperItem } from '@/types'
 import { formatFileSize } from '@/utils/helpers'
-import { useAlert } from '@/composables'
+import { useSettings, useAlert } from '@/composables'
 
-const wallpaperStore = useWallpaperStore()
+const { settings } = useSettings()
 const { alert, showSuccess, showError, hideAlert } = useAlert()
 
 // 响应式数据
@@ -135,7 +135,7 @@ const localWallpapers = ref<LocalWallpaper[]>([])
 const previewItem = ref<WallpaperItem | null>(null)
 
 // 计算属性
-const downloadPath = computed(() => wallpaperStore.settings.downloadPath)
+const downloadPath = computed(() => settings.value.downloadPath)
 
 const emptyMessage = computed(() => {
   if (!downloadPath.value) {
