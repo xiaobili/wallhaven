@@ -8,13 +8,19 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **断点续传，下载无忧** — 大文件下载不再担心中断，随时随地暂停恢复
 
-## Current Milestone: Planning Next
+## Current Milestone: v2.2 Store 分层迁移
 
-**Goal:** Define next milestone scope and requirements
+**Goal:** 将 views 中直接使用的 store 全部迁移到 composables，强化 View → Composable → Store 分层架构
 
 **Shipped:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
 - v2.1 下载断点续传 (2026-04-27) — 9 requirements, 4 phases
+
+**Target features:**
+- 分析并识别所有 views 中直接使用 store 的地方
+- 为每个 store 创建或扩展对应的 composable
+- 迁移所有 store 调用到 composables 层
+- 清理 views 中的 store 直接引用
 
 ## Requirements
 
@@ -38,7 +44,7 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 ### Active
 
-(None — run /gsd-new-milestone to define next milestone)
+(None — will be defined in REQUIREMENTS.md)
 
 ### Future
 
@@ -189,4 +195,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 v2.1 里程碑启动*
+*最后更新：2026-04-27 v2.2 里程碑启动*

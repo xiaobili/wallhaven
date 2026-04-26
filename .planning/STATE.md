@@ -1,23 +1,23 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
+milestone: v2.2
+milestone_name: Store 分层迁移
 status: planning
-last_updated: "2026-04-27T01:00:00.000Z"
-last_activity: 2026-04-27 — v2.1 milestone archived, ready for next milestone
+last_updated: "2026-04-27T10:00:00.000Z"
+last_activity: 2026-04-27 — Milestone v2.2 started
 progress:
-  total_phases: 9
-  completed_phases: 9
+  total_phases: 0
+  completed_phases: 0
   total_plans: 0
-  completed_plans: 36
-  percent: 100
+  completed_plans: 0
+  percent: 0
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-27
-> 当前阶段：里程碑归档完成
-> 项目状态：✓ 等待下一里程碑
+> 当前阶段：定义需求
+> 项目状态：◆ 规划中
 
 ---
 
@@ -26,15 +26,16 @@ progress:
 参见：.planning/PROJECT.md (更新于 2026-04-27)
 
 **Core value**：断点续传，下载无忧 — 大文件下载不再担心中断，随时随地暂停恢复
-**Current focus**：Run /gsd-new-milestone to define next milestone
+**Current focus**：v2.2 Store 分层迁移
 
 ---
 
 ## Current Position
 
-Milestone: v2.1 archived
-Status: Ready for next milestone
-Last activity: 2026-04-27 — v2.1 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-27 — Milestone v2.2 started
 
 ---
 
@@ -42,9 +43,7 @@ Last activity: 2026-04-27 — v2.1 milestone archived
 
 ### Decisions
 
-All milestone decisions archived to:
-- .planning/milestones/v2.0-ROADMAP.md
-- .planning/milestones/v2.1-ROADMAP.md
+(None yet for this milestone)
 
 ### Blockers
 
@@ -52,15 +51,16 @@ All milestone decisions archived to:
 
 ### Todos
 
-- Run /gsd-new-milestone to define next milestone
+- Define requirements for v2.2
+- Create roadmap
 
 ### Roadmap Evolution
 
 - 2026-04-26: v2.0 架构重构 shipped
 - 2026-04-27: v2.1 下载断点续传 shipped
-- 2026-04-27: v2.1 milestone archived
+- 2026-04-27: v2.2 Store 分层迁移 started
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.1 archived*
+*最后更新：2026-04-27 v2.2 started*
