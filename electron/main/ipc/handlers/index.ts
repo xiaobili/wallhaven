@@ -28,6 +28,9 @@ export const REGISTERED_CHANNELS = [
   // Download management
   'download-wallpaper',
   'start-download-task',
+  'pause-download-task',
+  'resume-download-task',
+  'get-pending-downloads',
   // Wallpaper setting
   'set-wallpaper',
   // Settings storage
