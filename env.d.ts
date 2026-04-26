@@ -12,6 +12,41 @@ interface DownloadProgressData {
   error?: string
 }
 
+// 恢复下载参数类型
+interface ResumeDownloadParams {
+  taskId: string
+  url: string
+  filename: string
+  saveDir: string
+  offset: number
+}
+
+// 待恢复下载任务类型
+interface PendingDownload {
+  taskId: string
+  url: string
+  filename: string
+  saveDir: string
+  offset: number
+  totalSize: number
+  wallpaperId?: string
+  small?: string
+  resolution?: string
+  size?: number
+  createdAt: string
+  updatedAt: string
+}
+
+// IPC 响应类型
+interface IpcResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: {
+    code: string
+    message: string
+  }
+}
+
 // Electron API 类型声明
 interface ElectronAPI {
   // 文件夹选择
@@ -44,6 +79,12 @@ interface ElectronAPI {
 
   // 取消下载任务
   cancelDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
+  // 恢复下载任务
+  resumeDownloadTask: (params: ResumeDownloadParams) => Promise<IpcResponse<string>>
+
+  // 获取待恢复的下载任务列表
+  getPendingDownloads: () => Promise<IpcResponse<PendingDownload[]>>
 
   // 监听下载进度
   onDownloadProgress: (callback: (data: DownloadProgressData) => void) => void
