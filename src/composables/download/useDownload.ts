@@ -57,6 +57,7 @@ export interface UseDownloadReturn {
   clearFinished: () => Promise<void>
   isDownloading: (wallpaperId: string) => boolean
   loadHistory: () => Promise<void>
+  restorePendingDownloads: () => Promise<void>
 }
 
 /**
@@ -316,6 +317,62 @@ export function useDownload(): UseDownloadReturn {
     }
   }
 
+  /**
+   * 恢复待处理的下载任务
+   * 在应用启动时调用，将未完成的下载任务恢复到下载列表
+   */
+  const restorePendingDownloads = async (): Promise<void> => {
+    const result = await downloadService.getPendingDownloads()
+
+    if (!result.success || !result.data) {
+      console.warn('[useDownload] 获取待恢复下载任务失败:', result.error)
+      return
+    }
+
+    const pendingDownloads = result.data
+
+    if (pendingDownloads.length === 0) {
+      console.log('[useDownload] 没有待恢复的下载任务')
+      return
+    }
+
+    console.log('[useDownload] 发现待恢复下载任务:', pendingDownloads.length, '个')
+
+    for (const pending of pendingDownloads) {
+      // 检查是否已存在相同 taskId（避免重复添加）
+      const existingTask = store.downloadingList.find((item) => item.id === pending.taskId)
+      if (existingTask) {
+        console.log('[useDownload] 任务已存在，跳过:', pending.taskId)
+        continue
+      }
+
+      // 从 PendingDownload 构造 DownloadItem
+      const downloadItem: DownloadItem = {
+        id: pending.taskId,
+        url: pending.url,
+        filename: pending.filename,
+        small: pending.small || '',
+        resolution: pending.resolution || '',
+        size: pending.size || pending.totalSize,
+        offset: pending.offset,
+        progress:
+          pending.totalSize > 0 ? Math.round((pending.offset / pending.totalSize) * 100) : 0,
+        speed: 0,
+        state: 'paused',
+        wallpaperId: pending.wallpaperId,
+      }
+
+      // 添加到下载列表
+      store.downloadingList.push(downloadItem)
+      console.log(
+        '[useDownload] 已恢复下载任务:',
+        pending.taskId,
+        '进度:',
+        downloadItem.progress + '%',
+      )
+    }
+  }
+
   return {
     // 状态
     downloadingList: computed(() => store.downloadingList),
@@ -334,5 +391,6 @@ export function useDownload(): UseDownloadReturn {
     clearFinished,
     isDownloading,
     loadHistory,
+    restorePendingDownloads,
   }
 }
