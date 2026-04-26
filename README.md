@@ -191,6 +191,8 @@ npm run format
 
 ### 1. 壁纸搜索
 
+![alt text](image.png)
+
 支持多种筛选条件：
 
 - 关键词搜索
@@ -200,9 +202,14 @@ npm run format
 - 比例筛选
 - 颜色筛选
 - 排序方式（相关性、随机、日期、浏览量等）
+  
+### 2. 本地列表
+
+![alt text](img/image2.png)
 
 ### 2. 图片预览
 
+![alt text](img/image3.png)
 - 大图预览
 - 全屏查看
 - 流畅的动画效果
@@ -216,12 +223,16 @@ npm run format
 
 ### 4. 下载管理
 
+![alt text](img/image4.png)
+
 - 批量下载
 - 多线程支持（1-10）
 - 暂停/恢复功能
 - 进度追踪
 
 ### 5. 应用设置
+
+![alt text](img/image5.png)
 
 提供丰富的个性化配置选项：
 

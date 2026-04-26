@@ -16,6 +16,7 @@ on:
       - '*.md'
       - '.gitignore'
       - '.github/workflows/build.yml'
+      - 'img/**'
 
 # 设置权限
 permissions:
