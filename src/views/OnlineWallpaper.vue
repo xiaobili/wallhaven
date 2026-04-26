@@ -68,21 +68,19 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, onActivated, onDeactivated, ref, shallowRef } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
-import { useDownloadStore } from '@/stores/modules/download'
 import { useWallpaperList, useDownload, useSettings, useAlert } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
 // Pinia Stores
 const wallpaperStore = useWallpaperStore()
-const downloadStore = useDownloadStore()
 
 // Composables
 const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, saveCustomParams } = useWallpaperList()
@@ -107,12 +105,20 @@ const apiKey = computed(() => wallpaperStore.settings.apiKey)
 onMounted(() => {
   // 加载下载历史记录
   loadHistory()
-  // 使用节流优化滚动事件（300ms间隔，平衡性能和响应）
+})
+
+onActivated(() => {
+  // 组件被激活时（从 KeepAlive 缓存中恢复），添加滚动监听器
   window.addEventListener('scroll', throttledScrollEvent, { passive: true })
 })
 
+onDeactivated(() => {
+  // 组件被停用时（进入 KeepAlive 缓存），移除滚动监听器
+  window.removeEventListener('scroll', throttledScrollEvent)
+})
+
 onUnmounted(() => {
-  // 清理事件监听器
+  // 组件真正卸载时，确保清理监听器
   window.removeEventListener('scroll', throttledScrollEvent)
 })
 

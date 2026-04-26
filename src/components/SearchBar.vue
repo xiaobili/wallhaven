@@ -501,35 +501,33 @@
 import { reactive, computed, onMounted } from 'vue'
 import type { CustomParams, ResolutionLine, RatioLine, ColorLine, GetParams } from '@/types'
 import { arrayToBinaryString, formatResolution } from '@/utils/helpers'
-import { useWallpaperStore } from '@/stores/wallpaper'
 import {useWallpaperList} from '@/composables'
 
-const wallpaperStore = useWallpaperStore()
 
-/**
- * 默认搜索参数
- * 用于初始化和重置操作
- */
 const DEFAULT_PARAMS: CustomParams = {
-  selector: 0,
   keyword: '',
-  categories: ['general', 'anime'],
-  aiArt: false,
-  purity: ['sfw', 'sketchy'],
-  sorting: 'hot',
+  categories: ['general', 'anime', 'people'],
+  purity: ['sfw'],
+  sorting: 'toplist',
+  topRange: '1w',
   desc: true,
-  topRange: '1M',
+  color: '',
   ratios: [],
-  respickerLimitation: 'atleast',
-  resolutions: [],
   resolution: '',
+  resolutions: [],
+  respickerLimitation: 'atleast',
+  selector: 0,
+  aiArt: false,
   respickerCustomWidth: '',
   respickerCustomHeight: '',
-  color: 'none',
 }
 
-onMounted(() => {
-  const oldCustomParams = wallpaperStore.savedParams
+// 本地参数副本 - 使用 reactive 确保深层响应式
+const localParams = reactive<CustomParams>(DEFAULT_PARAMS)
+
+onMounted(async () => {
+  const oldCustomParams = await useWallpaperList().loadSavedParams()
+  console.log('oldCustomParams', oldCustomParams)
   if (oldCustomParams) {
     Object.assign(localParams, oldCustomParams)
   }
@@ -553,8 +551,6 @@ const emit = defineEmits<{
   (e: 'saveParams', params: CustomParams): void
 }>()
 
-// 本地参数副本 - 使用 reactive 确保深层响应式
-const localParams = reactive<CustomParams>({ ...DEFAULT_PARAMS })
 
 // 将 watch 转换为 computed，自动追踪 localParams 的变化
 const computedQueryParams = computed<GetParams>(() => {
@@ -674,7 +670,7 @@ const resetSelect = async (): Promise<void> => {
     Object.assign(localParams, saved)
   } else {
     // 没有保存的参数时，重置为默认值
-    Object.assign(localParams, DEFAULT_PARAMS)
+    Object.assign(localParams, {} as CustomParams)
   }
   // 触发更新，通知父组件
   emit('changeParams', computedQueryParams.value)

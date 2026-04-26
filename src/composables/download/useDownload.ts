@@ -79,7 +79,7 @@ export function useDownload(): UseDownloadReturn {
     const { taskId, progress, offset, speed, state, filePath, error } = data
 
     if (error) {
-      const task = store.downloadingList.find(item => item.id === taskId)
+      const task = store.downloadingList.find((item) => item.id === taskId)
       if (task) {
         task.state = 'failed'
         // 保留 offset，不重置 progress，便于用户恢复下载
@@ -91,7 +91,7 @@ export function useDownload(): UseDownloadReturn {
     if (state === 'completed' && filePath) {
       store.completeDownload(taskId, filePath)
       // 持久化已完成记录到 storage
-      const finishedItem = store.finishedList.find(item => item.id === taskId)
+      const finishedItem = store.finishedList.find((item) => item.id === taskId)
       if (finishedItem) {
         downloadService.saveFinishedRecord(finishedItem).catch((err) => {
           console.error('[useDownload] 保存已完成记录失败:', err)
@@ -99,7 +99,7 @@ export function useDownload(): UseDownloadReturn {
       }
     } else if (state === 'paused') {
       // 更新为暂停状态
-      const task = store.downloadingList.find(item => item.id === taskId)
+      const task = store.downloadingList.find((item) => item.id === taskId)
       if (task) {
         task.state = 'paused'
         task.offset = offset
@@ -125,7 +125,9 @@ export function useDownload(): UseDownloadReturn {
   /**
    * 添加下载任务
    */
-  const addTask = (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>): string => {
+  const addTask = (
+    task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>,
+  ): string => {
     // Store 方法返回 Promise，但这里我们需要同步返回 ID
     // 直接调用 Store 的方法并返回 ID
     const id = `dl_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
@@ -148,7 +150,7 @@ export function useDownload(): UseDownloadReturn {
    * 启动下载
    */
   const startDownload = async (id: string): Promise<boolean> => {
-    const task = store.downloadingList.find(item => item.id === id)
+    const task = store.downloadingList.find((item) => item.id === id)
     if (!task) {
       showError('任务不存在')
       return false
@@ -158,15 +160,16 @@ export function useDownload(): UseDownloadReturn {
     task.time = new Date().toISOString()
 
     const result = await downloadService.startDownload(id, task.url, task.filename)
+    console.log('[useDownload] startDownload result:', result)
 
     if (!result.success) {
-      // 检查任务是否已被用户暂停 - 如果是，不要覆盖 paused 状态
-      if (task.state === 'paused') {
-        console.log('[useDownload] startDownload failed but task is paused - keeping paused state')
-        return false
-      }
-      console.log('[useDownload] startDownload FAILED - setting state to waiting')
-      task.state = 'waiting'
+      // // 检查任务是否已被用户暂停 - 如果是，不要覆盖 paused 状态
+      // if (task.state === 'paused') {
+      //   console.log('[useDownload] startDownload failed but task is paused - keeping paused state')
+      //   return false
+      // }
+      // console.log('[useDownload] startDownload FAILED - setting state to waiting')
+      // task.state = 'waiting'
       showError(result.error?.message || '启动下载失败')
       return false
     }
@@ -178,7 +181,7 @@ export function useDownload(): UseDownloadReturn {
    * 暂停下载
    */
   const pauseDownload = async (id: string): Promise<boolean> => {
-    const task = store.downloadingList.find(item => item.id === id)
+    const task = store.downloadingList.find((item) => item.id === id)
     if (!task || task.state !== 'downloading') {
       return false
     }
@@ -200,7 +203,7 @@ export function useDownload(): UseDownloadReturn {
    * 注意：当前实现不支持断点续传，恢复下载会重新开始
    */
   const resumeDownload = (id: string): void => {
-    const task = store.downloadingList.find(item => item.id === id)
+    const task = store.downloadingList.find((item) => item.id === id)
     if (task && task.state === 'paused') {
       // 重置进度
       task.state = 'waiting'
@@ -217,7 +220,7 @@ export function useDownload(): UseDownloadReturn {
    * 取消下载
    */
   const cancelDownload = async (id: string): Promise<boolean> => {
-    const task = store.downloadingList.find(item => item.id === id)
+    const task = store.downloadingList.find((item) => item.id === id)
     if (!task) {
       return false
     }
@@ -232,7 +235,7 @@ export function useDownload(): UseDownloadReturn {
     }
 
     // 从列表中移除
-    const index = store.downloadingList.findIndex(item => item.id === id)
+    const index = store.downloadingList.findIndex((item) => item.id === id)
     if (index !== -1) {
       store.downloadingList.splice(index, 1)
     }
@@ -246,7 +249,7 @@ export function useDownload(): UseDownloadReturn {
   const removeFinished = async (id: string): Promise<boolean> => {
     const result = await downloadService.removeFinishedRecord(id)
     if (result.success) {
-      const index = store.finishedList.findIndex(item => item.id === id)
+      const index = store.finishedList.findIndex((item) => item.id === id)
       if (index !== -1) {
         store.finishedList.splice(index, 1)
       }
@@ -269,7 +272,7 @@ export function useDownload(): UseDownloadReturn {
    * 检查是否正在下载
    */
   const isDownloading = (wallpaperId: string): boolean => {
-    return store.downloadingList.some(item => item.wallpaperId === wallpaperId)
+    return store.downloadingList.some((item) => item.wallpaperId === wallpaperId)
   }
 
   /**

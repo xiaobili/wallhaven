@@ -65,19 +65,10 @@ app.mount('#app')
 
 // 异步初始化（在应用挂载后执行）
 async function initializeApp() {
-  // 动态导入stores
-  const wallpaperModule = await import('./stores/wallpaper')
-  const downloadModule = await import('./stores/modules/download')
+  const { useSettings, useDownload } = await import('./composables')
 
-  const wallpaperStore = wallpaperModule.useWallpaperStore()
-  const downloadStore = downloadModule.useDownloadStore()
-
-  // 从 electron-store 加载设置
-  await wallpaperStore.loadSettings()
-
-  // 从 electron-store 加载下载历史记录
-  await downloadStore.loadDownloadHistory()
-
+  await useSettings().load()
+  await useDownload().loadHistory()
   console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
 
   // 注意：下载进度监听器已移至 useDownload composable 中
