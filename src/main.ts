@@ -69,7 +69,8 @@ async function initializeApp() {
 
   await useSettings().load()
   await useDownload().loadHistory()
-  console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
+  await useDownload().restorePendingDownloads()
+  console.log('[Main] 应用初始化完成，已从 electron-store 加载数据，并恢复待处理下载任务')
 
   // 注意：下载进度监听器已移至 useDownload composable 中
   // 这样每个使用下载功能的组件会自行管理监听器的生命周期
