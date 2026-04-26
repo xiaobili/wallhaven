@@ -6,6 +6,15 @@
  * @param delay 延迟时间（毫秒）
  * @param immediate 是否立即执行
  * @returns 防抖后的函数
+ * @example
+ * ```typescript
+ * const debouncedSearch = debounce((query) => {
+ *   api.search(query)
+ * }, 300)
+ *
+ * // 取消待执行的调用
+ * debouncedSearch.cancel()
+ * ```
  */
 export function debounce<T extends (...args: any[]) => any>(
   fn: T,
@@ -49,6 +58,15 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param fn 要执行的函数
  * @param interval 间隔时间（毫秒）
  * @returns 节流后的函数
+ * @example
+ * ```typescript
+ * const throttledScroll = throttle(() => {
+ *   checkInfiniteScroll()
+ * }, 300)
+ *
+ * // 取消待执行的调用
+ * throttledScroll.cancel()
+ * ```
  */
 export function throttle<T extends (...args: any[]) => any>(
   fn: T,
@@ -93,6 +111,11 @@ export function throttle<T extends (...args: any[]) => any>(
  * 格式化分辨率显示
  * @param str 分辨率字符串（如 "1920x1080"）
  * @returns 格式化后的字符串（如 "1920 × 1080"）
+ * @example
+ * ```typescript
+ * formatResolution("1920x1080") // Returns "1920 × 1080"
+ * formatResolution("2560x1440") // Returns "2560 × 1440"
+ * ```
  */
 export function formatResolution(str: string): string {
   return str.replace(/x/g, ' × ')
@@ -102,6 +125,12 @@ export function formatResolution(str: string): string {
  * 格式化文件大小（优化版 - 使用位运算加速）
  * @param size 文件大小（字节）
  * @returns 格式化后的字符串
+ * @example
+ * ```typescript
+ * formatFileSize(1536000) // Returns "1.46 MB"
+ * formatFileSize(1024)    // Returns "1.00 KB"
+ * formatFileSize(512)     // Returns "512 B"
+ * ```
  */
 export function formatFileSize(size: number): string {
   if (size < 1024) {
