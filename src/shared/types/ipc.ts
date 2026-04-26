@@ -23,7 +23,9 @@ export const IPC_CHANNELS = {
   DOWNLOAD_WALLPAPER: 'download-wallpaper',
   START_DOWNLOAD_TASK: 'start-download-task',
   PAUSE_DOWNLOAD_TASK: 'pause-download-task',
+  RESUME_DOWNLOAD_TASK: 'resume-download-task',
   CANCEL_DOWNLOAD_TASK: 'cancel-download-task',
+  GET_PENDING_DOWNLOADS: 'get-pending-downloads',
   DOWNLOAD_PROGRESS: 'download-progress',
 
   // 壁纸设置
