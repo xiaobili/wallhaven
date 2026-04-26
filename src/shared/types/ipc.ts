@@ -22,6 +22,8 @@ export const IPC_CHANNELS = {
   // 下载
   DOWNLOAD_WALLPAPER: 'download-wallpaper',
   START_DOWNLOAD_TASK: 'start-download-task',
+  PAUSE_DOWNLOAD_TASK: 'pause-download-task',
+  CANCEL_DOWNLOAD_TASK: 'cancel-download-task',
   DOWNLOAD_PROGRESS: 'download-progress',
 
   // 壁纸设置
@@ -142,6 +144,21 @@ export interface StartDownloadTaskRequest {
   url: string
   filename: string
   saveDir: string
+}
+
+/**
+ * 下载任务操作请求参数（暂停/取消）
+ */
+export interface DownloadTaskOperationRequest {
+  taskId: string
+}
+
+/**
+ * 下载任务操作响应
+ */
+export interface DownloadTaskOperationResponse {
+  success: boolean
+  error?: string
 }
 
 /**

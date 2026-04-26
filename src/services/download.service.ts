@@ -19,6 +19,7 @@ export interface DownloadProgressData {
   state: 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed'
   filePath?: string
   error?: string
+  totalSize?: number
 }
 
 /**
@@ -145,6 +146,22 @@ class DownloadServiceImpl {
       filename,
       saveDir: pathResult.data,
     })
+  }
+
+  /**
+   * 暂停下载任务
+   * @param taskId - 任务 ID
+   */
+  async pauseDownload(taskId: string): Promise<IpcResponse<void>> {
+    return electronClient.pauseDownloadTask(taskId)
+  }
+
+  /**
+   * 取消下载任务
+   * @param taskId - 任务 ID
+   */
+  async cancelDownload(taskId: string): Promise<IpcResponse<void>> {
+    return electronClient.cancelDownloadTask(taskId)
   }
 
   /**

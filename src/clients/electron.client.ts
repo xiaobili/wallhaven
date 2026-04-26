@@ -320,6 +320,56 @@ class ElectronClientImpl {
   }
 
   /**
+   * 暂停下载任务
+   */
+  async pauseDownloadTask(taskId: string): Promise<IpcResponse<void>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<void>()
+    }
+
+    try {
+      const result = await window.electronAPI.pauseDownloadTask(taskId)
+      if (result.success) {
+        return { success: true }
+      }
+      return {
+        success: false,
+        error: { code: 'DOWNLOAD_PAUSE_ERROR', message: result.error || 'Pause download failed' },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: { code: 'DOWNLOAD_PAUSE_ERROR', message: String(error) },
+      }
+    }
+  }
+
+  /**
+   * 取消下载任务
+   */
+  async cancelDownloadTask(taskId: string): Promise<IpcResponse<void>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<void>()
+    }
+
+    try {
+      const result = await window.electronAPI.cancelDownloadTask(taskId)
+      if (result.success) {
+        return { success: true }
+      }
+      return {
+        success: false,
+        error: { code: 'DOWNLOAD_CANCEL_ERROR', message: result.error || 'Cancel download failed' },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: { code: 'DOWNLOAD_CANCEL_ERROR', message: String(error) },
+      }
+    }
+  }
+
+  /**
    * 监听下载进度
    */
   onDownloadProgress(callback: (data: DownloadProgressData) => void): void {

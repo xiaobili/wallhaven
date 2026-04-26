@@ -8,7 +8,7 @@
       :duration="alert.duration"
       @close="hideAlert"
     />
-    
+
     <div class="dowloading">
       <div class="m-title">
         <a class="dowloading-title">下载中</a>
@@ -106,33 +106,42 @@ import Alert from '@/components/Alert.vue'
 // Pinia Store
 const downloadStore = useDownloadStore()
 
-// Composables
-const { loadHistory, removeFinished } = useDownload()
+// Composables - 使用 useDownload 提供的方法来执行实际的下载操作
+const {
+  loadHistory,
+  removeFinished,
+  pauseDownload,    // 来自 useDownload，会调用服务层
+  cancelDownload,   // 来自 useDownload，会调用服务层
+  resumeDownload    // 来自 useDownload，会调用服务层
+} = useDownload()
 const { alert, showSuccess, showError, showInfo, showWarning, hideAlert } = useAlert()
 
 // 从store获取数据（使用computed保持响应式）
 const downloadList = computed(() => downloadStore.downloadingList)
 const downloadFinishedList = computed(() => downloadStore.finishedList)
 
-// 取消下载
+// 取消下载 - 使用 composable 提供的方法
 const onCancelDownload = async (id: string) => {
-  // 使用自定义确认对话框（简单实现，可以后续优化为Modal组件）
   const confirmed = window.confirm('确定要取消这个下载任务吗？')
   if (confirmed) {
-    downloadStore.cancelDownload(id)
-    showInfo('已取消下载')
+    const success = await cancelDownload(id)
+    if (success) {
+      showInfo('已取消下载')
+    }
   }
 }
 
-// 暂停下载
-const onPauseDownload = (id: string) => {
-  downloadStore.pauseDownload(id)
-  showInfo('已暂停下载')
+// 暂停下载 - 使用 composable 提供的方法，会发送 IPC 到主进程
+const onPauseDownload = async (id: string) => {
+  const success = await pauseDownload(id)
+  if (success) {
+    showInfo('已暂停下载')
+  }
 }
 
-// 恢复下载
+// 恢复下载 - 使用 composable 提供的方法
 const onResumeDownload = (id: string) => {
-  downloadStore.resumeDownload(id)
+  resumeDownload(id)
   showInfo('恢复下载...')
 }
 
@@ -153,7 +162,7 @@ const showInFolder = async (path: string) => {
       // 简单处理：获取最后一个路径分隔符之前的部分
       const sep = path.includes('\\') ? '\\' : '/'
       const dirPath = path.substring(0, path.lastIndexOf(sep))
-      
+
       const result = await (window as any).electronAPI.openFolder(dirPath)
       if (!result.success) {
         showError('打开文件夹失败: ' + (result.error || ''))
@@ -173,7 +182,7 @@ onMounted(() => {
   // 初始化时从存储加载历史记录
   // loadHistory() handled by composable lifecycle
   console.log('下载中心数据已加载')
-  
+
   // 注意：下载进度监听器已在 main.ts 中全局注册，无需在此重复注册
 })
 

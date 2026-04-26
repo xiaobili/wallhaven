@@ -50,9 +50,9 @@ export interface UseDownloadReturn {
   // 方法
   addTask: (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>) => string
   startDownload: (id: string) => Promise<boolean>
-  pauseDownload: (id: string) => void
+  pauseDownload: (id: string) => Promise<boolean>
   resumeDownload: (id: string) => void
-  cancelDownload: (id: string) => boolean
+  cancelDownload: (id: string) => Promise<boolean>
   removeFinished: (id: string) => Promise<boolean>
   clearFinished: () => Promise<void>
   isDownloading: (wallpaperId: string) => boolean
@@ -90,6 +90,13 @@ export function useDownload(): UseDownloadReturn {
 
     if (state === 'completed' && filePath) {
       store.completeDownload(taskId, filePath)
+    } else if (state === 'paused') {
+      // 更新为暂停状态
+      const task = store.downloadingList.find(item => item.id === taskId)
+      if (task) {
+        task.state = 'paused'
+        task.offset = offset
+      }
     } else {
       store.updateProgress(taskId, progress, offset, speed, filePath)
     }
@@ -157,33 +164,67 @@ export function useDownload(): UseDownloadReturn {
   /**
    * 暂停下载
    */
-  const pauseDownload = (id: string): void => {
+  const pauseDownload = async (id: string): Promise<boolean> => {
     const task = store.downloadingList.find(item => item.id === id)
-    if (task && task.state === 'downloading') {
+    if (!task || task.state !== 'downloading') {
+      return false
+    }
+
+    // 调用服务层暂停下载
+    const result = await downloadService.pauseDownload(id)
+
+    if (result.success) {
       task.state = 'paused'
+      return true
+    } else {
+      showError(result.error?.message || '暂停下载失败')
+      return false
     }
   }
 
   /**
    * 恢复下载
+   * 注意：当前实现不支持断点续传，恢复下载会重新开始
    */
   const resumeDownload = (id: string): void => {
     const task = store.downloadingList.find(item => item.id === id)
     if (task && task.state === 'paused') {
-      task.state = 'downloading'
+      // 重置进度
+      task.state = 'waiting'
+      task.progress = 0
+      task.offset = 0
+      task.speed = 0
+
+      // 重新开始下载
+      startDownload(id)
     }
   }
 
   /**
    * 取消下载
    */
-  const cancelDownload = (id: string): boolean => {
+  const cancelDownload = async (id: string): Promise<boolean> => {
+    const task = store.downloadingList.find(item => item.id === id)
+    if (!task) {
+      return false
+    }
+
+    // 如果任务正在下载中，需要调用服务层取消
+    if (task.state === 'downloading') {
+      const result = await downloadService.cancelDownload(id)
+      if (!result.success) {
+        showError(result.error?.message || '取消下载失败')
+        return false
+      }
+    }
+
+    // 从列表中移除
     const index = store.downloadingList.findIndex(item => item.id === id)
     if (index !== -1) {
       store.downloadingList.splice(index, 1)
-      return true
     }
-    return false
+
+    return true
   }
 
   /**

@@ -31,6 +31,12 @@ export interface ElectronAPI {
     saveDir: string
   }) => Promise<{ success: boolean; filePath: string | null; error: string | null }>
 
+  // 暂停下载任务
+  pauseDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
+  // 取消下载任务
+  cancelDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
   // 监听下载进度
   onDownloadProgress: (callback: (data: any) => void) => void
   removeDownloadProgressListener: (callback: (data: any) => void) => void
@@ -118,6 +124,18 @@ const electronAPI: ElectronAPI = {
   startDownloadTask: (params) => {
     console.log('[Preload] startDownloadTask called:', params.taskId)
     return ipcRenderer.invoke(IPC_CHANNELS.START_DOWNLOAD_TASK, params)
+  },
+
+  // 暂停下载任务
+  pauseDownloadTask: (taskId: string) => {
+    console.log('[Preload] pauseDownloadTask called:', taskId)
+    return ipcRenderer.invoke(IPC_CHANNELS.PAUSE_DOWNLOAD_TASK, taskId)
+  },
+
+  // 取消下载任务
+  cancelDownloadTask: (taskId: string) => {
+    console.log('[Preload] cancelDownloadTask called:', taskId)
+    return ipcRenderer.invoke(IPC_CHANNELS.CANCEL_DOWNLOAD_TASK, taskId)
   },
 
   // 监听下载进度

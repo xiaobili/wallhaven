@@ -39,6 +39,12 @@ interface ElectronAPI {
     saveDir: string
   }) => Promise<{ success: boolean; filePath: string | null; error: string | null }>
 
+  // 暂停下载任务
+  pauseDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
+  // 取消下载任务
+  cancelDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
   // 监听下载进度
   onDownloadProgress: (callback: (data: DownloadProgressData) => void) => void
   removeDownloadProgressListener: (callback: (data: DownloadProgressData) => void) => void
