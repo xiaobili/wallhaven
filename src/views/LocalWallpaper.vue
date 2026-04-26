@@ -6,7 +6,7 @@
       :type="alert.type"
       :message="alert.message"
       :duration="alert.duration"
-      @close="alert.visible = false"
+      @close="hideAlert"
     />
     
     <!-- 工具栏 -->
@@ -119,34 +119,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import type { WallpaperItem } from '@/types'
 import { formatFileSize } from '@/utils/helpers'
+import { useAlert } from '@/composables'
 
 const wallpaperStore = useWallpaperStore()
-
-// Alert 状态管理
-const alert = reactive({
-  visible: false,
-  type: 'info' as 'success' | 'error' | 'warning' | 'info',
-  message: '',
-  duration: 3000
-})
-
-// 显示提示消息
-const showAlert = (
-  message: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'info',
-  duration: number = 3000
-) => {
-  alert.message = message
-  alert.type = type
-  alert.duration = duration
-  alert.visible = true
-}
+const { alert, showSuccess, showError, hideAlert } = useAlert()
 
 // 响应式数据
 const loading = ref<boolean>(false)
@@ -267,17 +249,17 @@ const closePreview = (): void => {
 const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {
   try {
     const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
-    
+
     const result = await window.electronAPI.setWallpaper(imagePath)
-    
+
     if (result.success) {
-      showAlert('✅ 壁纸设置成功！', 'success')
+      showSuccess('壁纸设置成功！')
     } else {
-      showAlert('❌ 设置壁纸失败: ' + (result.error || '未知错误'), 'error')
+      showError('设置壁纸失败: ' + (result.error || '未知错误'))
     }
   } catch (error: any) {
     console.error('设置壁纸错误:', error)
-    showAlert('设置壁纸失败: ' + error.message, 'error')
+    showError('设置壁纸失败: ' + error.message)
   }
 }
 
@@ -286,20 +268,20 @@ const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promis
   if (!confirmed) {
     return
   }
-  
+
   try {
     const result = await window.electronAPI.deleteFile(wallpaper.path)
-    
+
     if (result.success) {
       // 从列表中移除
       localWallpapers.value.splice(index, 1)
-      showAlert('✅ 文件已删除', 'success')
+      showSuccess('文件已删除')
     } else {
-      showAlert('❌ 删除失败: ' + (result.error || '未知错误'), 'error')
+      showError('删除失败: ' + (result.error || '未知错误'))
     }
   } catch (error: any) {
     console.error('删除文件错误:', error)
-    showAlert('删除失败: ' + error.message, 'error')
+    showError('删除失败: ' + error.message)
   }
 }
 
