@@ -335,3 +335,39 @@ export function isIpcErrorInfo(value: unknown): value is IpcErrorInfo {
     typeof (value as IpcErrorInfo).message === 'string'
   )
 }
+
+/**
+ * 检查是否为 ResumeDownloadParams
+ */
+export function isResumeDownloadParams(value: unknown): value is ResumeDownloadParams {
+  if (typeof value !== 'object' || value === null) return false
+
+  const v = value as ResumeDownloadParams
+  return (
+    typeof v.taskId === 'string' &&
+    typeof v.url === 'string' &&
+    typeof v.filename === 'string' &&
+    typeof v.saveDir === 'string' &&
+    typeof v.offset === 'number' &&
+    v.offset >= 0
+  )
+}
+
+/**
+ * 检查是否为 PendingDownload
+ */
+export function isPendingDownload(value: unknown): value is PendingDownload {
+  if (typeof value !== 'object' || value === null) return false
+
+  const v = value as PendingDownload
+  return (
+    typeof v.taskId === 'string' &&
+    typeof v.url === 'string' &&
+    typeof v.filename === 'string' &&
+    typeof v.saveDir === 'string' &&
+    typeof v.offset === 'number' &&
+    typeof v.totalSize === 'number' &&
+    typeof v.createdAt === 'string' &&
+    typeof v.updatedAt === 'string'
+  )
+}
