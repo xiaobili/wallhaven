@@ -34,12 +34,14 @@
 
 **Requirements:** INFR-01
 
+**Status:** Complete (2026-04-26)
+
 **Plans:**
-1. Define ResumeDownloadParams and PendingDownload types in types package
-2. Add RESUME_DOWNLOAD_TASK IPC channel definition
-3. Add GET_PENDING_DOWNLOADS IPC channel definition
-4. Register new IPC handlers with placeholder implementations
-5. Add type guards for resume-related payloads
+1. ✅ Define ResumeDownloadParams and PendingDownload types in types package
+2. ✅ Add RESUME_DOWNLOAD_TASK IPC channel definition
+3. ✅ Add GET_PENDING_DOWNLOADS IPC channel definition
+4. ✅ Register new IPC handlers with placeholder implementations
+5. ✅ Add type guards for resume-related payloads
 
 **Success Criteria:**
 - ✓ TypeScript compiles without errors for new types
@@ -123,7 +125,7 @@
 | 3 | 业务层与组合层 | v2.0 | 8/8 | Complete | 2025-04-25 |
 | 4 | IPC 模块化重构 | v2.0 | 6/6 | Complete | 2026-04-26 |
 | 5 | 表现层重构与清理 | v2.0 | 7/7 | Complete | 2026-04-26 |
-| 6 | Core Resume Infrastructure | v2.1 | 0/5 | Pending | — |
+| 6 | Core Resume Infrastructure | v2.1 | 9/9 | Complete | 2026-04-26 |
 | 7 | Main Process Implementation | v2.1 | 0/6 | Pending | — |
 | 8 | Renderer Integration | v2.1 | 0/5 | Pending | — |
 | 9 | Error Handling & Edge Cases | v2.1 | 0/5 | Pending | — |
