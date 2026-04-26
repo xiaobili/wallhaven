@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC_CHANNELS, isValidInvokeChannel } from './types'
+import type { ResumeDownloadParams, PendingDownload, IpcResponse } from './types'
 
 console.log('[Preload] Script loaded')
 console.log('[Preload] ipcRenderer available:', !!ipcRenderer)
@@ -36,6 +37,12 @@ export interface ElectronAPI {
 
   // 取消下载任务
   cancelDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>
+
+  // 恢复下载任务
+  resumeDownloadTask: (params: ResumeDownloadParams) => Promise<IpcResponse<string>>
+
+  // 获取待恢复的下载任务列表
+  getPendingDownloads: () => Promise<IpcResponse<PendingDownload[]>>
 
   // 监听下载进度
   onDownloadProgress: (callback: (data: any) => void) => void
@@ -136,6 +143,18 @@ const electronAPI: ElectronAPI = {
   cancelDownloadTask: (taskId: string) => {
     console.log('[Preload] cancelDownloadTask called:', taskId)
     return ipcRenderer.invoke(IPC_CHANNELS.CANCEL_DOWNLOAD_TASK, taskId)
+  },
+
+  // 恢复下载任务
+  resumeDownloadTask: (params: ResumeDownloadParams) => {
+    console.log('[Preload] resumeDownloadTask called:', params.taskId, 'offset:', params.offset)
+    return ipcRenderer.invoke(IPC_CHANNELS.RESUME_DOWNLOAD_TASK, params)
+  },
+
+  // 获取待恢复的下载任务列表
+  getPendingDownloads: () => {
+    console.log('[Preload] getPendingDownloads called')
+    return ipcRenderer.invoke(IPC_CHANNELS.GET_PENDING_DOWNLOADS)
   },
 
   // 监听下载进度
