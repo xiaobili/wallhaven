@@ -2,30 +2,30 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-last_updated: "2026-04-25T17:00:00.000Z"
+status: ready_to_plan
+last_updated: "2026-04-26T15:00:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 0
-  completed_plans: 22
+  completed_phases: 4
+  total_plans: 6
+  completed_plans: 28
 ---
 
 # 项目状态
 
-> 更新时间：2025-04-25
-> 当前阶段：阶段 4 上下文已收集
+> 更新时间：2026-04-26
+> 当前阶段：阶段 4 已完成
 > 项目状态：进行中
 
 ---
 
 ## 当前阶段
 
-**阶段**：4 - IPC 模块化重构
+**阶段**：5 - 表现层重构与清理
 
-**状态**：📋 上下文已收集
+**状态**：⏸️ 待开始
 
-**最近活动**：2025-04-25 完成阶段 4 上下文收集，确定 IPC 模块化拆分策略
+**最近活动**：2026-04-26 完成阶段 4 IPC 模块化重构
 
 ---
 
@@ -36,10 +36,10 @@ progress:
 | 1 | 基础设施与类型安全 | ✅ 完成 | 6/6 | 2025-04-25 | 2025-04-25 |
 | 2 | 数据层抽象 | ✅ 完成 | 6/6 | 2025-04-25 | 2025-04-25 |
 | 3 | 业务层与组合层 | ✅ 完成 | 8/8 | 2025-04-25 | 2025-04-25 |
-| 4 | IPC 模块化重构 | ⏸️ 待开始 | 0/10 | - | - |
+| 4 | IPC 模块化重构 | ✅ 完成 | 10/10 | 2026-04-26 | 2026-04-26 |
 | 5 | 表现层重构与清理 | ⏸️ 待开始 | 0/9 | - | - |
 
-**总进度**：20/38 (53%)
+**总进度**：30/38 (79%)
 
 ---
 
@@ -80,20 +80,20 @@ progress:
 | BIZ-07 | 重构 Store | ✅ 完成 | 03-PLAN-07.md |
 | BIZ-07 | main.ts 集成 downloadService | ✅ 完成 | 03-PLAN-08.md |
 
-### 阶段 4：IPC 模块化重构
+### 阶段 4：IPC 模块化重构 ✅
 
-| ID | 需求 | 状态 | 备注 |
-|----|------|------|------|
-| IPC-01 | 创建 `base.ts` | ⏸️ 待开始 | - |
-| IPC-02 | 创建 `file.handler.ts` | ⏸️ 待开始 | - |
-| IPC-03 | 创建 `download.handler.ts` | ⏸️ 待开始 | - |
-| IPC-04 | 创建 `settings.handler.ts` | ⏸️ 待开始 | - |
-| IPC-05 | 创建 `wallpaper.handler.ts` | ⏸️ 待开始 | - |
-| IPC-06 | 创建 `window.handler.ts` | ⏸️ 待开始 | - |
-| IPC-07 | 创建 `cache.handler.ts` | ⏸️ 待开始 | - |
-| IPC-08 | 创建 `api.handler.ts` | ⏸️ 待开始 | - |
-| IPC-09 | 实现统一错误处理包装器 | ⏸️ 待开始 | - |
-| IPC-10 | 更新 Preload 脚本类型定义 | ⏸️ 待开始 | - |
+| ID | 需求 | 状态 | 计划文件 |
+|----|------|------|----------|
+| IPC-01 | 创建 `electron/main/ipc/base.ts` | ✅ 完成 | 04-PLAN-01.md |
+| IPC-02 | 创建 `file.handler.ts` | ✅ 完成 | 04-PLAN-02.md |
+| IPC-03 | 创建 `download.handler.ts` | ✅ 完成 | 04-PLAN-03.md |
+| IPC-04 | 创建 `settings.handler.ts` | ✅ 完成 | 04-PLAN-02.md |
+| IPC-05 | 创建 `wallpaper.handler.ts` | ✅ 完成 | 04-PLAN-02.md |
+| IPC-06 | 创建 `window.handler.ts` | ✅ 完成 | 04-PLAN-02.md |
+| IPC-07 | 创建 `cache.handler.ts` | ✅ 完成 | 04-PLAN-03.md |
+| IPC-08 | 创建 `api.handler.ts` | ✅ 完成 | 04-PLAN-03.md |
+| IPC-09 | 实现统一错误处理包装器 | ✅ 完成 | 04-PLAN-01.md |
+| IPC-10 | 更新 Preload 脚本类型定义 | ✅ 完成 | 04-PLAN-05.md |
 
 ### 阶段 5：表现层重构与清理
 
@@ -144,10 +144,10 @@ progress:
 
 ## 下一步行动
 
-1. 运行 `/gsd-plan-phase 4` 开始阶段 4 规划
-2. 上下文文件：`.planning/phases/04-ipc-modular-refactoring/04-CONTEXT.md`
+1. 运行 `/gsd-discuss-phase 5` 开始讨论阶段 5
+2. 规划文件：`.planning/phases/05-presentation-layer-refactoring/` (待创建)
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2025-04-25 阶段 4 上下文收集完成*
+*最后更新：2026-04-26 阶段 4 执行完成*
