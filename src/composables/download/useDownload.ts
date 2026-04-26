@@ -153,6 +153,12 @@ export function useDownload(): UseDownloadReturn {
     const result = await downloadService.startDownload(id, task.url, task.filename)
 
     if (!result.success) {
+      // 检查任务是否已被用户暂停 - 如果是，不要覆盖 paused 状态
+      if (task.state === 'paused') {
+        console.log('[useDownload] startDownload failed but task is paused - keeping paused state')
+        return false
+      }
+      console.log('[useDownload] startDownload FAILED - setting state to waiting')
       task.state = 'waiting'
       showError(result.error?.message || '启动下载失败')
       return false
