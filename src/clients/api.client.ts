@@ -77,6 +77,7 @@ class ApiClientImpl {
         const result = await window.electronAPI.wallhavenApiRequest({
           endpoint: url,
           params,
+          apiKey,
         })
 
         if (result.success && result.data !== null) {
@@ -127,6 +128,7 @@ class ApiClientImpl {
         const result = await window.electronAPI.wallhavenApiRequest({
           endpoint: url,
           params: { method: 'POST', body: data },
+          apiKey,
         })
 
         if (result.success && result.data !== null) {

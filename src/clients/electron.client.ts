@@ -435,6 +435,7 @@ class ElectronClientImpl {
   async wallhavenApiRequest<T = unknown>(params: {
     endpoint: string
     params?: Record<string, unknown>
+    apiKey?: string
   }): Promise<IpcResponse<T>> {
     if (!this.isAvailable()) {
       return this.createUnavailableResponse<T>()

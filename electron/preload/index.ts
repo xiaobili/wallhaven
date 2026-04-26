@@ -43,7 +43,7 @@ export interface ElectronAPI {
   loadSettings: () => Promise<{ success: boolean; settings: any | null; error?: string }>
 
   // Wallhaven API 代理
-  wallhavenApiRequest: (params: { endpoint: string; params?: any }) => Promise<{
+  wallhavenApiRequest: (params: { endpoint: string; params?: any; apiKey?: string }) => Promise<{
     success: boolean
     data: any | null
     error?: string
@@ -149,7 +149,7 @@ const electronAPI: ElectronAPI = {
 
   // Wallhaven API 代理
   wallhavenApiRequest: (params) => {
-    console.log('[Preload] wallhavenApiRequest called:', params.endpoint)
+    console.log('[Preload] wallhavenApiRequest called:', params.endpoint, 'apiKey:', params.apiKey ? '[provided]' : '[not provided]')
     return ipcRenderer.invoke(IPC_CHANNELS.WALLHAVEN_API_REQUEST, params)
   },
 

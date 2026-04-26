@@ -123,13 +123,8 @@ class WallpaperServiceImpl {
 
       // 获取 API Key
       const apiKey = await this.getApiKey()
-
       // 调用 API
-      const result = await apiClient.get<WallpaperSearchResult>(
-        '/search',
-        filteredParams,
-        apiKey
-      )
+      const result = await apiClient.get<WallpaperSearchResult>('/search', filteredParams, apiKey)
 
       // 成功时缓存结果
       if (result.success && result.data) {
