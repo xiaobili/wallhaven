@@ -51,7 +51,7 @@ export interface UseDownloadReturn {
   addTask: (task: Omit<DownloadItem, 'id' | 'offset' | 'progress' | 'speed' | 'state'>) => string
   startDownload: (id: string) => Promise<boolean>
   pauseDownload: (id: string) => Promise<boolean>
-  resumeDownload: (id: string) => void
+  resumeDownload: (id: string) => Promise<boolean>
   cancelDownload: (id: string) => Promise<boolean>
   removeFinished: (id: string) => Promise<boolean>
   clearFinished: () => Promise<void>
@@ -199,21 +199,51 @@ export function useDownload(): UseDownloadReturn {
   }
 
   /**
-   * 恢复下载
-   * 注意：当前实现不支持断点续传，恢复下载会重新开始
+   * 恢复下载（断点续传）
+   * 从已下载的 offset 继续下载，而不是重新开始
    */
-  const resumeDownload = (id: string): void => {
+  const resumeDownload = async (id: string): Promise<boolean> => {
     const task = store.downloadingList.find((item) => item.id === id)
-    if (task && task.state === 'paused') {
-      // 重置进度
-      task.state = 'waiting'
-      task.progress = 0
-      task.offset = 0
-      task.speed = 0
-
-      // 重新开始下载
-      startDownload(id)
+    if (!task || task.state !== 'paused') {
+      return false
     }
+
+    // 获取下载目录
+    const pathResult = await downloadService.getDownloadPath()
+    if (!pathResult.success || !pathResult.data) {
+      showError(pathResult.error?.message || '获取下载目录失败')
+      return false
+    }
+
+    // 构造 PendingDownload 对象
+    const pendingDownload = {
+      taskId: task.id,
+      url: task.url,
+      filename: task.filename,
+      saveDir: pathResult.data,
+      offset: task.offset,
+      totalSize: task.size,
+      wallpaperId: task.wallpaperId,
+      small: task.small,
+      resolution: task.resolution,
+      size: task.size,
+      createdAt: task.time || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // 更新任务状态为下载中
+    task.state = 'downloading'
+
+    // 调用断点续传服务
+    const result = await downloadService.resumeDownload(id, pendingDownload)
+
+    if (!result.success) {
+      task.state = 'paused'
+      showError(result.error?.message || '恢复下载失败')
+      return false
+    }
+
+    return true
   }
 
   /**
