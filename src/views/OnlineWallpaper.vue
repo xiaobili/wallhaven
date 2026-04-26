@@ -2,14 +2,14 @@
   <div class="online-wallpaper-page">
     <!-- 加载遮罩层 -->
     <LoadingOverlay :show="showLoadingOverlay" text="搜索中..." />
-    
+
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
       :type="alert.type"
       :message="alert.message"
       :duration="alert.duration"
-      @close="alert.visible = false"
+      @close="hideAlert"
     />
 
     <ImagePreview
@@ -68,7 +68,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
@@ -76,7 +76,7 @@ import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/modules/download'
-import { useWallpaperList, useDownload, useSettings } from '@/composables'
+import { useWallpaperList, useDownload, useSettings, useAlert } from '@/composables'
 import type { WallpaperItem, GetParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
@@ -88,6 +88,7 @@ const downloadStore = useDownloadStore()
 const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, loadSavedParams } = useWallpaperList()
 const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
 const { update: updateSettings } = useSettings()
+const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
@@ -101,26 +102,6 @@ const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
 const apiKey = computed(() => wallpaperStore.settings.apiKey)
-
-// Alert 状态管理
-const alert = reactive({
-  visible: false,
-  type: 'info' as 'success' | 'error' | 'warning' | 'info',
-  message: '',
-  duration: 3000
-})
-
-// 显示提示消息
-const showAlert = (
-  message: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'info',
-  duration: number = 3000
-) => {
-  alert.message = message
-  alert.type = type
-  alert.duration = duration
-  alert.visible = true
-}
 
 // Lifecycle hooks
 onMounted(() => {
@@ -144,7 +125,7 @@ const handleChangeParams = (customParams: GetParams | null): void => {
 }
 
 const saveParams = (): void => {
-  showAlert('参数已保存', 'success')
+  showSuccess('参数已保存')
 }
 
 /**
@@ -173,7 +154,7 @@ const clearSelection = (): void => {
  */
 const downloadSelected = async (): Promise<void> => {
   if (selectedWallpapers.value.length === 0) {
-    showAlert('请先选择要下载的壁纸', 'warning')
+    showWarning('请先选择要下载的壁纸')
     return
   }
 
@@ -194,7 +175,7 @@ const downloadSelected = async (): Promise<void> => {
     )
 
     if (selectedItems.length === 0) {
-      showAlert('未找到选中的壁纸信息', 'error')
+      showError('未找到选中的壁纸信息')
       return
     }
 
@@ -211,13 +192,13 @@ const downloadSelected = async (): Promise<void> => {
       await startDownload(taskId)
     }
 
-    showAlert(`✅ 已添加 ${selectedItems.length} 个下载任务到下载中心`, 'success')
+    showSuccess(`已添加 ${selectedItems.length} 个下载任务到下载中心`)
 
     // 清空选择
     clearSelection()
   } catch (error: any) {
     console.error('批量下载失败:', error)
-    showAlert('批量下载失败: ' + error.message, 'error')
+    showError('批量下载失败: ' + error.message)
   } finally {
     downloading.value = false
   }
@@ -239,23 +220,23 @@ const setBg = async (imgItem: WallpaperItem): Promise<void> => {
   try {
     // 首先下载图片
     const downloadResult = await downloadWallpaperFile(imgItem)
-    
+
     if (!downloadResult.success || !downloadResult.filePath) {
-      showAlert('下载壁纸失败: ' + (downloadResult.error || '未知错误'), 'error')
+      showError('下载壁纸失败: ' + (downloadResult.error || '未知错误'))
       return
     }
-    
+
     // 设置为桌面壁纸
     const setResult = await window.electronAPI.setWallpaper(downloadResult.filePath)
-    
+
     if (setResult.success) {
-      showAlert('✅ 壁纸设置成功！', 'success')
+      showSuccess('壁纸设置成功！')
     } else {
-      showAlert('设置壁纸失败: ' + (setResult.error || '未知错误'), 'error')
+      showError('设置壁纸失败: ' + (setResult.error || '未知错误'))
     }
   } catch (error: any) {
     console.error('设置壁纸错误:', error)
-    showAlert('设置壁纸失败: ' + error.message, 'error')
+    showError('设置壁纸失败: ' + error.message)
   }
 }
 
@@ -263,10 +244,10 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
   try {
     // 添加到下载队列
     await addToDownloadQueue(imgItem)
-    showAlert('✅ 已添加到下载队列，请在下载中心查看进度', 'success')
+    showSuccess('已添加到下载队列，请在下载中心查看进度')
   } catch (error: any) {
     console.error('添加下载任务失败:', error)
-    showAlert('添加下载任务失败: ' + error.message, 'error')
+    showError('添加下载任务失败: ' + error.message)
   }
 }
 
@@ -280,24 +261,24 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
 }> => {
   // 从store获取下载目录
   const downloadPath = wallpaperStore.settings.downloadPath
-  
+
   if (!downloadPath) {
     // 如果没有设置下载目录，提示用户
     const selectedDir = await window.electronAPI.selectFolder()
     if (!selectedDir) {
       return { success: false, filePath: null, error: '未选择下载目录' }
     }
-    
+
     // 保存下载目录到 electron-store
     await updateSettings({ downloadPath: selectedDir })
   }
-  
+
   const saveDir = downloadPath || (await window.electronAPI.selectFolder())
-  
+
   if (!saveDir) {
     return { success: false, filePath: null, error: '未选择下载目录' }
   }
-  
+
   // 生成文件名（从URL提取扩展名）
   let ext = '.jpg'
   if (imgItem.path) {
@@ -307,7 +288,7 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
     }
   }
   const filename = `wallhaven-${imgItem.id}${ext}`
-  
+
   // 调用Electron API下载
   return await window.electronAPI.downloadWallpaper({
     url: imgItem.path,
