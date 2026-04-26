@@ -259,6 +259,12 @@ export function registerDownloadHandlers(): void {
 
         const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
 
+        // Update totalSize in activeDownloads
+        const downloadTracker = activeDownloads.get(taskId)
+        if (downloadTracker) {
+          downloadTracker.totalSize = totalSize
+        }
+
         let downloadedSize = 0
         let lastTime = Date.now()
         let lastSize = 0
@@ -267,6 +273,12 @@ export function registerDownloadHandlers(): void {
 
         response.data.on('data', (chunk: Buffer) => {
           downloadedSize += chunk.length
+
+          // Update ActiveDownload tracking
+          const activeDownload = activeDownloads.get(taskId)
+          if (activeDownload) {
+            activeDownload.downloadedSize = downloadedSize
+          }
 
           // 每100ms更新一次进度
           const now = Date.now()
@@ -288,6 +300,29 @@ export function registerDownloadHandlers(): void {
               windows[0].webContents.send('download-progress', progressData)
             }
 
+            // Check if we should persist state (throttled)
+            const download = activeDownloads.get(taskId)
+            if (download && shouldPersistState(
+              download.lastPersistTime,
+              download.lastPersistOffset,
+              downloadedSize
+            )) {
+              const statePath = getStateFilePath(tempPath)
+              const state: PendingDownload = {
+                taskId,
+                url,
+                filename,
+                saveDir,
+                offset: downloadedSize,
+                totalSize,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              }
+              writeStateFile(statePath, state)
+              download.lastPersistTime = Date.now()
+              download.lastPersistOffset = downloadedSize
+            }
+
             lastTime = now
             lastSize = downloadedSize
           }
@@ -307,6 +342,16 @@ export function registerDownloadHandlers(): void {
 
         // 重命名临时文件为正式文件
         fs.renameSync(tempPath, filePath)
+
+        // Delete state file on completion
+        const statePath = getStateFilePath(tempPath)
+        if (fs.existsSync(statePath)) {
+          try {
+            fs.unlinkSync(statePath)
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
 
         const finalSize = fs.statSync(filePath).size
 
@@ -385,25 +430,44 @@ export function registerDownloadHandlers(): void {
       // 中止下载
       download.abortController.abort()
 
-      // 通知渲染进程任务已暂停
+      // Get current downloaded size
+      let currentSize = download.downloadedSize || 0
+      if (fs.existsSync(download.tempPath)) {
+        try {
+          currentSize = fs.statSync(download.tempPath).size
+        } catch {
+          // Use tracked value if file read fails
+          currentSize = download.downloadedSize || 0
+        }
+      }
+
+      // Write state file before cleanup
+      const statePath = getStateFilePath(download.tempPath)
+      const state: PendingDownload = {
+        taskId,
+        url: '',  // URL not stored in ActiveDownload, will be enriched by renderer
+        filename: download.filename,
+        saveDir: download.saveDir,
+        offset: currentSize,
+        totalSize: download.totalSize,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      writeStateFile(statePath, state)
+
+      // Notify renderer of paused state
       const windows = BrowserWindow.getAllWindows()
       if (windows.length > 0) {
-        // 获取当前下载大小
-        let currentSize = 0
-        if (fs.existsSync(download.tempPath)) {
-          try {
-            currentSize = fs.statSync(download.tempPath).size
-          } catch {
-            // 忽略读取错误
-          }
-        }
-
         windows[0].webContents.send('download-progress', {
           taskId,
           state: 'paused',
           offset: currentSize,
+          totalSize: download.totalSize,
         })
       }
+
+      // Cleanup but preserve temp file
+      cleanupDownload(taskId, true)
 
       return {
         success: true,
