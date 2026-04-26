@@ -502,8 +502,31 @@ import { reactive, computed, onMounted } from 'vue'
 import type { CustomParams, ResolutionLine, RatioLine, ColorLine, GetParams } from '@/types'
 import { arrayToBinaryString, formatResolution } from '@/utils/helpers'
 import { useWallpaperStore } from '@/stores/wallpaper'
+import {useWallpaperList} from '@/composables'
 
 const wallpaperStore = useWallpaperStore()
+
+/**
+ * 默认搜索参数
+ * 用于初始化和重置操作
+ */
+const DEFAULT_PARAMS: CustomParams = {
+  selector: 0,
+  keyword: '',
+  categories: ['general', 'anime'],
+  aiArt: false,
+  purity: ['sfw', 'sketchy'],
+  sorting: 'hot',
+  desc: true,
+  topRange: '1M',
+  ratios: [],
+  respickerLimitation: 'atleast',
+  resolutions: [],
+  resolution: '',
+  respickerCustomWidth: '',
+  respickerCustomHeight: '',
+  color: 'none',
+}
 
 onMounted(() => {
   const oldCustomParams = wallpaperStore.savedParams
@@ -527,27 +550,11 @@ const emit = defineEmits<{
   (e: 'changeParams', value: GetParams | null): void
   (e: 'downloadSelected'): void
   (e: 'clearSelection'): void
-  (e: 'saveParams'): void
+  (e: 'saveParams', params: CustomParams): void
 }>()
 
 // 本地参数副本 - 使用 reactive 确保深层响应式
-const localParams = reactive<CustomParams>({
-  selector: 0,
-  keyword: '',
-  categories: ['general', 'anime'],
-  aiArt: false,
-  purity: ['sfw', 'sketchy'],
-  sorting: 'hot',
-  desc: true,
-  topRange: '1M',
-  ratios: [],
-  respickerLimitation: 'atleast',
-  resolutions: [],
-  resolution: '',
-  respickerCustomWidth: '',
-  respickerCustomHeight: '',
-  color: 'none',
-})
+const localParams = reactive<CustomParams>({ ...DEFAULT_PARAMS })
 
 // 将 watch 转换为 computed，自动追踪 localParams 的变化
 const computedQueryParams = computed<GetParams>(() => {
@@ -659,20 +666,23 @@ const closeModal = (): void => {
 }
 
 const resetSelect = async (): Promise<void> => {
-  // 重置选择,从pinia中获取参数
-  const saved = await wallpaperStore.savedParams
+  // 优先从 pinia 中获取已保存的参数
+  const saved = await useWallpaperList().loadSavedParams()
+  console.log('从 Pinia 加载的已保存参数：', saved)
   if (saved) {
     // 将保存的参数复制到 localParams
     Object.assign(localParams, saved)
-    // 触发更新，通知父组件
-    emit('changeParams', computedQueryParams.value)
+  } else {
+    // 没有保存的参数时，重置为默认值
+    Object.assign(localParams, DEFAULT_PARAMS)
   }
+  // 触发更新，通知父组件
+  emit('changeParams', computedQueryParams.value)
 }
 
 const saveParams = async (): Promise<void> => {
   // 将 params 存储到 electron-store 中
-  // saveCustomParams handled by composable({ ...localParams })
-  emit('saveParams')
+  emit('saveParams', { ...localParams })
 }
 
 const handleDownloadSelected = (): void => {
@@ -747,6 +757,6 @@ defineExpose({
 
 .button.blue:disabled {
   opacity: 0.6;
-  cursor: not-allowed;
+  cursor: not_allowed;
 }
 </style>

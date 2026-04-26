@@ -77,7 +77,7 @@ import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useDownloadStore } from '@/stores/modules/download'
 import { useWallpaperList, useDownload, useSettings, useAlert } from '@/composables'
-import type { WallpaperItem, GetParams } from '@/types'
+import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
 // Pinia Stores
@@ -85,7 +85,7 @@ const wallpaperStore = useWallpaperStore()
 const downloadStore = useDownloadStore()
 
 // Composables
-const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, loadSavedParams } = useWallpaperList()
+const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, saveCustomParams } = useWallpaperList()
 const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
 const { update: updateSettings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
@@ -124,8 +124,11 @@ const handleChangeParams = (customParams: GetParams | null): void => {
   })
 }
 
-const saveParams = (): void => {
-  showSuccess('参数已保存')
+const saveParams = async (params: CustomParams): Promise<void> => {
+  const success = await saveCustomParams(params)
+  if (success) {
+    showSuccess('参数已保存')
+  }
 }
 
 /**
