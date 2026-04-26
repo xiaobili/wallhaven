@@ -8,7 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
 import { streamPipeline, logHandler } from './base'
-import { IPC_CHANNELS, type ResumeDownloadParams, type PendingDownload } from '../../../../src/shared/types/ipc'
+import { IPC_CHANNELS, type ResumeDownloadParams, type PendingDownload, isResumeDownloadParams, isPendingDownload } from '../../../../src/shared/types/ipc'
 
 // /**
 //  * IPC Channel names (duplicated from shared/types/ipc.ts to avoid cross-directory imports)
@@ -28,18 +28,75 @@ interface ActiveDownload {
   tempPath: string
   saveDir: string
   filename: string
+  totalSize: number
+  downloadedSize: number
+  lastPersistTime: number
+  lastPersistOffset: number
 }
 
 // Store active downloads with their AbortControllers
 const activeDownloads = new Map<string, ActiveDownload>()
 
 /**
- * Clean up a download task
+ * Get state file path from temp file path
  */
-function cleanupDownload(taskId: string): void {
+function getStateFilePath(tempPath: string): string {
+  return tempPath + '.json'
+}
+
+/**
+ * Write state file atomically (write to temp, then rename)
+ */
+function writeStateFile(statePath: string, state: PendingDownload): void {
+  const tempStatePath = statePath + '.tmp'
+  fs.writeFileSync(tempStatePath, JSON.stringify(state, null, 2), 'utf-8')
+  fs.renameSync(tempStatePath, statePath)
+}
+
+/**
+ * Read and parse state file
+ */
+function readStateFile(statePath: string): PendingDownload | null {
+  try {
+    if (!fs.existsSync(statePath)) return null
+    const content = fs.readFileSync(statePath, 'utf-8')
+    const state = JSON.parse(content)
+    return isPendingDownload(state) ? state : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Check if state should be persisted based on throttling rules
+ * Persists every 5 seconds OR every 10MB, whichever comes first
+ */
+function shouldPersistState(
+  lastPersistTime: number,
+  lastPersistOffset: number,
+  currentOffset: number
+): boolean {
+  const now = Date.now()
+  const timeElapsed = now - lastPersistTime
+  const bytesDownloaded = currentOffset - lastPersistOffset
+  const MIN_INTERVAL = 5000  // 5 seconds
+  const MIN_BYTES = 10 * 1024 * 1024  // 10MB
+
+  return timeElapsed >= MIN_INTERVAL || bytesDownloaded >= MIN_BYTES
+}
+
+/**
+ * Clean up download task
+ * @param taskId - Task ID
+ * @param preserveTempFile - If true (pause), keep temp and state files
+ *                           If false (cancel), delete both
+ */
+function cleanupDownload(taskId: string, preserveTempFile: boolean = false): void {
   const download = activeDownloads.get(taskId)
-  if (download) {
-    // Delete temp file if exists
+  if (!download) return
+
+  if (!preserveTempFile) {
+    // Cancel: delete temp file
     if (fs.existsSync(download.tempPath)) {
       try {
         fs.unlinkSync(download.tempPath)
@@ -47,8 +104,19 @@ function cleanupDownload(taskId: string): void {
         // Ignore cleanup errors
       }
     }
-    activeDownloads.delete(taskId)
+    // Also delete state file
+    const statePath = getStateFilePath(download.tempPath)
+    if (fs.existsSync(statePath)) {
+      try {
+        fs.unlinkSync(statePath)
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
   }
+  // Pause: preserve temp file, state file should already be written
+
+  activeDownloads.delete(taskId)
 }
 
 export function registerDownloadHandlers(): void {
@@ -174,6 +242,10 @@ export function registerDownloadHandlers(): void {
           tempPath,
           saveDir,
           filename,
+          totalSize: 0,  // Will be updated after response
+          downloadedSize: 0,
+          lastPersistTime: Date.now(),
+          lastPersistOffset: 0,
         })
 
         // 下载文件并跟踪进度
