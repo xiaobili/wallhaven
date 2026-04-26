@@ -8,7 +8,7 @@
 ## Milestones
 
 - ✅ **v2.0 架构重构** — Phases 1-5 (shipped 2026-04-26)
-- 🔄 **v2.1 下载断点续传** — Phases 6-9 (in progress)
+- 🎉 **v2.1 下载断点续传** — Phases 6-9 (shipped 2026-04-27)
 
 ---
 
@@ -101,12 +101,12 @@
 
 **Requirements:** ERRH-01, ERRH-02, ERRH-03
 
+**Status:** Complete (2026-04-27)
+
 **Plans:**
-1. Implement server Range support detection via HEAD request
-2. Add file integrity validation before resume (size comparison)
-3. Implement orphan temp file cleanup on app startup (>7 days old)
-4. Add user notification when server doesn't support Range
-5. Handle corrupted state file with fallback to fresh download
+1. ✅ Implement orphan temp file cleanup on app startup (>7 days old)
+2. ✅ Add user notification when server doesn't support Range
+3. ✅ Handle corrupted state file with fallback to fresh download
 
 **Success Criteria:**
 - ✓ User sees clear message when resume not supported by server
@@ -130,7 +130,7 @@
 | 6 | Core Resume Infrastructure | v2.1 | 9/9 | Complete | 2026-04-26 |
 | 7 | Main Process Implementation | v2.1 | 4/4 | Complete | 2026-04-26 |
 | 8 | Renderer Integration | v2.1 | 5/5 | Complete | 2026-04-26 |
-| 9 | Error Handling & Edge Cases | v2.1 | 0/5 | Pending | — |
+| 9 | Error Handling & Edge Cases | v2.1 | 3/3 | Complete | 2026-04-27 |
 
 ---
 
@@ -144,9 +144,9 @@
 | INFR-01 | Phase 6 | IPC channels for resume-download-task and get-pending-downloads | ✅ Complete |
 | INFR-02 | Phase 7 | HTTP Range request support in download handler | ✅ Complete |
 | INFR-03 | Phase 7 | Temporary .download file preserved on pause | ✅ Complete |
-| ERRH-01 | Phase 9 | Graceful degradation when server doesn't support Range | Pending |
-| ERRH-02 | Phase 9 | File integrity validation before resume | Pending |
-| ERRH-03 | Phase 9 | Orphan temp file cleanup on app startup | Pending |
+| ERRH-01 | Phase 9 | Graceful degradation when server doesn't support Range | ✅ Complete |
+| ERRH-02 | Phase 9 | File integrity validation before resume | ✅ Complete |
+| ERRH-03 | Phase 9 | Orphan temp file cleanup on app startup | ✅ Complete |
 
 **Coverage:** 9/9 requirements mapped ✓
 
