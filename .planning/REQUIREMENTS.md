@@ -12,8 +12,8 @@
 
 ### 简单迁移 (Simple Migration)
 
-- [ ] **SMIG-01**: LocalWallpaper.vue 移除 `useWallpaperStore` 导入，改用 `useSettings()` 获取 `downloadPath`
-- [ ] **SMIG-02**: DownloadWallpaper.vue 移除 `useDownloadStore` 导入，改用 `useDownload()` 获取列表状态
+- [x] **SMIG-01**: LocalWallpaper.vue 移除 `useWallpaperStore` 导入，改用 `useSettings()` 获取 `downloadPath` ✓ Phase 10
+- [x] **SMIG-02**: DownloadWallpaper.vue 移除 `useDownloadStore` 导入，改用 `useDownload()` 获取列表状态 ✓ Phase 10
 - [ ] **SMIG-03**: OnlineWallpaper.vue 移除直接 store 状态访问，改用 `useWallpaperList()` 获取 `wallpapers`, `loading`, `error`
 
 ### 复杂迁移 (Complex Migration)
@@ -60,8 +60,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SMIG-01 | Phase 10 | ⏳ Pending |
-| SMIG-02 | Phase 10 | ⏳ Pending |
+| SMIG-01 | Phase 10 | ✅ Complete |
+| SMIG-02 | Phase 10 | ✅ Complete |
 | SMIG-03 | Phase 11 | ⏳ Pending |
 | CMIG-01 | Phase 11 | ⏳ Pending |
 | CMIG-02 | Phase 12 | ⏳ Pending |
