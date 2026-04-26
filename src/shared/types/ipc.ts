@@ -178,6 +178,46 @@ export interface DownloadProgressData {
 }
 
 /**
+ * 恢复下载任务请求参数
+ * 继承 StartDownloadTaskRequest 并添加 offset 字段
+ */
+export interface ResumeDownloadParams extends StartDownloadTaskRequest {
+  /** 已下载的字节数 */
+  offset: number
+}
+
+/**
+ * 待恢复的下载任务信息
+ * 包含恢复下载所需的所有状态信息
+ */
+export interface PendingDownload {
+  /** 任务 ID */
+  taskId: string
+  /** 下载 URL */
+  url: string
+  /** 文件名 */
+  filename: string
+  /** 保存目录 */
+  saveDir: string
+  /** 已下载字节数 */
+  offset: number
+  /** 文件总大小 */
+  totalSize: number
+  /** Wallhaven 壁纸 ID */
+  wallpaperId?: string
+  /** 缩略图 URL */
+  small?: string
+  /** 分辨率信息 */
+  resolution?: string
+  /** 文件大小 */
+  size?: number
+  /** 创建时间 ISO 字符串 */
+  createdAt: string
+  /** 更新时间 ISO 字符串 */
+  updatedAt: string
+}
+
+/**
  * 设置壁纸响应
  */
 export interface SetWallpaperResponse {
