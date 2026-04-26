@@ -97,28 +97,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useDownloadStore } from '@/stores/modules/download'
+import { onMounted, onUnmounted } from 'vue'
 import { useDownload, useAlert } from '@/composables'
 import { formatFileSize, formatResolution, formatSpeed, formatTime } from '@/utils/helpers'
 import Alert from '@/components/Alert.vue'
 
-// Pinia Store
-const downloadStore = useDownloadStore()
-
-// Composables - 使用 useDownload 提供的方法来执行实际的下载操作
+// Composables
 const {
+  downloadingList: downloadList,
+  finishedList: downloadFinishedList,
   loadHistory,
   removeFinished,
-  pauseDownload,    // 来自 useDownload，会调用服务层
-  cancelDownload,   // 来自 useDownload，会调用服务层
-  resumeDownload    // 来自 useDownload，会调用服务层
+  pauseDownload,
+  cancelDownload,
+  resumeDownload
 } = useDownload()
 const { alert, showSuccess, showError, showInfo, showWarning, hideAlert } = useAlert()
-
-// 从store获取数据（使用computed保持响应式）
-const downloadList = computed(() => downloadStore.downloadingList)
-const downloadFinishedList = computed(() => downloadStore.finishedList)
 
 // 取消下载 - 使用 composable 提供的方法
 const onCancelDownload = async (id: string) => {
