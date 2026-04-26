@@ -5,7 +5,7 @@
 
 import type { IpcResponse } from '@/shared/types/ipc'
 import type { AppSettings, WallpaperFit } from '@/types'
-import { settingsRepository } from '@/repositories'
+import { settingsRepository, type CacheInfo, type ClearCacheResult } from '@/repositories'
 
 /**
  * 默认应用设置
@@ -108,6 +108,47 @@ class SettingsServiceImpl {
    */
   clearCache(): void {
     this.cachedSettings = null
+  }
+
+  // ============================================
+  // 缓存管理方法
+  // ============================================
+
+  /**
+   * 选择文件夹
+   * @returns 返回选中的文件夹路径，取消则返回 null
+   */
+  async selectFolder(): Promise<IpcResponse<string | null>> {
+    return settingsRepository.selectFolder()
+  }
+
+  /**
+   * 清理应用缓存
+   * 同时清除内存中的设置缓存
+   * @param downloadPath - 下载目录路径
+   */
+  async clearAppCache(downloadPath?: string): Promise<IpcResponse<ClearCacheResult>> {
+    // 清除内存缓存
+    this.cachedSettings = null
+    return settingsRepository.clearAppCache(downloadPath)
+  }
+
+  /**
+   * 清空应用存储
+   * 同时清除内存中的设置缓存
+   */
+  async clearStore(): Promise<IpcResponse<void>> {
+    // 清除内存缓存
+    this.cachedSettings = null
+    return settingsRepository.clearStore()
+  }
+
+  /**
+   * 获取缓存信息
+   * @param downloadPath - 下载目录路径
+   */
+  async getCacheInfo(downloadPath?: string): Promise<IpcResponse<CacheInfo>> {
+    return settingsRepository.getCacheInfo(downloadPath)
   }
 }
 

@@ -3,7 +3,7 @@
  */
 
 // 设置仓储
-export { settingsRepository } from './settings.repository'
+export { settingsRepository, type CacheInfo, type ClearCacheResult } from './settings.repository'
 
 // 下载仓储
 export { downloadRepository } from './download.repository'

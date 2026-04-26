@@ -69,7 +69,24 @@ interface ElectronAPI {
   storeSet: (params: { key: string; value: any }) => Promise<{ success: boolean; error?: string }>
   storeDelete: (key: string) => Promise<{ success: boolean; error?: string }>
   storeClear: () => Promise<{ success: boolean; error?: string }>
-  
+
+  // 缓存管理
+  clearAppCache: (downloadPath?: string) => Promise<{
+    success: boolean
+    thumbnailsDeleted: number
+    tempFilesDeleted: number
+    errors?: string[]
+    error?: string
+  }>
+  getCacheInfo: (downloadPath?: string) => Promise<{
+    success: boolean
+    info: {
+      thumbnailsCount: number
+      tempFilesCount: number
+    }
+    error?: string
+  }>
+
   // 通用IPC通信
   send: (channel: string, data: any) => void
   receive: (channel: string, func: (...args: any[]) => void) => void

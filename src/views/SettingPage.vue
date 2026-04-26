@@ -8,19 +8,19 @@
       :duration="alert.duration"
       @close="hideAlert"
     />
-    
+
     <h2>应用设置</h2>
     <!-- 下载设置 -->
     <section class="settings-section">
       <h3><i class="fas fa-download"></i> 下载设置</h3>
-      
+
       <div class="setting-item">
         <label for="download-path">下载目录</label>
         <div class="oneline">
-          <input 
-            type="text" 
-            id="download-path" 
-            v-model="settings.downloadPath" 
+          <input
+            type="text"
+            id="download-path"
+            v-model="settings.downloadPath"
             placeholder="选择壁纸下载目录"
             readonly
           />
@@ -30,16 +30,16 @@
         </div>
         <p class="setting-hint">设置壁纸文件的默认保存位置</p>
       </div>
-      
+
       <div class="setting-item">
         <label for="max-concurrent">多线程下载数量: {{ settings.maxConcurrentDownloads }}</label>
         <div class="framed">
-          <input 
-            type="range" 
-            id="max-concurrent" 
-            v-model.number="settings.maxConcurrentDownloads" 
-            min="1" 
-            max="10" 
+          <input
+            type="range"
+            id="max-concurrent"
+            v-model.number="settings.maxConcurrentDownloads"
+            min="1"
+            max="10"
             step="1"
             class="slider-input"
           />
@@ -47,31 +47,31 @@
         <p class="setting-hint">同时下载的壁纸数量（1-10）</p>
       </div>
     </section>
-    
+
     <!-- API 设置 -->
     <section class="settings-section">
       <h3><i class="fas fa-key"></i> Wallhaven API 设置</h3>
-      
+
       <div class="setting-item">
         <label for="api-key">API Key</label>
-        <input 
-          type="password" 
-          id="api-key" 
-          v-model="settings.apiKey" 
+        <input
+          type="password"
+          id="api-key"
+          v-model="settings.apiKey"
           placeholder="输入您的 Wallhaven API Key"
         />
         <p class="setting-hint">
-          API Key 用于访问 NSFW 内容。您可以在 
-          <a href="https://wallhaven.cc/settings/account" target="_blank">Wallhaven 账户设置</a> 
+          API Key 用于访问 NSFW 内容。您可以在
+          <a href="https://wallhaven.cc/settings/account" target="_blank">Wallhaven 账户设置</a>
           中获取。
         </p>
       </div>
     </section>
-    
+
     <!-- 桌面设置 -->
     <section class="settings-section">
       <h3><i class="fas fa-desktop"></i> 系统桌面设置</h3>
-      
+
       <div class="setting-item">
         <label for="wallpaper-fit">壁纸适配模式</label>
         <div class="framed">
@@ -86,7 +86,7 @@
         </div>
         <p class="setting-hint">设置壁纸在桌面上的显示方式</p>
       </div>
-      
+
       <div class="setting-preview">
         <p class="preview-label">预览效果：</p>
         <div class="fit-preview" :class="'fit-' + settings.wallpaperFit">
@@ -97,18 +97,18 @@
         </div>
       </div>
     </section>
-    
+
     <!-- 缓存管理 -->
     <section class="settings-section">
       <h3><i class="fas fa-broom"></i> 缓存管理</h3>
-      
+
       <div class="setting-item">
         <label>应用缓存</label>
         <p class="setting-hint" style="margin-bottom: 1em;">
           清理应用产生的缓存数据，包括缩略图、临时文件和应用存储数据。<br>
           注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件。
         </p>
-        
+
         <div class="cache-info" v-if="cacheInfo">
           <div class="cache-stat">
             <span class="stat-label">缩略图数量:</span>
@@ -119,14 +119,14 @@
             <span class="stat-value">{{ cacheInfo.tempFilesCount || 0 }}</span>
           </div>
         </div>
-        
+
         <button class="button warning-button" @click="clearCache" :disabled="isClearing">
           <i class="fas" :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
           {{ isClearing ? '清理中...' : '清空缓存' }}
         </button>
       </div>
     </section>
-    
+
     <!-- 操作按钮 -->
     <div class="settings-actions">
       <button class="button restore-button" @click="resetSettings">
@@ -143,6 +143,7 @@
 import { reactive, toRaw, ref } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { useSettings, useAlert } from '@/composables'
+import { settingsService } from '@/services'
 import type { WallpaperFit } from '@/types'
 import Alert from '@/components/Alert.vue'
 
@@ -166,24 +167,16 @@ const isClearing = ref(false)
 // 方法
 const browseDownloadPath = async (): Promise<void> => {
   try {
-    // 检查 Electron API 是否可用
-    // @ts-ignore
-    if (!window.electronAPI) {
-      console.error('[SettingPage] window.electronAPI is undefined')
-      showError('Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志')
+    const response = await settingsService.selectFolder()
+
+    if (!response.success) {
+      showError('选择文件夹失败: ' + (response.error?.message || '未知错误'))
       return
     }
-    
-    console.log('[SettingPage] window.electronAPI:', window.electronAPI)
-    // @ts-ignore
-    console.log('[SettingPage] selectFolder method:', window.electronAPI.selectFolder)
-    
-    // 调用 Electron API 打开文件夹选择对话框
-    // @ts-ignore
-    const selectedPath = await window.electronAPI.selectFolder()
-    
+
+    const selectedPath = response.data
     console.log('[SettingPage] Selected path:', selectedPath)
-    
+
     if (selectedPath) {
       settings.downloadPath = selectedPath
       // 自动保存设置到 electron-store
@@ -201,14 +194,14 @@ const saveSettings = async (): Promise<void> => {
     showWarning('多线程下载数量必须在 1-10 之间')
     return
   }
-  
+
   try {
     // 将 reactive 对象转换为普通对象，避免 IPC 克隆错误
     const plainSettings = toRaw(settings)
-    
+
     // 保存设置到 electron-store
     await updateSettings(plainSettings)
-    
+
     console.log('[SettingPage] 设置已保存到 electron-store')
 
     showSuccess('设置已保存')
@@ -223,7 +216,7 @@ const resetSettings = async (): Promise<void> => {
   if (!confirmed) {
     return
   }
-  
+
   // 重置为默认值（普通对象）
   const defaultSettings = {
     downloadPath: '',
@@ -231,9 +224,9 @@ const resetSettings = async (): Promise<void> => {
     apiKey: '',
     wallpaperFit: 'fill' as WallpaperFit,
   }
-  
+
   await updateSettings(defaultSettings)
-  
+
   // 同时更新本地显示
   Object.assign(settings, defaultSettings)
 
@@ -261,38 +254,28 @@ const clearCache = async (): Promise<void> => {
     '• 应用存储数据（设置将被重置）\n\n' +
     '注意：不会删除已下载的壁纸文件。'
   )
-  
+
   if (!confirmed) {
     return
   }
-  
+
   isClearing.value = true
-  
+
   try {
-    // 检查 Electron API 是否可用
-    // @ts-ignore
-    if (!window.electronAPI) {
-      showError('Electron API 未加载')
-      isClearing.value = false
-      return
-    }
-    
     // 1. 清空缩略图和临时文件缓存
-    // @ts-ignore
-    const cacheResult = await window.electronAPI.clearAppCache(settings.downloadPath || undefined)
-    
+    const cacheResult = await settingsService.clearAppCache(settings.downloadPath || undefined)
+
     if (!cacheResult.success) {
-      throw new Error(cacheResult.error || '清理缓存失败')
+      throw new Error(cacheResult.error?.message || '清理缓存失败')
     }
-    
+
     // 2. 清空 Store 数据
-    // @ts-ignore
-    const storeResult = await window.electronAPI.storeClear()
-    
+    const storeResult = await settingsService.clearStore()
+
     if (!storeResult.success) {
-      console.warn('[SettingPage] Store clear failed:', storeResult.error)
+      console.warn('[SettingPage] Store clear failed:', storeResult.error?.message)
     }
-    
+
     // 3. 重置本地设置状态
     const defaultSettings = {
       downloadPath: '',
@@ -301,18 +284,18 @@ const clearCache = async (): Promise<void> => {
       wallpaperFit: 'fill' as WallpaperFit,
     }
     Object.assign(settings, defaultSettings)
-    
+
     // 4. 更新缓存信息
     cacheInfo.thumbnailsCount = 0
     cacheInfo.tempFilesCount = 0
-    
+
     // 5. 显示成功消息
     const details = []
-    if (cacheResult.thumbnailsDeleted > 0) {
-      details.push(`${cacheResult.thumbnailsDeleted} 个缩略图`)
+    if (cacheResult.data?.thumbnailsDeleted && cacheResult.data.thumbnailsDeleted > 0) {
+      details.push(`${cacheResult.data.thumbnailsDeleted} 个缩略图`)
     }
-    if (cacheResult.tempFilesDeleted > 0) {
-      details.push(`${cacheResult.tempFilesDeleted} 个临时文件`)
+    if (cacheResult.data?.tempFilesDeleted && cacheResult.data.tempFilesDeleted > 0) {
+      details.push(`${cacheResult.data.tempFilesDeleted} 个临时文件`)
     }
 
     const message = details.length > 0
@@ -320,12 +303,6 @@ const clearCache = async (): Promise<void> => {
       : '缓存已清空'
 
     showSuccess(message, 5000)
-
-    // 如果有错误，也显示警告
-    if (cacheResult.errors && cacheResult.errors.length > 0) {
-      console.warn('[SettingPage] Cache clear warnings:', cacheResult.errors)
-      showWarning('部分缓存清理失败\n' + cacheResult.errors.join('\n'), 8000)
-    }
   } catch (error: any) {
     console.error('[SettingPage] Clear cache error:', error)
     showError('清空缓存失败: ' + error.message)
@@ -336,18 +313,11 @@ const clearCache = async (): Promise<void> => {
 
 const fetchCacheInfo = async (): Promise<void> => {
   try {
-    // 检查 Electron API 是否可用
-    // @ts-ignore
-    if (!window.electronAPI) {
-      return
-    }
-    
-    // @ts-ignore
-    const result = await window.electronAPI.getCacheInfo(settings.downloadPath || undefined)
-    
-    if (result.success && result.info) {
-      cacheInfo.thumbnailsCount = result.info.thumbnailsCount
-      cacheInfo.tempFilesCount = result.info.tempFilesCount
+    const result = await settingsService.getCacheInfo(settings.downloadPath || undefined)
+
+    if (result.success && result.data) {
+      cacheInfo.thumbnailsCount = result.data.thumbnailsCount
+      cacheInfo.tempFilesCount = result.data.tempFilesCount
     }
   } catch (error: any) {
     console.error('获取缓存信息失败:', error)
@@ -495,7 +465,7 @@ fetchCacheInfo()
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ddd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ddd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3E%3c/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.7em center;
   background-size: 1em;
@@ -599,7 +569,7 @@ fetchCacheInfo()
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-image: 
+  background-image:
     repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px),
     repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 70px);
 }
@@ -731,16 +701,16 @@ fetchCacheInfo()
   .settings-page {
     padding: 0 1em;
   }
-  
+
   .settings-section {
     padding: 1em;
   }
-  
+
   .oneline {
     flex-direction: column;
     height: auto;
   }
-  
+
   .oneline > input,
   .oneline > .button {
     width: 100%;

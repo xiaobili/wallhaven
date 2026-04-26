@@ -52,8 +52,8 @@ export const downloadRepository = {
       return { success: false, error: result.error }
     }
 
-    // 添加到头部，并限制长度
-    const items = [item, ...result.data].slice(0, MAX_FINISHED_ITEMS)
+    // 添加到头部，并限制长度（result.data 已在 get() 中保证为数组）
+    const items = [item, ...(result.data ?? [])].slice(0, MAX_FINISHED_ITEMS)
     return this.set(items)
   },
 
@@ -67,7 +67,8 @@ export const downloadRepository = {
       return { success: false, error: result.error }
     }
 
-    const items = result.data.filter((item) => item.id !== id)
+    // result.data 已在 get() 中保证为数组
+    const items = (result.data ?? []).filter((item) => item.id !== id)
     return this.set(items)
   },
 
