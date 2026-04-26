@@ -6,7 +6,7 @@
       :type="alert.type"
       :message="alert.message"
       :duration="alert.duration"
-      @close="alert.visible = false"
+      @close="hideAlert"
     />
     
     <h2>应用设置</h2>
@@ -142,7 +142,7 @@
 <script lang="ts" setup>
 import { reactive, toRaw, ref } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
-import { useSettings } from '@/composables'
+import { useSettings, useAlert } from '@/composables'
 import type { WallpaperFit } from '@/types'
 import Alert from '@/components/Alert.vue'
 
@@ -152,14 +152,7 @@ const settings = wallpaperStore.settings
 
 // Composables
 const { update: updateSettings, reset: resetSettingsComposable } = useSettings()
-
-// Alert 状态管理
-const alert = reactive({
-  visible: false,
-  type: 'info' as 'success' | 'error' | 'warning' | 'info',
-  message: '',
-  duration: 3000
-})
+const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 
 // 缓存信息
 const cacheInfo = reactive({
@@ -170,18 +163,6 @@ const cacheInfo = reactive({
 // 清理状态
 const isClearing = ref(false)
 
-// 显示提示消息
-const showAlert = (
-  message: string,
-  type: 'success' | 'error' | 'warning' | 'info' = 'info',
-  duration: number = 3000
-) => {
-  alert.message = message
-  alert.type = type
-  alert.duration = duration
-  alert.visible = true
-}
-
 // 方法
 const browseDownloadPath = async (): Promise<void> => {
   try {
@@ -189,7 +170,7 @@ const browseDownloadPath = async (): Promise<void> => {
     // @ts-ignore
     if (!window.electronAPI) {
       console.error('[SettingPage] window.electronAPI is undefined')
-      showAlert('❌ Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志', 'error', 5000)
+      showError('Electron API 未加载\n\n可能原因：\n1. 应用未在 Electron 环境中运行\n2. Preload 脚本加载失败\n\n请检查控制台日志')
       return
     }
     
@@ -210,14 +191,14 @@ const browseDownloadPath = async (): Promise<void> => {
     }
   } catch (error: any) {
     console.error('选择文件夹失败:', error)
-    showAlert('选择文件夹失败: ' + error.message, 'error')
+    showError('选择文件夹失败: ' + error.message)
   }
 }
 
 const saveSettings = async (): Promise<void> => {
   // 验证设置
   if (settings.maxConcurrentDownloads < 1 || settings.maxConcurrentDownloads > 10) {
-    showAlert('多线程下载数量必须在 1-10 之间', 'warning')
+    showWarning('多线程下载数量必须在 1-10 之间')
     return
   }
   
@@ -229,11 +210,11 @@ const saveSettings = async (): Promise<void> => {
     await updateSettings(plainSettings)
     
     console.log('[SettingPage] 设置已保存到 electron-store')
-    
-    showAlert('✅ 设置已保存', 'success')
+
+    showSuccess('设置已保存')
   } catch (error: any) {
     console.error('保存设置错误:', error)
-    showAlert('保存设置失败: ' + error.message, 'error')
+    showError('保存设置失败: ' + error.message)
   }
 }
 
@@ -255,8 +236,8 @@ const resetSettings = async (): Promise<void> => {
   
   // 同时更新本地显示
   Object.assign(settings, defaultSettings)
-  
-  showAlert('✅ 已恢复默认设置', 'success')
+
+  showSuccess('已恢复默认设置')
 }
 
 const getFitDescription = (fit: WallpaperFit): string => {
@@ -291,7 +272,7 @@ const clearCache = async (): Promise<void> => {
     // 检查 Electron API 是否可用
     // @ts-ignore
     if (!window.electronAPI) {
-      showAlert('❌ Electron API 未加载', 'error')
+      showError('Electron API 未加载')
       isClearing.value = false
       return
     }
@@ -333,21 +314,21 @@ const clearCache = async (): Promise<void> => {
     if (cacheResult.tempFilesDeleted > 0) {
       details.push(`${cacheResult.tempFilesDeleted} 个临时文件`)
     }
-    
-    const message = details.length > 0 
-      ? `✅ 缓存已清空\n已删除：${details.join('、')}`
-      : '✅ 缓存已清空'
-    
-    showAlert(message, 'success', 5000)
-    
+
+    const message = details.length > 0
+      ? `缓存已清空\n已删除：${details.join('、')}`
+      : '缓存已清空'
+
+    showSuccess(message, 5000)
+
     // 如果有错误，也显示警告
     if (cacheResult.errors && cacheResult.errors.length > 0) {
       console.warn('[SettingPage] Cache clear warnings:', cacheResult.errors)
-      showAlert('⚠️ 部分缓存清理失败\n' + cacheResult.errors.join('\n'), 'warning', 8000)
+      showWarning('部分缓存清理失败\n' + cacheResult.errors.join('\n'), 8000)
     }
   } catch (error: any) {
     console.error('[SettingPage] Clear cache error:', error)
-    showAlert('❌ 清空缓存失败: ' + error.message, 'error')
+    showError('清空缓存失败: ' + error.message)
   } finally {
     isClearing.value = false
   }
