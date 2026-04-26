@@ -26,8 +26,8 @@ const store = new Store({
 // 将 store 实例导出供其他模块使用
 export { store }
 
-// 导入IPC handlers
-import './ipc/handlers'
+// 导入IPC handlers (modular)
+import { verifyHandlers } from './ipc/handlers/index'
 
 /**
  * 注册自定义协议用于加载本地文件
@@ -148,6 +148,9 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+
+  // Verify all IPC handlers are registered
+  verifyHandlers()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
