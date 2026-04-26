@@ -239,11 +239,26 @@ export function useDownload(): UseDownloadReturn {
     const result = await downloadService.resumeDownload(id, pendingDownload)
 
     if (!result.success) {
+      const errorCode = result.error?.code
+
+      // 根据错误类型处理
+      if (errorCode === 'RESUME_FILE_NOT_FOUND' || errorCode === 'RESUME_STATE_CORRUPTED') {
+        // 临时文件丢失或状态损坏，从列表移除
+        showError(`下载任务已失效: ${result.error?.message || '文件不存在'}`)
+        const index = store.downloadingList.findIndex((item) => item.id === id)
+        if (index !== -1) {
+          store.downloadingList.splice(index, 1)
+        }
+        return false
+      }
+
+      // 其他错误，保持暂停状态允许重试
       task.state = 'paused'
       showError(result.error?.message || '恢复下载失败')
       return false
     }
 
+    console.log('[useDownload] 恢复下载成功:', id, '从 offset:', task.offset)
     return true
   }
 
