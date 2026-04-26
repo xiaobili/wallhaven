@@ -58,7 +58,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-01 | Phase 8 | Pending |
 | CORE-02 | Phase 7 | Pending |
 | CORE-03 | Phase 8 | Pending |
-| INFR-01 | Phase 6 | Pending |
+| INFR-01 | Phase 6 | ✅ Complete |
 | INFR-02 | Phase 7 | Pending |
 | INFR-03 | Phase 7 | Pending |
 | ERRH-01 | Phase 9 | Pending |
@@ -68,6 +68,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v2.1 requirements: 9 total
 - Mapped to phases: 9
+- Complete: 1
 - Unmapped: 0 ✓
 
 ---
