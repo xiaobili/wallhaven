@@ -630,7 +630,7 @@ export function registerDownloadHandlers(): void {
           download.downloadedSize = 0
           download.lastPersistOffset = 0
 
-          // Notify renderer about restart
+          // Notify renderer about restart with flag
           const windows = BrowserWindow.getAllWindows()
           if (windows.length > 0) {
             windows[0].webContents.send('download-progress', {
@@ -639,8 +639,11 @@ export function registerDownloadHandlers(): void {
               offset: 0,
               progress: 0,
               totalSize: effectiveTotalSize,
+              resumeNotSupported: true,
             })
           }
+
+          logHandler('resume-download-task', `Server doesn't support Range, restarting from 0: ${taskId}`, 'info')
         } else {
           throw new Error(`Unexpected status code: ${response.status}`)
         }

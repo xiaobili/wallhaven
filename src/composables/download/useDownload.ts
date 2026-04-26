@@ -69,7 +69,7 @@ export interface UseDownloadReturn {
  */
 export function useDownload(): UseDownloadReturn {
   const store = useDownloadStore()
-  const { showError } = useAlert()
+  const { showError, showWarning } = useAlert()
 
   // 进度订阅取消函数
   let unsubscribe: (() => void) | null = null
@@ -78,7 +78,12 @@ export function useDownload(): UseDownloadReturn {
    * 处理进度更新
    */
   const handleProgress = (data: DownloadProgressData): void => {
-    const { taskId, progress, offset, speed, state, filePath, error } = data
+    const { taskId, progress, offset, speed, state, filePath, error, resumeNotSupported } = data
+
+    // Show notification if server doesn't support Range
+    if (resumeNotSupported) {
+      showWarning('服务器不支持断点续传，已重新开始下载')
+    }
 
     if (error) {
       const task = store.downloadingList.find((item) => item.id === taskId)

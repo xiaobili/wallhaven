@@ -178,6 +178,8 @@ export interface DownloadProgressData {
   filePath?: string
   error?: string
   totalSize?: number
+  /** 服务器不支持断点续传，已重新开始下载 */
+  resumeNotSupported?: boolean
 }
 
 /**
