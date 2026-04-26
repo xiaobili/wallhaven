@@ -9,6 +9,7 @@ on:
       - '*.md'
       - '.gitignore'
       - '.github/workflows/build.yml'
+      - 'img/**'
   pull_request:
     branches: [main, master]
     paths-ignore:
