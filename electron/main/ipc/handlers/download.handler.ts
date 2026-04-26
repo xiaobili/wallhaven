@@ -525,19 +525,241 @@ export function registerDownloadHandlers(): void {
   })
 
   /**
-   * 恢复下载任务（占位实现）
-   * Phase 7 将实现完整逻辑
+   * 恢复下载任务
    */
   ipcMain.handle(
     IPC_CHANNELS.RESUME_DOWNLOAD_TASK,
     async (_event, params: ResumeDownloadParams) => {
-      logHandler('resume-download-task', `Placeholder called for task: ${params.taskId}`)
-      return {
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'Resume download - Phase 7',
-        },
+      // 1. Validate parameters
+      if (!isResumeDownloadParams(params)) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_PARAMS',
+            message: 'Invalid resume parameters',
+          },
+        }
+      }
+
+      const { taskId, url, filename, saveDir, offset } = params
+      const tempPath = path.join(saveDir, filename + '.download')
+      const statePath = getStateFilePath(tempPath)
+
+      // 2. Check temp file exists
+      if (!fs.existsSync(tempPath)) {
+        return {
+          success: false,
+          error: {
+            code: 'RESUME_FILE_NOT_FOUND',
+            message: 'Temp file not found',
+          },
+        }
+      }
+
+      // 3. Validate temp file size >= offset
+      const actualSize = fs.statSync(tempPath).size
+      if (actualSize < offset) {
+        // D-08: Validation failed, delete and restart
+        try {
+          fs.unlinkSync(tempPath)
+          if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath)
+          }
+        } catch {
+          // Ignore cleanup errors
+        }
+        return {
+          success: false,
+          error: {
+            code: 'RESUME_INVALID_OFFSET',
+            message: 'Temp file smaller than offset',
+          },
+        }
+      }
+
+      // 4. Create AbortController
+      const abortController = new AbortController()
+
+      // 5. Store active download
+      activeDownloads.set(taskId, {
+        abortController,
+        tempPath,
+        saveDir,
+        filename,
+        totalSize: 0,  // Will be updated from response
+        downloadedSize: offset,
+        lastPersistTime: Date.now(),
+        lastPersistOffset: offset,
+      })
+
+      try {
+        // 6. Send Range request
+        const headers: Record<string, string> = {}
+        if (offset > 0) {
+          headers['Range'] = `bytes=${offset}-`
+        }
+
+        const response = await axios({
+          method: 'GET',
+          url,
+          headers,
+          responseType: 'stream',
+          timeout: 60000,
+          signal: abortController.signal,
+        })
+
+        // 7. Handle server response status
+        let writer: fs.WriteStream
+        let effectiveOffset = offset
+        let effectiveTotalSize: number
+        const download = activeDownloads.get(taskId)!
+
+        if (response.status === 206) {
+          // Server supports Range - append mode
+          writer = fs.createWriteStream(tempPath, { flags: 'a' })
+          const contentLength = parseInt(String(response.headers['content-length'] || '0'), 10)
+          effectiveTotalSize = offset + contentLength
+          download.totalSize = effectiveTotalSize
+        } else if (response.status === 200) {
+          // D-02: Server doesn't support Range - restart from 0
+          fs.unlinkSync(tempPath)
+          writer = fs.createWriteStream(tempPath, { flags: 'w' })
+          effectiveOffset = 0
+          effectiveTotalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+          download.totalSize = effectiveTotalSize
+          download.downloadedSize = 0
+          download.lastPersistOffset = 0
+
+          // Notify renderer about restart
+          const windows = BrowserWindow.getAllWindows()
+          if (windows.length > 0) {
+            windows[0].webContents.send('download-progress', {
+              taskId,
+              state: 'downloading',
+              offset: 0,
+              progress: 0,
+              totalSize: effectiveTotalSize,
+            })
+          }
+        } else {
+          throw new Error(`Unexpected status code: ${response.status}`)
+        }
+
+        // 8. Stream download with progress
+        let downloadedSize = effectiveOffset
+        let lastTime = Date.now()
+        let lastSize = effectiveOffset
+
+        response.data.on('data', (chunk: Buffer) => {
+          downloadedSize += chunk.length
+          download.downloadedSize = downloadedSize
+
+          // Every 100ms update progress
+          const now = Date.now()
+          if (now - lastTime >= 100) {
+            const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
+            const progress = effectiveTotalSize > 0 ? (downloadedSize / effectiveTotalSize) * 100 : 0
+
+            const windows = BrowserWindow.getAllWindows()
+            if (windows.length > 0) {
+              windows[0].webContents.send('download-progress', {
+                taskId,
+                progress: Math.min(progress, 99),
+                offset: downloadedSize,
+                speed,
+                state: 'downloading',
+                totalSize: effectiveTotalSize,
+              })
+            }
+
+            // Check throttled state persistence
+            if (shouldPersistState(download.lastPersistTime, download.lastPersistOffset, downloadedSize)) {
+              const state: PendingDownload = {
+                taskId,
+                url,
+                filename,
+                saveDir,
+                offset: downloadedSize,
+                totalSize: effectiveTotalSize,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              }
+              writeStateFile(statePath, state)
+              download.lastPersistTime = Date.now()
+              download.lastPersistOffset = downloadedSize
+            }
+
+            lastTime = now
+            lastSize = downloadedSize
+          }
+        })
+
+        // 9. Use pipeline for proper stream handling
+        await streamPipeline(response.data, writer)
+
+        // 10. Check for abort
+        if (abortController.signal.aborted) {
+          return { success: false, error: 'Download paused or cancelled' }
+        }
+
+        // 11. Complete: rename temp file, delete state file
+        const filePath = path.join(saveDir, filename)
+        fs.renameSync(tempPath, filePath)
+        if (fs.existsSync(statePath)) {
+          try {
+            fs.unlinkSync(statePath)
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+
+        const finalSize = fs.statSync(filePath).size
+        activeDownloads.delete(taskId)
+
+        // 12. Notify completion
+        const windows = BrowserWindow.getAllWindows()
+        if (windows.length > 0) {
+          windows[0].webContents.send('download-progress', {
+            taskId,
+            progress: 100,
+            offset: finalSize,
+            speed: 0,
+            state: 'completed',
+            filePath,
+          })
+        }
+
+        return { success: true, filePath, size: finalSize }
+
+      } catch (error: any) {
+        // Check if user-initiated cancel
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+          logHandler('resume-download-task', `Download cancelled: ${taskId}`, 'info')
+          return { success: false, error: 'Download cancelled', cancelled: true }
+        }
+
+        logHandler('resume-download-task', `Error: ${error.message}`, 'error')
+
+        // Keep temp file for retry on network errors
+        activeDownloads.delete(taskId)
+
+        // Notify renderer of failure
+        const windows = BrowserWindow.getAllWindows()
+        if (windows.length > 0) {
+          windows[0].webContents.send('download-progress', {
+            taskId,
+            progress: 0,
+            offset: 0,
+            speed: 0,
+            state: 'failed',
+            error: error.message || 'Resume failed',
+          })
+        }
+
+        return {
+          success: false,
+          error: { code: 'RESUME_FAILED', message: error.message || 'Resume failed' },
+        }
       }
     },
   )
