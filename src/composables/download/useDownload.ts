@@ -90,6 +90,13 @@ export function useDownload(): UseDownloadReturn {
 
     if (state === 'completed' && filePath) {
       store.completeDownload(taskId, filePath)
+      // 持久化已完成记录到 storage
+      const finishedItem = store.finishedList.find(item => item.id === taskId)
+      if (finishedItem) {
+        downloadService.saveFinishedRecord(finishedItem).catch((err) => {
+          console.error('[useDownload] 保存已完成记录失败:', err)
+        })
+      }
     } else if (state === 'paused') {
       // 更新为暂停状态
       const task = store.downloadingList.find(item => item.id === taskId)

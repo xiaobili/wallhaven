@@ -4,11 +4,6 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { AppError } from './errors'
-import { downloadService } from '@/services'
-
-// 延迟导入stores，减少启动时的模块加载
-let wallpaperStore: any = null
-let downloadStore: any = null
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -74,8 +69,8 @@ async function initializeApp() {
   const wallpaperModule = await import('./stores/wallpaper')
   const downloadModule = await import('./stores/modules/download')
 
-  wallpaperStore = wallpaperModule.useWallpaperStore()
-  downloadStore = downloadModule.useDownloadStore()
+  const wallpaperStore = wallpaperModule.useWallpaperStore()
+  const downloadStore = downloadModule.useDownloadStore()
 
   // 从 electron-store 加载设置
   await wallpaperStore.loadSettings()
@@ -85,38 +80,8 @@ async function initializeApp() {
 
   console.log('[Main] 应用初始化完成，已从 electron-store 加载数据')
 
-  // 通过 downloadService 注册下载进度监听器
-  downloadService.onProgress((data) => {
-    console.log('[Main] 收到下载进度:', data)
-
-    const { taskId, progress, offset, speed, state, filePath, error } = data
-
-    if (error) {
-      // 下载失败 - 保留已下载的字节数，便于恢复
-      console.error('[Main] 下载失败:', error)
-      const task = downloadStore.downloadingList.find((item: any) => item.id === taskId)
-      if (task) {
-        task.state = 'failed'
-        // 保留 offset，不重置 progress，便于用户恢复下载
-      }
-    } else if (state === 'completed') {
-      // 下载完成 - 先更新进度到100%，再标记为完成
-      downloadStore.updateProgress(taskId, 100, offset, 0, filePath)
-      // 持久化已完成记录到 storage
-      const finishedItem = downloadStore.finishedList.find((item: any) => item.id === taskId)
-      if (finishedItem) {
-        downloadService.saveFinishedRecord(finishedItem).catch((err) => {
-          console.error('[Main] 保存已完成记录失败:', err)
-        })
-      }
-      console.log('[Main] 下载完成:', filePath)
-    } else {
-      // 更新进度（downloading, paused, waiting 等状态）
-      downloadStore.updateProgress(taskId, progress, offset, speed)
-    }
-  })
-
-  console.log('[Main] 下载进度监听器已通过 downloadService 注册')
+  // 注意：下载进度监听器已移至 useDownload composable 中
+  // 这样每个使用下载功能的组件会自行管理监听器的生命周期
 }
 
 // 非阻塞式初始化
