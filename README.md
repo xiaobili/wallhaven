@@ -191,7 +191,7 @@ npm run format
 
 ### 1. 壁纸搜索
 
-![alt text](image.png)
+![alt text](img/image.png)
 
 支持多种筛选条件：
 
