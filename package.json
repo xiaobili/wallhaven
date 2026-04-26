@@ -10,7 +10,8 @@
     "*.vue",
     "*.css",
     "src/static/**/*",
-    "electron/main/ipc/handlers.ts"
+    "electron/main/ipc/handlers.ts",
+    "electron/main/ipc/handlers/**/*.ts"
   ],
   "scripts": {
     "dev": "electron-vite dev",

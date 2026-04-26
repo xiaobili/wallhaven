@@ -27,7 +27,7 @@ const store = new Store({
 export { store }
 
 // 导入IPC handlers (modular)
-import { verifyHandlers } from './ipc/handlers/index'
+import { registerAllHandlers, verifyHandlers } from './ipc/handlers/index'
 
 /**
  * 注册自定义协议用于加载本地文件
@@ -149,7 +149,8 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  // Verify all IPC handlers are registered
+  // Register and verify all IPC handlers
+  registerAllHandlers()
   verifyHandlers()
 
   app.on('activate', function () {

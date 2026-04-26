@@ -18,7 +18,8 @@ export default defineConfig({
         },
         output: {
           manualChunks: undefined // 主进程不分割
-        }
+        },
+        treeshake: false
       }
     }
   },
