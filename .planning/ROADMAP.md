@@ -78,12 +78,14 @@
 
 **Requirements:** CORE-01, CORE-03
 
+**Status:** Complete (2026-04-26)
+
 **Plans:**
-1. Add resumeDownload() method to DownloadService
-2. Add getPendingDownloads() method to DownloadService
-3. Update useDownload composable with resume functionality
-4. Implement auto-restore of pending downloads on app mount
-5. Add UI state handling for resumed downloads (progress display)
+1. ✅ Add resumeDownload() and getPendingDownloads() methods to DownloadService
+2. ✅ Update useDownload composable with resume functionality
+3. ✅ Add restorePendingDownloads method to useDownload composable
+4. ✅ Integrate restorePendingDownloads into app initialization
+5. ✅ Add error handling for resume failures
 
 **Success Criteria:**
 - ✓ User can click "Resume" button on paused download to continue
@@ -127,7 +129,7 @@
 | 5 | 表现层重构与清理 | v2.0 | 7/7 | Complete | 2026-04-26 |
 | 6 | Core Resume Infrastructure | v2.1 | 9/9 | Complete | 2026-04-26 |
 | 7 | Main Process Implementation | v2.1 | 4/4 | Complete | 2026-04-26 |
-| 8 | Renderer Integration | v2.1 | 0/5 | Pending | — |
+| 8 | Renderer Integration | v2.1 | 5/5 | Complete | 2026-04-26 |
 | 9 | Error Handling & Edge Cases | v2.1 | 0/5 | Pending | — |
 
 ---
@@ -136,9 +138,9 @@
 
 | Requirement | Phase | Description | Status |
 |-------------|-------|-------------|--------|
-| CORE-01 | Phase 8 | User can pause download and resume from breakpoint | Pending |
+| CORE-01 | Phase 8 | User can pause download and resume from breakpoint | ✅ Complete |
 | CORE-02 | Phase 7 | Application persists download progress to survive restart | ✅ Complete |
-| CORE-03 | Phase 8 | Incomplete downloads auto-restore when app launches | Pending |
+| CORE-03 | Phase 8 | Incomplete downloads auto-restore when app launches | ✅ Complete |
 | INFR-01 | Phase 6 | IPC channels for resume-download-task and get-pending-downloads | ✅ Complete |
 | INFR-02 | Phase 7 | HTTP Range request support in download handler | ✅ Complete |
 | INFR-03 | Phase 7 | Temporary .download file preserved on pause | ✅ Complete |
@@ -151,4 +153,4 @@
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-26 Phase 7 complete*
+*最后更新：2026-04-26 Phase 8 complete*
