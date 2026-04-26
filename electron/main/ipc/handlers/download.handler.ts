@@ -765,14 +765,82 @@ export function registerDownloadHandlers(): void {
   )
 
   /**
-   * 获取待恢复的下载任务列表（占位实现）
-   * Phase 7 将实现完整逻辑
+   * 获取待恢复的下载任务列表
    */
   ipcMain.handle(IPC_CHANNELS.GET_PENDING_DOWNLOADS, async () => {
-    logHandler('get-pending-downloads', 'Placeholder called')
-    return {
-      success: true,
-      data: [] as PendingDownload[],
+    try {
+      // 1. Get download directory from settings
+      const { store } = await import('../../index')
+      const downloadPath = store?.get('appSettings.downloadPath') as string | undefined
+
+      if (!downloadPath || !fs.existsSync(downloadPath)) {
+        return { success: true, data: [] as PendingDownload[] }
+      }
+
+      // 2. Scan for .download.json files
+      let files: string[]
+      try {
+        files = fs.readdirSync(downloadPath)
+      } catch {
+        return { success: true, data: [] as PendingDownload[] }
+      }
+
+      const stateFiles = files.filter(f => f.endsWith('.download.json'))
+      const pendingDownloads: PendingDownload[] = []
+
+      for (const stateFile of stateFiles) {
+        const statePath = path.join(downloadPath, stateFile)
+        const tempPath = statePath.replace('.json', '')  // Remove .json to get .download path
+
+        try {
+          // 3. Parse JSON and validate
+          const state = readStateFile(statePath)
+          if (!state) {
+            // Invalid state file, delete it
+            try {
+              fs.unlinkSync(statePath)
+            } catch {
+              // Ignore cleanup errors
+            }
+            continue
+          }
+
+          // 4. Check corresponding .download file exists
+          if (!fs.existsSync(tempPath)) {
+            // Temp file missing, delete state file
+            try {
+              fs.unlinkSync(statePath)
+            } catch {
+              // Ignore cleanup errors
+            }
+            continue
+          }
+
+          // 5. Update offset from actual temp file size
+          const actualSize = fs.statSync(tempPath).size
+          state.offset = actualSize
+          state.updatedAt = new Date().toISOString()
+
+          pendingDownloads.push(state)
+
+        } catch (parseError) {
+          // Corrupted state file, delete it
+          try {
+            fs.unlinkSync(statePath)
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+      }
+
+      return { success: true, data: pendingDownloads }
+
+    } catch (error: any) {
+      logHandler('get-pending-downloads', `Error: ${error.message}`, 'error')
+      return {
+        success: false,
+        error: { code: 'SCAN_ERROR', message: error.message },
+      }
     }
   })
 }
