@@ -4,8 +4,18 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
+    paths-ignore:
+      - 'README.md'
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/build.yml'
   pull_request:
     branches: [main, master]
+    paths-ignore:
+      - 'README.md'
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/build.yml'
 
 # 设置权限
 permissions:
