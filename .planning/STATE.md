@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Store 分层迁移
 status: ready
-last_updated: "2026-04-27T10:30:00.000Z"
-last_activity: 2026-04-27 — v2.2 roadmap created, ready to execute
+last_updated: "2026-04-27T12:00:00.000Z"
+last_activity: 2026-04-27 — Phase 10 context gathered, ready to plan
 progress:
   total_phases: 4
   completed_phases: 0
@@ -16,7 +16,7 @@ progress:
 # 项目状态
 
 > 更新时间：2026-04-27
-> 当前阶段：Phase 10 准备就绪
+> 当前阶段：Phase 10 上下文已收集
 > 项目状态：◆ 就绪
 
 ---
@@ -34,8 +34,8 @@ progress:
 
 Phase: 10 — Simple Substitutions
 Plan: —
-Status: Ready to execute
-Last activity: 2026-04-27 — v2.2 roadmap created
+Status: Context gathered, ready to plan
+Last activity: 2026-04-27 — Phase 10 context captured
 
 ---
 
@@ -53,6 +53,11 @@ Last activity: 2026-04-27 — v2.2 roadmap created
    - 推荐方案：显式 `update()` 调用 + 本地 reactive 副本
    - 保持清晰的保存/丢弃语义
 
+3. **Phase 10 迁移策略** (2026-04-27)
+   - LocalWallpaper: 直接替换 store → composable
+   - DownloadWallpaper: 使用别名解构匹配模板变量名
+   - 最小变更原则，不修改模板代码
+
 ### Blockers
 
 (None)
@@ -69,6 +74,7 @@ Last activity: 2026-04-27 — v2.2 roadmap created
 - 2026-04-26: v2.0 架构重构 shipped
 - 2026-04-27: v2.1 下载断点续传 shipped
 - 2026-04-27: v2.2 Store 分层迁移 roadmap created
+- 2026-04-27: Phase 10 context gathered
 
 ---
 
@@ -84,4 +90,4 @@ Last activity: 2026-04-27 — v2.2 roadmap created
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.2 roadmap created*
+*最后更新：2026-04-27 Phase 10 context gathered*
