@@ -1,6 +1,6 @@
 /**
  * 壁纸仓储
- * 管理壁纸查询参数的持久化存储
+ * 管理壁纸查询参数的持久化存储和壁纸设置
  */
 
 import type { IpcResponse } from '@/shared/types/ipc'
@@ -32,5 +32,13 @@ export const wallpaperRepository = {
    */
   async deleteQueryParams(): Promise<IpcResponse<void>> {
     return electronClient.storeDelete(STORAGE_KEYS.WALLPAPER_QUERY_PARAMS)
+  },
+
+  /**
+   * 设置桌面壁纸
+   * @param imagePath - 图片文件路径
+   */
+  async setWallpaper(imagePath: string): Promise<IpcResponse<void>> {
+    return electronClient.setWallpaper(imagePath)
   },
 }

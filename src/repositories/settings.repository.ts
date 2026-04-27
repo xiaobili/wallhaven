@@ -3,7 +3,7 @@
  * 管理应用设置的持久化存储
  */
 
-import type { IpcResponse } from '@/shared/types/ipc'
+import type { IpcResponse, LocalFile } from '@/shared/types/ipc'
 import type { AppSettings } from '@/types'
 import { electronClient, STORAGE_KEYS } from '@/clients'
 
@@ -75,5 +75,30 @@ export const settingsRepository = {
    */
   async getCacheInfo(downloadPath?: string): Promise<IpcResponse<CacheInfo>> {
     return electronClient.getCacheInfo(downloadPath)
+  },
+
+  /**
+   * 在系统文件管理器中打开文件夹
+   * @param folderPath - 文件夹路径
+   */
+  async openFolder(folderPath: string): Promise<IpcResponse<void>> {
+    return electronClient.openFolder(folderPath)
+  },
+
+  /**
+   * 读取目录内容
+   * @param dirPath - 目录路径
+   * @returns 返回目录中的文件列表
+   */
+  async readDirectory(dirPath: string): Promise<IpcResponse<LocalFile[]>> {
+    return electronClient.readDirectory(dirPath)
+  },
+
+  /**
+   * 删除文件
+   * @param filePath - 文件路径
+   */
+  async deleteFile(filePath: string): Promise<IpcResponse<void>> {
+    return electronClient.deleteFile(filePath)
   },
 }
