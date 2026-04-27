@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Store 分层迁移
 status: ready
-last_updated: "2026-04-27T15:00:00.000Z"
-last_activity: 2026-04-27 — Phase 12 complete, ready for Phase 13
+last_updated: "2026-04-27T16:00:00.000Z"
+last_activity: 2026-04-27 — Phase 13 context gathered, ready for planning
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 18
   completed_plans: 5
-  percent: 28
+  percent: 75
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-27
-> 当前阶段：Phase 12 完成
+> 当前阶段：Phase 13 context gathered
 > 项目状态：◆ 就绪
 
 ---
@@ -34,8 +34,8 @@ progress:
 
 Phase: 13 — Verification & Enforcement
 Plan: —
-Status: Ready to discuss
-Last activity: 2026-04-27 — Phase 12 complete
+Status: Ready for planning
+Last activity: 2026-04-27 — Phase 13 context gathered
 
 ---
 
@@ -59,6 +59,11 @@ Last activity: 2026-04-27 — Phase 12 complete
    - DownloadWallpaper: 使用别名解构匹配模板变量名
    - 最小变更原则，不修改模板代码
 
+4. **ESLint 配置方案** (2026-04-27 Phase 13)
+   - 使用 flat config (eslint.config.js) — ESLint 9+ 标准
+   - 阻止 views 导入 @/stores/* — 强制 View → Composable → Store 分层
+   - 完整手动测试验证所有功能
+
 ### Blockers
 
 (None)
@@ -68,6 +73,7 @@ Last activity: 2026-04-27 — Phase 12 complete
 - [x] Execute Phase 10: Simple Substitutions
 - [x] Execute Phase 11: OnlineWallpaper Migration
 - [x] Execute Phase 12: SettingPage Migration
+- [x] Phase 13 context gathered
 - [ ] Execute Phase 13: Verification & Enforcement
 
 ### Roadmap Evolution
@@ -80,6 +86,7 @@ Last activity: 2026-04-27 — Phase 12 complete
 - 2026-04-27: Phase 11 complete (partial)
 - 2026-04-27: Phase 12 context gathered
 - 2026-04-27: Phase 12 complete
+- 2026-04-27: Phase 13 context gathered
 
 ---
 
@@ -90,9 +97,9 @@ Last activity: 2026-04-27 — Phase 12 complete
 | 10 | Simple Substitutions | SMIG-01, SMIG-02 | Complete |
 | 11 | OnlineWallpaper Migration | SMIG-03, CMIG-01 | Complete |
 | 12 | SettingPage Migration | CMIG-02, CMIG-03 | Complete |
-| 13 | Verification & Enforcement | CLUP-01, CLUP-02, CLUP-03, CLUP-04 | Pending |
+| 13 | Verification & Enforcement | CLUP-01, CLUP-02, CLUP-03, CLUP-04 | Context Ready |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 Phase 12 complete*
+*最后更新：2026-04-27 Phase 13 context gathered*
