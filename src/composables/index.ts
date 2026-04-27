@@ -13,3 +13,6 @@ export { useDownload, type UseDownloadReturn } from './download/useDownload'
 
 // Settings
 export { useSettings, type UseSettingsReturn } from './settings/useSettings'
+
+// Local Files
+export { useLocalFiles, type UseLocalFilesReturn } from './local/useLocalFiles'
