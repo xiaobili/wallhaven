@@ -10,6 +10,7 @@
 - ✅ **v2.0 架构重构** — Phases 1-5 (shipped 2026-04-26)
 - ✅ **v2.1 下载断点续传** — Phases 6-9 (shipped 2026-04-27) — [Archive](milestones/v2.1-ROADMAP.md)
 - ✅ **v2.2 Store 分层迁移** — Phases 10-13 (shipped 2026-04-27)
+- ✅ **v2.3 ElectronAPI 分层重构** — Phase 14 (shipped 2026-04-27)
 
 ---
 
@@ -126,6 +127,45 @@
 
 ---
 
+### v2.3 ElectronAPI 分层重构 (Phase 14)
+
+**Goal**: 将 LocalWallpaper 和 OnlineWallpaper 中的 window.electronAPI 调用重构为符合 service → repository → client → electronAPI 的分层架构
+
+#### Phase 14: ElectronAPI Layer Refactor
+
+**Requirements**: EAPI-01, EAPI-02
+
+**Goal**: 重构 window.electronAPI 直接调用，建立完整的分层架构
+
+**Files**: `LocalWallpaper.vue`, `OnlineWallpaper.vue`
+
+**Changes**:
+- 分析 LocalWallpaper.vue 中所有 `window.electronAPI` 调用
+- 分析 OnlineWallpaper.vue 中所有 `window.electronAPI` 调用
+- 创建或扩展现有的 client 层封装 electronAPI 调用
+- 创建或扩展现有的 repository 层处理数据逻辑
+- 创建或扩展现有的 service 层提供业务接口
+- 迁移 views 中的直接调用到 service 层
+
+**Success Criteria**:
+1. LocalWallpaper.vue 无直接 `window.electronAPI` 调用
+2. OnlineWallpaper.vue 无直接 `window.electronAPI` 调用
+3. 分层架构完整：view → service → repository → client → electronAPI
+4. 所有现有功能行为不变
+5. TypeScript 编译通过
+
+**Depends on**: None
+
+**Plans**:
+- [x] Plan 1: 扩展 Repository 层 (Wave 1)
+- [x] Plan 2: 扩展 Service 层 (Wave 2)
+- [x] Plan 3: 创建 useWallpaperSetter Composable (Wave 3)
+- [x] Plan 4: 创建 useLocalFiles Composable (Wave 3)
+- [x] Plan 5: 扩展 useSettings Composable (Wave 3)
+- [x] Plan 6: 迁移 Views (Wave 4)
+
+---
+
 ## Progress
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
@@ -143,8 +183,9 @@
 | 11 | OnlineWallpaper Migration | v2.2 | 1/5 | Complete | 2026-04-27 |
 | 12 | SettingPage Migration | v2.2 | 2/2 | Complete | 2026-04-27 |
 | 13 | Verification & Enforcement | v2.2 | 3/3 | Complete | 2026-04-27 |
+| 14 | ElectronAPI Layer Refactor | v2.3 | 6/6 | Complete | 2026-04-27 |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.2 complete*
+*最后更新：2026-04-27 v2.3 shipped*
