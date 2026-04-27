@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * IPC Handler Base Utilities
  * Shared utilities for IPC handlers

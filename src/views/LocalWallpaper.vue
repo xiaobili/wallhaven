@@ -1,5 +1,8 @@
 <template>
-  <main id="main" class="local-wallpaper-page">
+  <main
+    id="main"
+    class="local-wallpaper-page"
+  >
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
@@ -12,29 +15,50 @@
     <!-- 工具栏 -->
     <div class="local-toolbar framed">
       <div class="toolbar-left">
-        <span class="folder-path" v-if="downloadPath">
-          <i class="fas fa-folder-open"></i>
+        <span
+          v-if="downloadPath"
+          class="folder-path"
+        >
+          <i class="fas fa-folder-open" />
           {{ downloadPath }}
         </span>
-        <span class="folder-path empty" v-else>
-          <i class="fas fa-exclamation-circle"></i>
+        <span
+          v-else
+          class="folder-path empty"
+        >
+          <i class="fas fa-exclamation-circle" />
           未设置下载目录，请前往 <router-link to="/setting">设置</router-link> 页面配置
         </span>
       </div>
       <div class="toolbar-right">
-        <button class="button" @click="refreshList" :disabled="loading">
-          <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
+        <button
+          class="button"
+          :disabled="loading"
+          @click="refreshList"
+        >
+          <i
+            class="fas fa-sync-alt"
+            :class="{ 'fa-spin': loading }"
+          />
           刷新
         </button>
-        <button class="button" @click="openFolder" v-if="downloadPath">
-          <i class="fas fa-folder-open"></i>
+        <button
+          v-if="downloadPath"
+          class="button"
+          @click="openFolder"
+        >
+          <i class="fas fa-folder-open" />
           打开文件夹
         </button>
       </div>
     </div>
 
     <!-- 壁纸列表 -->
-    <div id="thumbs" class="thumbs-container" v-if="localWallpapers.length > 0">
+    <div
+      v-if="localWallpapers.length > 0"
+      id="thumbs"
+      class="thumbs-container"
+    >
       <section class="thumb-listing-page">
         <header class="thumb-listing-page-header">
           <h2>
@@ -42,40 +66,61 @@
             <span class="thumb-listing-page-num">{{ localWallpapers.length }}</span> 
             张
           </h2>
-          <a class="icon to-top" href="#top" title="返回顶部">
-            <i class="far fa-lg fa-chevron-up"></i>
+          <a
+            class="icon to-top"
+            href="#top"
+            title="返回顶部"
+          >
+            <i class="far fa-lg fa-chevron-up" />
           </a>
         </header>
         <ul class="local-wallpaper-grid">
-          <li v-for="(wallpaper, index) in localWallpapers" :key="index">
-            <figure class="thumb thumb-local"
-                    :style="{ width: '300px', height: '200px' }">
+          <li
+            v-for="(wallpaper, index) in localWallpapers"
+            :key="index"
+          >
+            <figure
+              class="thumb thumb-local"
+              :style="{ width: '300px', height: '200px' }"
+            >
               <!-- 操作按钮 -->
-              <a class="thumb-btn thumb-btn-set jsAnchor overlay-anchor" 
-                 title="设为桌面壁纸" 
-                 @click="setAsWallpaper(wallpaper)">
-                <i class="fas fa-fw fa-desktop"></i>
+              <a
+                class="thumb-btn thumb-btn-set jsAnchor overlay-anchor" 
+                title="设为桌面壁纸" 
+                @click="setAsWallpaper(wallpaper)"
+              >
+                <i class="fas fa-fw fa-desktop" />
               </a>
-              <a class="thumb-btn thumb-btn-delete jsAnchor overlay-anchor" 
-                 title="删除文件" 
-                 @click="deleteWallpaper(wallpaper, index)">
-                <i class="fas fa-fw fa-trash"></i>
+              <a
+                class="thumb-btn thumb-btn-delete jsAnchor overlay-anchor" 
+                title="删除文件" 
+                @click="deleteWallpaper(wallpaper, index)"
+              >
+                <i class="fas fa-fw fa-trash" />
               </a>
               
               <!-- 图片预览 - 优先使用缩略图 -->
-              <img alt="本地壁纸" 
-                   loading="lazy" 
-                   class="lazyload loaded"
-                   :src="getImageUrl(wallpaper.thumbnailPath || wallpaper.path)"
-                   @click="previewWallpaper(wallpaper)"
-                   @error="handleImageError(index)"/>
+              <img
+                alt="本地壁纸" 
+                loading="lazy" 
+                class="lazyload loaded"
+                :src="getImageUrl(wallpaper.thumbnailPath || wallpaper.path)"
+                @click="previewWallpaper(wallpaper)"
+                @error="handleImageError(index)"
+              >
               
               <!-- 点击预览区域 -->
-              <a class="preview" @click="previewWallpaper(wallpaper)"></a>
+              <a
+                class="preview"
+                @click="previewWallpaper(wallpaper)"
+              />
               
               <!-- 底部信息 -->
               <div class="thumb-info">
-                <span class="wall-name" :title="wallpaper.name">{{ wallpaper.name }}</span>
+                <span
+                  class="wall-name"
+                  :title="wallpaper.name"
+                >{{ wallpaper.name }}</span>
                 <span class="wall-res">{{ formatFileSize(wallpaper.size) }}</span>
                 <span class="wall-date">{{ formatDate(wallpaper.modifiedTime) }}</span>
               </div>
@@ -86,22 +131,34 @@
     </div>
 
     <!-- 空状态 -->
-    <div class="empty-state" v-else>
+    <div
+      v-else
+      class="empty-state"
+    >
       <div class="empty-icon">
-        <i class="fas fa-images"></i>
+        <i class="fas fa-images" />
       </div>
       <h3>{{ emptyMessage }}</h3>
-      <p v-if="!downloadPath">请先在设置页面配置下载目录</p>
-      <button class="button green" v-if="downloadPath && !loading" @click="refreshList">
-        <i class="fas fa-sync-alt"></i>
+      <p v-if="!downloadPath">
+        请先在设置页面配置下载目录
+      </p>
+      <button
+        v-if="downloadPath && !loading"
+        class="button green"
+        @click="refreshList"
+      >
+        <i class="fas fa-sync-alt" />
         重新加载
       </button>
     </div>
 
     <!-- 加载状态 -->
-    <div class="main-bottom" v-show="loading">
+    <div
+      v-show="loading"
+      class="main-bottom"
+    >
       <div class="loading-span">
-        <i class="fas fa-spinner fa-spin"></i>
+        <i class="fas fa-spinner fa-spin" />
       </div>
     </div>
 

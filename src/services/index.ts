@@ -10,3 +10,6 @@ export { downloadService, type DownloadProgressData, type ProgressCallback } fro
 
 // 设置服务
 export { settingsService } from './settings.service'
+
+// 窗口服务
+export { windowService } from './window.service'

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /**
  * Electron Store IPC Handlers
  *
@@ -43,7 +44,7 @@ export function registerStoreHandlers(): void {
   ipcMain.handle('store-delete', async (_event, key: string) => {
     try {
       const { store } = await import('../../index')
-      // @ts-ignore - electron-store 的类型定义过于严格，但运行时支持任意字符串 key
+      // @ts-expect-error
       store.delete(key)
       return { success: true }
     } catch (error: any) {

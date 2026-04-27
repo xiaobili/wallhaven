@@ -1,45 +1,69 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="left-menu">
-    <img class="logo-wrap" src="./static/icons/logo.png"/>
-    <div class="version-wrap">{{ version }}</div>
+    <img
+      class="logo-wrap"
+      src="./static/icons/logo.png"
+    >
+    <div class="version-wrap">
+      {{ version }}
+    </div>
     <div class="menu-wrap">
       <label class="menu-title">我的壁纸</label>
       <ul class="menu-ul">
         <li class="menu-item">
-          <router-link to="/online" class="menu-native">
-            <i class="fas fa-cloud"></i>
-            在线壁纸<span class="li-border"/>
+          <router-link
+            to="/online"
+            class="menu-native"
+          >
+            <i class="fas fa-cloud" />
+            在线壁纸<span class="li-border" />
           </router-link>
         </li>
         <li class="menu-item">
-          <router-link to="/switch" class="menu-native">
-            <i class="fas fa-folder"></i>
-            本地列表<span class="li-border"/>
+          <router-link
+            to="/switch"
+            class="menu-native"
+          >
+            <i class="fas fa-folder" />
+            本地列表<span class="li-border" />
           </router-link>
         </li>
         <li class="menu-item">
-          <router-link to="download" class="menu-native">
-            <i class="fas fa-inbox-in"></i>
-            下载中心<span class="li-border"/>
+          <router-link
+            to="download"
+            class="menu-native"
+          >
+            <i class="fas fa-inbox-in" />
+            下载中心<span class="li-border" />
           </router-link>
         </li>
       </ul>
       <label class="menu-title more">更多</label>
       <ul class="menu-ul">
         <li class="menu-item">
-          <router-link to="setting" class="menu-native">
-            <i class="fas fa-cog"></i>
-            设置<span class="li-border"/>
+          <router-link
+            to="setting"
+            class="menu-native"
+          >
+            <i class="fas fa-cog" />
+            设置<span class="li-border" />
           </router-link>
         </li>
       </ul>
     </div>
   </div>
-  <div class="container" :style="{width: calContainerW + 'px'}">
+  <div
+    class="container"
+    :style="{width: calContainerW + 'px'}"
+  >
     <!-- 使用 KeepAlive 缓存路由组件，避免重复渲染 -->
     <router-view v-slot="{ Component, route }">
       <KeepAlive :include="['OnlineWallpaper', 'LocalWallpaper', 'DownloadWallpaper']">
-        <component :is="Component" :key="route.path" />
+        <component
+          :is="Component"
+          :key="route.path"
+        />
       </KeepAlive>
     </router-view>
   </div>

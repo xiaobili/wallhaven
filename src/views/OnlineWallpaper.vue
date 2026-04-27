@@ -1,7 +1,10 @@
 <template>
   <div class="online-wallpaper-page">
     <!-- 加载遮罩层 -->
-    <LoadingOverlay :show="showLoadingOverlay" text="搜索中..." />
+    <LoadingOverlay
+      :show="showLoadingOverlay"
+      text="搜索中..."
+    />
 
     <!-- Alert 提示框 -->
     <Alert
@@ -35,9 +38,12 @@
     />
 
     <!-- 显示错误信息 -->
-    <div v-if="error" class="error-container">
+    <div
+      v-if="error"
+      class="error-container"
+    >
       <div class="error-content">
-        <i class="fas fa-exclamation-triangle error-icon"></i>
+        <i class="fas fa-exclamation-triangle error-icon" />
         <h3>网络异常</h3>
         <p>无法连接到 Wallhaven API，请检查：</p>
         <ul>
@@ -45,8 +51,11 @@
           <li>API Key 是否正确（如果需要）</li>
           <li>防火墙或代理设置</li>
         </ul>
-        <button @click="retryFetch" class="retry-button">
-          <i class="fas fa-redo"></i> 重试
+        <button
+          class="retry-button"
+          @click="retryFetch"
+        >
+          <i class="fas fa-redo" /> 重试
         </button>
       </div>
     </div>

@@ -97,12 +97,15 @@ class DownloadServiceImpl {
     if (!selectResult.success || !selectResult.data) {
       return {
         success: false,
-        error: selectResult.error || { code: 'SELECT_FOLDER_CANCELLED', message: 'User cancelled folder selection' },
+        error: selectResult.error || {
+          code: 'SELECT_FOLDER_CANCELLED',
+          message: 'User cancelled folder selection',
+        },
       }
     }
 
     // 保存用户选择的路径到设置
-    const newSettings = { downloadPath: selectResult.data }
+    //const newSettings = { downloadPath: selectResult.data }
     const saveResult = await settingsRepository.set({
       downloadPath: selectResult.data,
       maxConcurrentDownloads: 3,
@@ -126,18 +129,17 @@ class DownloadServiceImpl {
    * @param url - 下载 URL
    * @param filename - 保存文件名
    */
-  async startDownload(
-    taskId: string,
-    url: string,
-    filename: string
-  ): Promise<IpcResponse<string>> {
+  async startDownload(taskId: string, url: string, filename: string): Promise<IpcResponse<string>> {
     // 获取下载目录
     const pathResult = await this.getDownloadPath()
 
     if (!pathResult.success || !pathResult.data) {
       return {
         success: false,
-        error: pathResult.error || { code: 'DOWNLOAD_PATH_NOT_SET', message: 'Download path not configured' },
+        error: pathResult.error || {
+          code: 'DOWNLOAD_PATH_NOT_SET',
+          message: 'Download path not configured',
+        },
       }
     }
 
@@ -228,7 +230,9 @@ class DownloadServiceImpl {
    * 清理孤儿临时文件
    * 删除超过 7 天的临时文件和状态文件
    */
-  async cleanupOrphanFiles(): Promise<IpcResponse<{ filesDeleted: number; stateFilesDeleted: number }>> {
+  async cleanupOrphanFiles(): Promise<
+    IpcResponse<{ filesDeleted: number; stateFilesDeleted: number }>
+  > {
     // 获取下载目录
     const pathResult = await this.getDownloadPath()
 

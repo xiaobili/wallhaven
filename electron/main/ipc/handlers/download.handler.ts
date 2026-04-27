@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Download Management IPC Handlers
  * Handles wallpaper downloads with progress tracking and pause/cancel support
@@ -8,7 +9,13 @@ import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
 import { streamPipeline, logHandler } from './base'
-import { IPC_CHANNELS, type ResumeDownloadParams, type PendingDownload, isResumeDownloadParams, isPendingDownload } from '../../../../src/shared/types/ipc'
+import {
+  IPC_CHANNELS,
+  type ResumeDownloadParams,
+  type PendingDownload,
+  isResumeDownloadParams,
+  isPendingDownload,
+} from '../../../../src/shared/types/ipc'
 
 // /**
 //  * IPC Channel names (duplicated from shared/types/ipc.ts to avoid cross-directory imports)
@@ -111,13 +118,13 @@ function readStateFile(statePath: string): StateFileResult {
 function shouldPersistState(
   lastPersistTime: number,
   lastPersistOffset: number,
-  currentOffset: number
+  currentOffset: number,
 ): boolean {
   const now = Date.now()
   const timeElapsed = now - lastPersistTime
   const bytesDownloaded = currentOffset - lastPersistOffset
-  const MIN_INTERVAL = 5000  // 5 seconds
-  const MIN_BYTES = 10 * 1024 * 1024  // 10MB
+  const MIN_INTERVAL = 5000 // 5 seconds
+  const MIN_BYTES = 10 * 1024 * 1024 // 10MB
 
   return timeElapsed >= MIN_INTERVAL || bytesDownloaded >= MIN_BYTES
 }
@@ -279,7 +286,7 @@ export function registerDownloadHandlers(): void {
           tempPath,
           saveDir,
           filename,
-          totalSize: 0,  // Will be updated after response
+          totalSize: 0, // Will be updated after response
           downloadedSize: 0,
           lastPersistTime: Date.now(),
           lastPersistOffset: 0,
@@ -339,11 +346,14 @@ export function registerDownloadHandlers(): void {
 
             // Check if we should persist state (throttled)
             const download = activeDownloads.get(taskId)
-            if (download && shouldPersistState(
-              download.lastPersistTime,
-              download.lastPersistOffset,
-              downloadedSize
-            )) {
+            if (
+              download &&
+              shouldPersistState(
+                download.lastPersistTime,
+                download.lastPersistOffset,
+                downloadedSize,
+              )
+            ) {
               const statePath = getStateFilePath(tempPath)
               const state: PendingDownload = {
                 taskId,
@@ -482,7 +492,7 @@ export function registerDownloadHandlers(): void {
       const statePath = getStateFilePath(download.tempPath)
       const state: PendingDownload = {
         taskId,
-        url: '',  // URL not stored in ActiveDownload, will be enriched by renderer
+        url: '', // URL not stored in ActiveDownload, will be enriched by renderer
         filename: download.filename,
         saveDir: download.saveDir,
         offset: currentSize,
@@ -617,7 +627,7 @@ export function registerDownloadHandlers(): void {
         tempPath,
         saveDir,
         filename,
-        totalSize: 0,  // Will be updated from response
+        totalSize: 0, // Will be updated from response
         downloadedSize: offset,
         lastPersistTime: Date.now(),
         lastPersistOffset: offset,
@@ -674,7 +684,11 @@ export function registerDownloadHandlers(): void {
             })
           }
 
-          logHandler('resume-download-task', `Server doesn't support Range, restarting from 0: ${taskId}`, 'info')
+          logHandler(
+            'resume-download-task',
+            `Server doesn't support Range, restarting from 0: ${taskId}`,
+            'info',
+          )
         } else {
           throw new Error(`Unexpected status code: ${response.status}`)
         }
@@ -692,7 +706,8 @@ export function registerDownloadHandlers(): void {
           const now = Date.now()
           if (now - lastTime >= 100) {
             const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
-            const progress = effectiveTotalSize > 0 ? (downloadedSize / effectiveTotalSize) * 100 : 0
+            const progress =
+              effectiveTotalSize > 0 ? (downloadedSize / effectiveTotalSize) * 100 : 0
 
             const windows = BrowserWindow.getAllWindows()
             if (windows.length > 0) {
@@ -707,7 +722,13 @@ export function registerDownloadHandlers(): void {
             }
 
             // Check throttled state persistence
-            if (shouldPersistState(download.lastPersistTime, download.lastPersistOffset, downloadedSize)) {
+            if (
+              shouldPersistState(
+                download.lastPersistTime,
+                download.lastPersistOffset,
+                downloadedSize,
+              )
+            ) {
               const state: PendingDownload = {
                 taskId,
                 url,
@@ -764,7 +785,6 @@ export function registerDownloadHandlers(): void {
         }
 
         return { success: true, filePath, size: finalSize }
-
       } catch (error: any) {
         // Check if user-initiated cancel
         if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
@@ -819,12 +839,12 @@ export function registerDownloadHandlers(): void {
         return { success: true, data: [] as PendingDownload[] }
       }
 
-      const stateFiles = files.filter(f => f.endsWith('.download.json'))
+      const stateFiles = files.filter((f) => f.endsWith('.download.json'))
       const pendingDownloads: PendingDownload[] = []
 
       for (const stateFile of stateFiles) {
         const statePath = path.join(downloadPath, stateFile)
-        const tempPath = statePath.replace('.json', '')  // Remove .json to get .download path
+        const tempPath = statePath.replace('.json', '') // Remove .json to get .download path
 
         try {
           // 3. Parse JSON and validate
@@ -860,7 +880,6 @@ export function registerDownloadHandlers(): void {
           result.data.updatedAt = new Date().toISOString()
 
           pendingDownloads.push(result.data)
-
         } catch (parseError) {
           // Corrupted state file, delete it
           try {
@@ -872,7 +891,6 @@ export function registerDownloadHandlers(): void {
       }
 
       return { success: true, data: pendingDownloads }
-
     } catch (error: any) {
       logHandler('get-pending-downloads', `Error: ${error.message}`, 'error')
       return {

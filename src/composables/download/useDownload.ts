@@ -250,25 +250,27 @@ export function useDownload(): UseDownloadReturn {
 
       // 根据错误类型处理
       switch (errorCode) {
-        case 'RESUME_FILE_NOT_FOUND':
-          // 临时文件丢失，从列表移除
+        case 'RESUME_FILE_NOT_FOUND': {
+          // 临时文件丢失,从列表移除
           showError(errorMessage || '临时文件不存在')
           const index1 = store.downloadingList.findIndex((item) => item.id === id)
           if (index1 !== -1) {
             store.downloadingList.splice(index1, 1)
           }
           return false
+        }
 
-        case 'RESUME_INVALID_OFFSET':
-          // 临时文件损坏，已自动清理
-          showWarning(errorMessage || '临时文件已损坏，请重新下载')
+        case 'RESUME_INVALID_OFFSET': {
+          // 临时文件损坏,已自动清理
+          showWarning(errorMessage || '临时文件已损坏,请重新下载')
           const index2 = store.downloadingList.findIndex((item) => item.id === id)
           if (index2 !== -1) {
             store.downloadingList.splice(index2, 1)
           }
           return false
+        }
 
-        case 'RESUME_STATE_CORRUPTED':
+        case 'RESUME_STATE_CORRUPTED': {
           // 状态文件损坏
           showError(errorMessage || '下载记录已损坏')
           const index3 = store.downloadingList.findIndex((item) => item.id === id)
@@ -276,9 +278,10 @@ export function useDownload(): UseDownloadReturn {
             store.downloadingList.splice(index3, 1)
           }
           return false
+        }
 
         default:
-          // 其他错误，保持暂停状态允许重试
+          // 其他错误,保持暂停状态允许重试
           task.state = 'paused'
           showError(errorMessage || '恢复下载失败')
           return false

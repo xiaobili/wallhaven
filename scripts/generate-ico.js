@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * Windows ICO 图标生成脚本
  * 使用 png-to-ico 库从多个尺寸的 PNG 生成 ICO 文件

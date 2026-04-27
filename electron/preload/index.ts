@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_CHANNELS, isValidInvokeChannel } from './types'
+import { IPC_CHANNELS } from './types'
 import type { ResumeDownloadParams, PendingDownload, IpcResponse } from './types'
 
 console.log('[Preload] Script loaded')
@@ -194,7 +194,12 @@ const electronAPI: ElectronAPI = {
 
   // Wallhaven API 代理
   wallhavenApiRequest: (params) => {
-    console.log('[Preload] wallhavenApiRequest called:', params.endpoint, 'apiKey:', params.apiKey ? '[provided]' : '[not provided]')
+    console.log(
+      '[Preload] wallhavenApiRequest called:',
+      params.endpoint,
+      'apiKey:',
+      params.apiKey ? '[provided]' : '[not provided]',
+    )
     return ipcRenderer.invoke(IPC_CHANNELS.WALLHAVEN_API_REQUEST, params)
   },
 
@@ -263,7 +268,7 @@ const electronAPI: ElectronAPI = {
       // Deliberately strip event as it includes `sender`
       ipcRenderer.on(channel, (_event: any, ...args: any[]) => func(...args))
     }
-  }
+  },
 }
 
 console.log('[Preload] Exposing electronAPI to window')

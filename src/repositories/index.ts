@@ -10,3 +10,6 @@ export { downloadRepository } from './download.repository'
 
 // 壁纸仓储
 export { wallpaperRepository } from './wallpaper.repository'
+
+// 窗口仓储
+export { windowRepository } from './window.repository'

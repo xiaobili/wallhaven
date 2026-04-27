@@ -33,7 +33,7 @@ export class AppError extends Error {
   /**
    * 原始错误，用于错误链追踪
    */
-  override readonly cause?: Error
+  readonly cause?: Error
 
   constructor(message: string, options?: AppErrorOptions) {
     super(message)
@@ -62,7 +62,7 @@ export class AppError extends Error {
   /**
    * 转换为字符串
    */
-  override toString(): string {
+  toString(): string {
     let result = `${this.name} [${this.code}]: ${this.message}`
     if (this.context) {
       result += ` (context: ${JSON.stringify(this.context)})`

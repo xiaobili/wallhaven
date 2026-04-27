@@ -73,7 +73,7 @@ export function useAlert(defaultDuration = 3000): UseAlertReturn {
   const showAlert = (
     message: string,
     type: AlertType = 'info',
-    duration: number = defaultDuration
+    duration: number = defaultDuration,
   ): void => {
     alert.message = message
     alert.type = type

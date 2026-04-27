@@ -2,14 +2,26 @@
   <header id="header">
     <label>{{ title }}</label>
     <div class="win-btn-wrap">
-      <span class="win-btn min-btn" @click="minimize" title="最小化">
-        <i class="fas fw fa-window-minimize"></i>
+      <span
+        class="win-btn min-btn"
+        title="最小化"
+        @click="minimize"
+      >
+        <i class="fas fw fa-window-minimize" />
       </span>
-      <span class="win-btn max-btn" @click="maximize" :title="isMaximized ? '还原' : '最大化'">
-        <i :class="isMaximized ? 'fas fw fa-window-restore' : 'fas fw fa-window-maximize'"></i>
+      <span
+        class="win-btn max-btn"
+        :title="isMaximized ? '还原' : '最大化'"
+        @click="maximize"
+      >
+        <i :class="isMaximized ? 'fas fw fa-window-restore' : 'fas fw fa-window-maximize'" />
       </span>
-      <span class="win-btn close-btn" @click="close" title="关闭">
-        <i class="fas fw fa-window-close"></i>
+      <span
+        class="win-btn close-btn"
+        title="关闭"
+        @click="close"
+      >
+        <i class="fas fw fa-window-close" />
       </span>
     </div>
   </header>
@@ -17,68 +29,36 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { windowService } from '@/services'
 
 interface Props {
   title: string
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
 // 窗口最大化状态
 const isMaximized = ref(false)
 
 // 检查窗口是否最大化
 const checkMaximizedState = async (): Promise<void> => {
-  // @ts-ignore
-  if (window.electronAPI) {
-    try {
-      // @ts-ignore
-      isMaximized.value = await window.electronAPI.isMaximized()
-    } catch (error) {
-      console.error('检查窗口状态失败:', error)
-    }
-  }
+  isMaximized.value = await windowService.isMaximized()
 }
 
 const minimize = async (): Promise<void> => {
-  console.log("最小化")
-  // @ts-ignore
-  if (window.electronAPI) {
-    try {
-      // @ts-ignore
-      await window.electronAPI.minimizeWindow()
-    } catch (error) {
-      console.error('最小化窗口失败:', error)
-    }
-  }
+  await windowService.minimize()
 }
 
 const maximize = async (): Promise<void> => {
-  console.log("最大化/还原")
-  // @ts-ignore
-  if (window.electronAPI) {
-    try {
-      // @ts-ignore
-      await window.electronAPI.maximizeWindow()
-      // 切换后更新状态
-      isMaximized.value = !isMaximized.value
-    } catch (error) {
-      console.error('最大化窗口失败:', error)
-    }
+  const result = await windowService.maximize()
+  if (result.success) {
+    // 切换后更新状态
+    isMaximized.value = !isMaximized.value
   }
 }
 
 const close = async (): Promise<void> => {
-  console.log("关闭")
-  // @ts-ignore
-  if (window.electronAPI) {
-    try {
-      // @ts-ignore
-      await window.electronAPI.closeWindow()
-    } catch (error) {
-      console.error('关闭窗口失败:', error)
-    }
-  }
+  await windowService.close()
 }
 
 // 组件挂载时检查窗口状态

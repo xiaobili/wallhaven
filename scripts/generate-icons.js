@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * 应用图标生成脚本
  * 使用 sharp 库从源图片生成各平台所需的图标格式

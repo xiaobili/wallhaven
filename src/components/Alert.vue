@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <transition name="alert-fade">
     <div 
@@ -6,16 +7,19 @@
       role="alert"
     >
       <div class="alert-content">
-        <i v-if="showIcon" :class="['alert-icon', iconClass]"></i>
+        <i
+          v-if="showIcon"
+          :class="['alert-icon', iconClass]"
+        />
         <span class="alert-message">{{ message }}</span>
       </div>
       <button 
         v-if="closable" 
         class="alert-close" 
-        @click="handleClose"
         aria-label="关闭"
+        @click="handleClose"
       >
-        <i class="fas fa-times"></i>
+        <i class="fas fa-times" />
       </button>
     </div>
   </transition>

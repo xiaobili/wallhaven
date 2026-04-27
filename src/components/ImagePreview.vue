@@ -1,21 +1,56 @@
 <template>
-  <div class="mask" :class="showing === true ? '' : 'out'">
-    <a class="close_btn" @click="close"></a>
+  <div
+    class="mask"
+    :class="showing === true ? '' : 'out'"
+  >
+    <a
+      class="close_btn"
+      @click="close"
+    />
     <div class="img-view">
-      <img v-if="imgInfo" class="img-class" :src="imgInfo.path" :style="{'max-height':calHeight}">
-      <img class="img-class close-bg" v-show="!showing" :src="imgBgSrc" :style="{'max-height':calHeight}">
+      <img
+        v-if="imgInfo"
+        class="img-class"
+        :src="imgInfo.path"
+        :style="{'max-height':calHeight}"
+      >
+      <img
+        v-show="!showing"
+        class="img-class close-bg"
+        :src="imgBgSrc"
+        :style="{'max-height':calHeight}"
+      >
     </div>
-    <div class="sidebar-fixed-wrapper" style="bottom: 40px;">
+    <div
+      class="sidebar-fixed-wrapper"
+      style="bottom: 40px;"
+    >
       <div class="details-sidebar-fixed-box hi-de">
-        <div class="sidebar-fixed_box comments-middle-icon" title="设为壁纸" @click="setBg(imgInfo)">
-          <div class="icon-wrap"><i class="fas fa-repeat-alt"></i></div>
+        <div
+          class="sidebar-fixed_box comments-middle-icon"
+          title="设为壁纸"
+          @click="setBg(imgInfo)"
+        >
+          <div class="icon-wrap">
+            <i class="fas fa-repeat-alt" />
+          </div>
         </div>
-        <div v-show="!isLocal" class="sidebar-fixed_box share-middle-icon sidebar-share" title="下载"
-             @click="downloadImg(imgInfo)">
-          <div class="icon-wrap"><i class="fas fa-download"></i></div>
+        <div
+          v-show="!isLocal"
+          class="sidebar-fixed_box share-middle-icon sidebar-share"
+          title="下载"
+          @click="downloadImg(imgInfo)"
+        >
+          <div class="icon-wrap">
+            <i class="fas fa-download" />
+          </div>
         </div>
       </div>
-      <div class="back-to-top sidebar-fixed_box" z-st="shortcut_totop" style="display: block;"></div>
+      <div
+        class="back-to-top sidebar-fixed_box"
+        z-st="shortcut_totop"
+        style="display: block;"
+      />
     </div>
   </div>
 </template>
