@@ -35,7 +35,7 @@
     />
 
     <!-- 显示错误信息 -->
-    <div v-if="wallpaperStore.error" class="error-container">
+    <div v-if="error" class="error-container">
       <div class="error-content">
         <i class="fas fa-exclamation-triangle error-icon"></i>
         <h3>网络异常</h3>
@@ -54,9 +54,9 @@
     <!-- 使用壁纸列表组件 -->
     <WallpaperList
       v-else
-      :page-data="wallpaperStore.totalPageData"
-      :loading="wallpaperStore.loading"
-      :error="wallpaperStore.error"
+      :page-data="wallpapers"
+      :loading="loading"
+      :error="error"
       :selected-ids="selectedWallpapers"
       @set-bg="setBg"
       @preview="preview"
@@ -74,18 +74,22 @@ import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
-import { useWallpaperStore } from '@/stores/wallpaper'
 import { useWallpaperList, useDownload, useSettings, useAlert } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
-// Pinia Stores
-const wallpaperStore = useWallpaperStore()
-
 // Composables
-const { fetch: fetchWallpapers, loadMore: loadMoreWallpapers, saveCustomParams } = useWallpaperList()
+const {
+  wallpapers,
+  loading,
+  error,
+  queryParams,
+  fetch: fetchWallpapers,
+  loadMore: loadMoreWallpapers,
+  saveCustomParams
+} = useWallpaperList()
 const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
-const { update: updateSettings } = useSettings()
+const { settings, update: updateSettings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 
 // Refs - 使用 shallowRef 优化大型对象
@@ -99,7 +103,7 @@ const downloading = ref<boolean>(false)
 const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
-const apiKey = computed(() => wallpaperStore.settings.apiKey)
+const apiKey = computed(() => settings.value.apiKey)
 
 // Lifecycle hooks
 onMounted(() => {
@@ -171,7 +175,7 @@ const downloadSelected = async (): Promise<void> => {
 
   try {
     // 获取所有选中的壁纸信息
-    const allSections = wallpaperStore.totalPageData.sections
+    const allSections = wallpapers.value.sections
     const allWallpapers: WallpaperItem[] = []
 
     // 从所有section中收集壁纸
@@ -269,7 +273,7 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
   error: string | null
 }> => {
   // 从store获取下载目录
-  const downloadPath = wallpaperStore.settings.downloadPath
+  const downloadPath = settings.value.downloadPath
 
   if (!downloadPath) {
     // 如果没有设置下载目录，提示用户
@@ -316,7 +320,7 @@ const closePreview = (): void => {
  */
 const retryFetch = (): void => {
   showLoadingOverlay.value = true
-  fetchWallpapers(wallpaperStore.queryParams).finally(() => {
+  fetchWallpapers(queryParams.value).finally(() => {
     showLoadingOverlay.value = false
   })
 }
@@ -326,10 +330,10 @@ const retryFetch = (): void => {
  */
 const scrollEvent = (): void => {
   // 如果正在加载，则不执行
-  if (wallpaperStore.loading) return
+  if (loading.value) return
 
   // 如果已经加载完所有页面且有数据，则不执行
-  const { currentPage, totalPage } = wallpaperStore.totalPageData
+  const { currentPage, totalPage } = wallpapers.value
   if (totalPage > 0 && currentPage >= totalPage) return
 
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
