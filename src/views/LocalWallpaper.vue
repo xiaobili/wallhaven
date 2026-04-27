@@ -43,7 +43,7 @@ import { useSettings, useAlert, useLocalFiles, useWallpaperSetter } from '@/comp
 import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 const { settings } = useSettings()
-const { alert, showSuccess, showError, hideAlert } = useAlert()
+const { alert, showSuccess, hideAlert } = useAlert()
 const { readDirectory, openFolder: openFolderAction, deleteFile } = useLocalFiles()
 const { setWallpaper } = useWallpaperSetter()
 
