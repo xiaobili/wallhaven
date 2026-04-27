@@ -186,8 +186,25 @@ const handleNavigate = (direction: 'prev' | 'next'): void => {
   }
 }
 
+/**
+ * 从 wallhaven:// 协议 URL 解码原始文件路径
+ * @param url - 可能是 wallhaven:// 协议 URL 或普通路径
+ * @returns 原始文件路径
+ */
+const decodeWallhavenUrl = (url: string): string => {
+  if (url.startsWith('wallhaven://')) {
+    return decodeURIComponent(url.replace(/^wallhaven:\/\//, ''))
+  }
+  return url
+}
+
 const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {
-  const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
+  // 获取图片路径用于设置壁纸
+  // 对于 LocalWallpaper（从列表直接点击），path 字段是原始文件路径
+  // 对于 WallpaperItem（从 ImagePreview 传来），path 可能是 wallhaven:// 协议 URL，需要解码
+  const pathValue = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
+  const imagePath = decodeWallhavenUrl(pathValue)
+  console.log('设置壁纸:', imagePath)
 
   const result = await setWallpaper(imagePath)
   if (result) {
