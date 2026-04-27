@@ -9,6 +9,15 @@
       @close="hideAlert"
     />
 
+    <!-- 图片预览组件 -->
+    <ImagePreview
+      v-show="imgShow"
+      :showing="imgShow"
+      :img-info="previewItem"
+      :is-local="true"
+      @close="closePreview"
+      @set-bg="setAsWallpaper"
+    />
     <!-- 主内容区域 -->
     <LocalWallpaperMain
       :local-wallpapers="localWallpapers"
@@ -20,16 +29,6 @@
       @delete-wallpaper="deleteWallpaper"
       @preview="previewWallpaper"
       @image-error="handleImageError"
-    />
-
-    <!-- 图片预览组件 -->
-    <ImagePreview
-      v-show="imgShow"
-      :showing="imgShow"
-      :img-info="previewItem"
-      @close="closePreview"
-      @download-img="() => {}"
-      @set-bg="setAsWallpaper"
     />
   </div>
 </template>

@@ -63,10 +63,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 interface Props {
   showing: boolean;
   imgInfo: WallpaperItem | null;
+  isLocal: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showing: false,
+  isLocal: false,
 });
 
 // 定义 emits
@@ -77,7 +79,6 @@ const emit = defineEmits<{
 }>();
 
 // 响应式数据
-const isLocal = ref<boolean>(false);
 const clientHeight = ref<number>(1080);
 const imgBgSrc = ref<string>("");
 
@@ -98,7 +99,6 @@ const close = () => {
   if (props.imgInfo) {
     imgBgSrc.value = props.imgInfo.path;
   }
-  isLocal.value = false;
   emit('close', false);
 };
 
