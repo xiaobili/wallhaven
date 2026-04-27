@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Store 分层迁移
 status: ready
-last_updated: "2026-04-27T12:00:00.000Z"
-last_activity: 2026-04-27 — Phase 10 context gathered, ready to plan
+last_updated: "2026-04-27T14:00:00.000Z"
+last_activity: 2026-04-27 — Phase 12 context gathered, ready to plan
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 18
-  completed_plans: 0
-  percent: 0
+  completed_plans: 3
+  percent: 17
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-27
-> 当前阶段：Phase 10 上下文已收集
+> 当前阶段：Phase 12 上下文已收集
 > 项目状态：◆ 就绪
 
 ---
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 11 — OnlineWallpaper Migration
+Phase: 12 — SettingPage Migration
 Plan: —
-Status: Ready to execute
-Last activity: 2026-04-27 — Phase 10 complete, advancing to Phase 11
+Status: Ready to plan
+Last activity: 2026-04-27 — Phase 11 complete, Phase 12 context gathered
 
 ---
 
@@ -49,8 +49,9 @@ Last activity: 2026-04-27 — Phase 10 complete, advancing to Phase 11
    - Phase 12: SettingPage 迁移 + useSettings 扩展
    - Phase 13: 验证与 ESLint 强制
 
-2. **SettingPage 表单绑定方案** (待 Phase 12 确认)
-   - 推荐方案：显式 `update()` 调用 + 本地 reactive 副本
+2. **SettingPage 表单绑定方案** (2026-04-27 Phase 12)
+   - 采用方案：显式 `update()` 调用 + 本地 reactive 副本
+   - 扩展 useSettings 添加 editableSettings, startEdit, discardChanges, saveChanges
    - 保持清晰的保存/丢弃语义
 
 3. **Phase 10 迁移策略** (2026-04-27)
@@ -76,6 +77,8 @@ Last activity: 2026-04-27 — Phase 10 complete, advancing to Phase 11
 - 2026-04-27: v2.2 Store 分层迁移 roadmap created
 - 2026-04-27: Phase 10 context gathered
 - 2026-04-27: Phase 10 complete
+- 2026-04-27: Phase 11 complete (partial)
+- 2026-04-27: Phase 12 context gathered
 
 ---
 
@@ -91,4 +94,4 @@ Last activity: 2026-04-27 — Phase 10 complete, advancing to Phase 11
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 Phase 10 context gathered*
+*最后更新：2026-04-27 Phase 12 context gathered*
