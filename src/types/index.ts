@@ -112,6 +112,7 @@ export interface GetParams {
   atleast?: string | null
   resolutions?: string | null
   page: number
+  seed?: string | null
 }
 
 // ==================== UI 辅助类型 ====================
@@ -182,9 +183,9 @@ export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed' |
  * 下载任务项
  */
 export interface DownloadItem {
-  id: string  // 唯一标识符
+  id: string // 唯一标识符
   url: string
-  filename: string  // 文件名
+  filename: string // 文件名
   small: string
   resolution: string
   size: number
@@ -194,7 +195,7 @@ export interface DownloadItem {
   state: DownloadState
   path?: string
   time?: string
-  wallpaperId?: string  // 关联的壁纸ID
+  wallpaperId?: string // 关联的壁纸ID
 }
 
 /**
@@ -219,10 +220,10 @@ export interface AppSettings {
   // 下载设置
   downloadPath: string
   maxConcurrentDownloads: number
-  
+
   // API 设置
   apiKey: string
-  
+
   // 桌面设置
   wallpaperFit: WallpaperFit
 }

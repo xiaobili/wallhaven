@@ -135,9 +135,11 @@ export function formatResolution(str: string): string {
 export function formatFileSize(size: number): string {
   if (size < 1024) {
     return `${size} B`
-  } else if (size < 1048576) { // 1024 * 1024
+  } else if (size < 1048576) {
+    // 1024 * 1024
     return `${(size / 1024).toFixed(2)} KB`
-  } else if (size < 1073741824) { // 1024 * 1024 * 1024
+  } else if (size < 1073741824) {
+    // 1024 * 1024 * 1024
     return `${(size / 1048576).toFixed(2)} MB`
   } else {
     return `${(size / 1073741824).toFixed(2)} GB`
@@ -185,7 +187,7 @@ export function arrayToBinaryString(selectedItems: string[], allItems: string[])
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj
   if (obj instanceof Date) return new Date(obj.getTime()) as any
-  if (obj instanceof Array) return obj.map(item => deepClone(item)) as any
+  if (obj instanceof Array) return obj.map((item) => deepClone(item)) as any
   if (obj instanceof RegExp) return new RegExp(obj.source, obj.flags) as any
 
   const clonedObj = {} as Record<string, any>
@@ -241,14 +243,14 @@ export function preloadImages(urls: string[], concurrency: number = 3): Promise<
 
       const url = urls[index++]
       if (!url) return // 跳过undefined
-      
+
       const img = new Image()
-      
+
       img.onload = img.onerror = () => {
         loaded++
         loadNext()
       }
-      
+
       img.src = url
     }
 
@@ -265,16 +267,39 @@ export function preloadImages(urls: string[], concurrency: number = 3): Promise<
  */
 export function cleanupObject(obj: any): void {
   if (!obj) return
-  
+
   // 清理事件监听器
   if (obj.removeEventListener && obj._listeners) {
     obj._listeners.forEach((listener: any) => {
       obj.removeEventListener(listener.type, listener.handler)
     })
   }
-  
+
   // 清理定时器
   if (obj._timers) {
     obj._timers.forEach((timer: number) => clearTimeout(timer))
   }
+}
+
+/**
+ * 生成指定长度的随机字母数字字符串
+ * @param length 字符串长度（默认6）
+ * @returns 随机字符串，包含 [a-zA-Z0-9]
+ * @example
+ * ```typescript
+ * generateRandomString()     // Returns "aB3xK9"
+ * generateRandomString(8)    // Returns "mN7pQ2wR"
+ * generateRandomString(10)   // Returns "kL4jH8nM5v"
+ * ```
+ */
+export function generateRandomString(length: number = 6): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ''
+  
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length)
+    result += chars[randomIndex]
+  }
+  
+  return result
 }

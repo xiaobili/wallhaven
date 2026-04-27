@@ -608,7 +608,7 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import type { CustomParams, ResolutionLine, RatioLine, ColorLine, GetParams } from '@/types'
-import { arrayToBinaryString, formatResolution } from '@/utils/helpers'
+import { arrayToBinaryString, formatResolution,generateRandomString } from '@/utils/helpers'
 import {useWallpaperList} from '@/composables'
 
 
@@ -679,7 +679,7 @@ const computedQueryParams = computed<GetParams>(() => {
 
   // 处理颜色值,'none' 时返回 null
   const colorValue = localParams.color && localParams.color !== 'none' ? localParams.color : null
-
+  const seed = localParams.sorting === 'random' ? generateRandomString() : undefined
   return {
     q: localParams.keyword,
     categories: tempCate,
@@ -692,6 +692,7 @@ const computedQueryParams = computed<GetParams>(() => {
     atleast: localParams.respickerLimitation === 'atleast' ? localParams.resolution : undefined,
     resolutions: localParams.respickerLimitation === 'atleast' ? undefined : resolutionsStr,
     page: 1,
+    seed: seed
   }
 })
 
