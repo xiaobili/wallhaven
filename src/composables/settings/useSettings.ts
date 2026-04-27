@@ -24,6 +24,7 @@ import { useWallpaperStore } from '@/stores/wallpaper'
 import { settingsService } from '@/services'
 import { useAlert } from '@/composables'
 import type { AppSettings } from '@/types'
+import type { IpcResponse } from '@/shared/types/ipc'
 
 /**
  * useSettings 返回值接口
@@ -44,6 +45,9 @@ export interface UseSettingsReturn {
   update: (partial: Partial<AppSettings>) => Promise<boolean>
   reset: () => Promise<boolean>
   getDefaults: () => AppSettings
+
+  // 文件夹选择
+  selectFolder: () => Promise<IpcResponse<string | null>>
 }
 
 /**
@@ -164,6 +168,15 @@ export function useSettings(): UseSettingsReturn {
     return JSON.stringify(editableSettings.value) !== JSON.stringify(store.settings)
   })
 
+  /**
+   * 选择文件夹
+   * 打开系统文件夹选择对话框
+   * @returns 选中的文件夹路径，取消返回 null
+   */
+  const selectFolder = async (): Promise<IpcResponse<string | null>> => {
+    return settingsService.selectFolder()
+  }
+
   return {
     settings: computed(() => store.settings),
     editableSettings,
@@ -175,5 +188,6 @@ export function useSettings(): UseSettingsReturn {
     update,
     reset,
     getDefaults,
+    selectFolder,
   }
 }
