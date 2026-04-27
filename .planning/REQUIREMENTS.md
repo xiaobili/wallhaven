@@ -14,11 +14,11 @@
 
 - [x] **SMIG-01**: LocalWallpaper.vue 移除 `useWallpaperStore` 导入，改用 `useSettings()` 获取 `downloadPath` ✓ Phase 10
 - [x] **SMIG-02**: DownloadWallpaper.vue 移除 `useDownloadStore` 导入，改用 `useDownload()` 获取列表状态 ✓ Phase 10
-- [ ] **SMIG-03**: OnlineWallpaper.vue 移除直接 store 状态访问，改用 `useWallpaperList()` 获取 `wallpapers`, `loading`, `error`
+- [x] **SMIG-03**: OnlineWallpaper.vue 移除直接 store 状态访问，改用 `useWallpaperList()` 获取 `wallpapers`, `loading`, `error` ✓ Phase 11
 
 ### 复杂迁移 (Complex Migration)
 
-- [ ] **CMIG-01**: OnlineWallpaper.vue 移除 `settings.apiKey` 直接访问，改用 `useSettings()`
+- [x] **CMIG-01**: OnlineWallpaper.vue 移除 `settings.apiKey` 直接访问，改用 `useSettings()` ✓ Phase 11
 - [ ] **CMIG-02**: SettingPage.vue 扩展 `useSettings` composable 支持 v-model 响应式绑定
 - [ ] **CMIG-03**: SettingPage.vue 移除 `useWallpaperStore` 导入，使用扩展后的 `useSettings()`
 
@@ -62,8 +62,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | SMIG-01 | Phase 10 | ✅ Complete |
 | SMIG-02 | Phase 10 | ✅ Complete |
-| SMIG-03 | Phase 11 | ⏳ Pending |
-| CMIG-01 | Phase 11 | ⏳ Pending |
+| SMIG-03 | Phase 11 | ✅ Complete |
+| CMIG-01 | Phase 11 | ✅ Complete |
 | CMIG-02 | Phase 12 | ⏳ Pending |
 | CMIG-03 | Phase 12 | ⏳ Pending |
 | CLUP-01 | Phase 13 | ⏳ Pending |
