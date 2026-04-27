@@ -1,5 +1,5 @@
 <template>
-  <div class="download-center">
+  <main class="download-center">
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
@@ -152,7 +152,7 @@
         没有完成的任务~
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -255,7 +255,7 @@ onUnmounted(() => {
 .download-center {
   width: 100%;
   position: relative;
-  padding: 50px 20px 0;
+  padding: 50px 20px 2em;
   min-width: 800px;
 }
 

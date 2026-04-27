@@ -1,5 +1,185 @@
 <template>
-  <div class="settings-page">
+  <div>
+    <main class="settings-page">
+      <h2>应用设置</h2>
+      <!-- 下载设置 -->
+      <section class="settings-section">
+        <h3><i class="fas fa-download" /> 下载设置</h3>
+
+        <div class="setting-item">
+          <label for="download-path">下载目录</label>
+          <div class="oneline">
+            <input
+              id="download-path"
+              v-model="formSettings.downloadPath"
+              type="text"
+              placeholder="选择壁纸下载目录"
+              readonly
+            >
+            <button
+              class="button"
+              @click="browseDownloadPath"
+            >
+              <i class="fas fa-folder-open" /> 浏览
+            </button>
+          </div>
+          <p class="setting-hint">
+            设置壁纸文件的默认保存位置
+          </p>
+        </div>
+
+        <div class="setting-item">
+          <label for="max-concurrent">多线程下载数量: {{ formSettings.maxConcurrentDownloads }}</label>
+          <div class="framed">
+            <input
+              id="max-concurrent"
+              v-model.number="formSettings.maxConcurrentDownloads"
+              type="range"
+              min="1"
+              max="10"
+              step="1"
+              class="slider-input"
+            >
+          </div>
+          <p class="setting-hint">
+            同时下载的壁纸数量（1-10）
+          </p>
+        </div>
+      </section>
+
+      <!-- API 设置 -->
+      <section class="settings-section">
+        <h3><i class="fas fa-key" /> Wallhaven API 设置</h3>
+
+        <div class="setting-item">
+          <label for="api-key">API Key</label>
+          <input
+            id="api-key"
+            v-model="formSettings.apiKey"
+            type="password"
+            placeholder="输入您的 Wallhaven API Key"
+          >
+          <p class="setting-hint">
+            API Key 用于访问 NSFW 内容。您可以在
+            <a
+              href="https://wallhaven.cc/settings/account"
+              target="_blank"
+            >Wallhaven 账户设置</a>
+            中获取。
+          </p>
+        </div>
+      </section>
+
+      <!-- 桌面设置 -->
+      <section class="settings-section">
+        <h3><i class="fas fa-desktop" /> 系统桌面设置</h3>
+
+        <div class="setting-item">
+          <label for="wallpaper-fit">壁纸适配模式</label>
+          <div class="framed">
+            <select
+              id="wallpaper-fit"
+              v-model="formSettings.wallpaperFit"
+            >
+              <option value="fill">
+                填充 (Fill)
+              </option>
+              <option value="fit">
+                适应 (Fit)
+              </option>
+              <option value="stretch">
+                拉伸 (Stretch)
+              </option>
+              <option value="tile">
+                平铺 (Tile)
+              </option>
+              <option value="center">
+                居中 (Center)
+              </option>
+              <option value="span">
+                跨屏 (Span)
+              </option>
+            </select>
+          </div>
+          <p class="setting-hint">
+            设置壁纸在桌面上的显示方式
+          </p>
+        </div>
+
+        <div class="setting-preview">
+          <p class="preview-label">
+            预览效果：
+          </p>
+          <div
+            class="fit-preview"
+            :class="'fit-' + formSettings.wallpaperFit"
+          >
+            <div class="preview-screen">
+              <div class="preview-wallpaper" />
+            </div>
+            <span class="fit-description">{{ getFitDescription(formSettings.wallpaperFit) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 缓存管理 -->
+      <section class="settings-section">
+        <h3><i class="fas fa-broom" /> 缓存管理</h3>
+
+        <div class="setting-item">
+          <label>应用缓存</label>
+          <p
+            class="setting-hint"
+            style="margin-bottom: 1em;"
+          >
+            清理应用产生的缓存数据，包括缩略图、临时文件和应用存储数据。<br>
+            注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件。
+          </p>
+
+          <div
+            v-if="cacheInfo"
+            class="cache-info"
+          >
+            <div class="cache-stat">
+              <span class="stat-label">缩略图数量:</span>
+              <span class="stat-value">{{ cacheInfo.thumbnailsCount || 0 }}</span>
+            </div>
+            <div class="cache-stat">
+              <span class="stat-label">临时文件数量:</span>
+              <span class="stat-value">{{ cacheInfo.tempFilesCount || 0 }}</span>
+            </div>
+          </div>
+
+          <button
+            class="button warning-button"
+            :disabled="isClearing"
+            @click="clearCache"
+          >
+            <i
+              class="fas"
+              :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"
+            />
+            {{ isClearing ? '清理中...' : '清空缓存' }}
+          </button>
+        </div>
+      </section>
+
+      <!-- 操作按钮 -->
+      <div class="settings-actions">
+        <button
+          class="button restore-button"
+          @click="resetSettings"
+        >
+          <i class="fas fa-undo" /> 恢复默认
+        </button>
+        <button
+          class="button green"
+          @click="saveSettings"
+        >
+          <i class="fas fa-save" /> 保存设置
+        </button>
+      </div>
+    </main>
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
@@ -8,185 +188,6 @@
       :duration="alert.duration"
       @close="hideAlert"
     />
-
-    <h2>应用设置</h2>
-    <!-- 下载设置 -->
-    <section class="settings-section">
-      <h3><i class="fas fa-download" /> 下载设置</h3>
-
-      <div class="setting-item">
-        <label for="download-path">下载目录</label>
-        <div class="oneline">
-          <input
-            id="download-path"
-            v-model="formSettings.downloadPath"
-            type="text"
-            placeholder="选择壁纸下载目录"
-            readonly
-          >
-          <button
-            class="button"
-            @click="browseDownloadPath"
-          >
-            <i class="fas fa-folder-open" /> 浏览
-          </button>
-        </div>
-        <p class="setting-hint">
-          设置壁纸文件的默认保存位置
-        </p>
-      </div>
-
-      <div class="setting-item">
-        <label for="max-concurrent">多线程下载数量: {{ formSettings.maxConcurrentDownloads }}</label>
-        <div class="framed">
-          <input
-            id="max-concurrent"
-            v-model.number="formSettings.maxConcurrentDownloads"
-            type="range"
-            min="1"
-            max="10"
-            step="1"
-            class="slider-input"
-          >
-        </div>
-        <p class="setting-hint">
-          同时下载的壁纸数量（1-10）
-        </p>
-      </div>
-    </section>
-
-    <!-- API 设置 -->
-    <section class="settings-section">
-      <h3><i class="fas fa-key" /> Wallhaven API 设置</h3>
-
-      <div class="setting-item">
-        <label for="api-key">API Key</label>
-        <input
-          id="api-key"
-          v-model="formSettings.apiKey"
-          type="password"
-          placeholder="输入您的 Wallhaven API Key"
-        >
-        <p class="setting-hint">
-          API Key 用于访问 NSFW 内容。您可以在
-          <a
-            href="https://wallhaven.cc/settings/account"
-            target="_blank"
-          >Wallhaven 账户设置</a>
-          中获取。
-        </p>
-      </div>
-    </section>
-
-    <!-- 桌面设置 -->
-    <section class="settings-section">
-      <h3><i class="fas fa-desktop" /> 系统桌面设置</h3>
-
-      <div class="setting-item">
-        <label for="wallpaper-fit">壁纸适配模式</label>
-        <div class="framed">
-          <select
-            id="wallpaper-fit"
-            v-model="formSettings.wallpaperFit"
-          >
-            <option value="fill">
-              填充 (Fill)
-            </option>
-            <option value="fit">
-              适应 (Fit)
-            </option>
-            <option value="stretch">
-              拉伸 (Stretch)
-            </option>
-            <option value="tile">
-              平铺 (Tile)
-            </option>
-            <option value="center">
-              居中 (Center)
-            </option>
-            <option value="span">
-              跨屏 (Span)
-            </option>
-          </select>
-        </div>
-        <p class="setting-hint">
-          设置壁纸在桌面上的显示方式
-        </p>
-      </div>
-
-      <div class="setting-preview">
-        <p class="preview-label">
-          预览效果：
-        </p>
-        <div
-          class="fit-preview"
-          :class="'fit-' + formSettings.wallpaperFit"
-        >
-          <div class="preview-screen">
-            <div class="preview-wallpaper" />
-          </div>
-          <span class="fit-description">{{ getFitDescription(formSettings.wallpaperFit) }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- 缓存管理 -->
-    <section class="settings-section">
-      <h3><i class="fas fa-broom" /> 缓存管理</h3>
-
-      <div class="setting-item">
-        <label>应用缓存</label>
-        <p
-          class="setting-hint"
-          style="margin-bottom: 1em;"
-        >
-          清理应用产生的缓存数据，包括缩略图、临时文件和应用存储数据。<br>
-          注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件。
-        </p>
-
-        <div
-          v-if="cacheInfo"
-          class="cache-info"
-        >
-          <div class="cache-stat">
-            <span class="stat-label">缩略图数量:</span>
-            <span class="stat-value">{{ cacheInfo.thumbnailsCount || 0 }}</span>
-          </div>
-          <div class="cache-stat">
-            <span class="stat-label">临时文件数量:</span>
-            <span class="stat-value">{{ cacheInfo.tempFilesCount || 0 }}</span>
-          </div>
-        </div>
-
-        <button
-          class="button warning-button"
-          :disabled="isClearing"
-          @click="clearCache"
-        >
-          <i
-            class="fas"
-            :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"
-          />
-          {{ isClearing ? '清理中...' : '清空缓存' }}
-        </button>
-      </div>
-    </section>
-
-    <!-- 操作按钮 -->
-    <div class="settings-actions">
-      <button
-        class="button restore-button"
-        @click="resetSettings"
-      >
-        <i class="fas fa-undo" /> 恢复默认
-      </button>
-      <button
-        class="button green"
-        @click="saveSettings"
-      >
-        <i class="fas fa-save" /> 保存设置
-      </button>
-    </div>
   </div>
 </template>
 
@@ -376,7 +377,8 @@ startEdit()
 .settings-page {
   max-width: 900px;
   margin: 2em auto;
-  padding: 0 2em;
+  padding: 50px 2em 2em;
+  width: 100%;
 }
 
 .settings-page h2 {
@@ -740,7 +742,7 @@ startEdit()
 /* 响应式设计 */
 @media (max-width: 768px) {
   .settings-page {
-    padding: 0 1em;
+    padding: 50px 1em 0;
   }
 
   .settings-section {

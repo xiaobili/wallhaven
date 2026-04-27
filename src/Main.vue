@@ -174,6 +174,7 @@ a:visited {
 .left-menu {
   z-index: 998;
   position: fixed;
+  top: 0;
   color: #fff;
   float: left;
   width: 180px;
