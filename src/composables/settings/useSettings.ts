@@ -19,7 +19,7 @@
  * ```
  */
 
-import { computed, type ComputedRef } from 'vue'
+import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { useWallpaperStore } from '@/stores/wallpaper'
 import { settingsService } from '@/services'
 import { useAlert } from '@/composables'
@@ -31,6 +31,13 @@ import type { AppSettings } from '@/types'
 export interface UseSettingsReturn {
   // 状态（ComputedRef）
   settings: ComputedRef<AppSettings>
+
+  // 可编辑状态（表单绑定用）
+  editableSettings: Ref<AppSettings>
+  startEdit: () => void
+  discardChanges: () => void
+  saveChanges: () => Promise<boolean>
+  isDirty: ComputedRef<boolean>
 
   // 方法
   load: () => Promise<boolean>
@@ -114,8 +121,56 @@ export function useSettings(): UseSettingsReturn {
     return settingsService.getDefaults()
   }
 
+  // === 可编辑设置副本（表单绑定用）===
+
+  /**
+   * 本地可编辑副本
+   * 独立于 store 状态 - 修改不影响 store 直到调用 saveChanges()
+   */
+  const editableSettings = ref<AppSettings>(getDefaults()) as Ref<AppSettings>
+
+  /**
+   * 初始化/同步 editableSettings 从 store
+   * 组件挂载时或 reset 后调用
+   */
+  const startEdit = (): void => {
+    Object.assign(editableSettings.value, store.settings)
+  }
+
+  /**
+   * 丢弃本地修改，从 store 同步
+   */
+  const discardChanges = (): void => {
+    Object.assign(editableSettings.value, store.settings)
+  }
+
+  /**
+   * 保存本地修改到 store 并持久化
+   * @returns 是否保存成功
+   */
+  const saveChanges = async (): Promise<boolean> => {
+    const result = await update(editableSettings.value)
+    if (result) {
+      // 保存成功后同步本地副本
+      Object.assign(editableSettings.value, store.settings)
+    }
+    return result
+  }
+
+  /**
+   * 检查是否有未保存的本地修改
+   */
+  const isDirty = computed(() => {
+    return JSON.stringify(editableSettings.value) !== JSON.stringify(store.settings)
+  })
+
   return {
     settings: computed(() => store.settings),
+    editableSettings,
+    startEdit,
+    discardChanges,
+    saveChanges,
+    isDirty,
     load,
     update,
     reset,
