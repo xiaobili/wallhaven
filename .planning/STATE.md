@@ -83,5 +83,13 @@ Last activity: 2026-04-27 — v2.2 shipped
 
 ---
 
+## Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 270427-001 | 提取 LocalWallpaper Main 组件 | 2026-04-27 | - | [270427-001-extract-main-component](./quick/270427-001-extract-main-component/) |
+
+---
+
 *创建时间：2025-04-25*
 *最后更新：2026-04-27 v2.2 shipped*
