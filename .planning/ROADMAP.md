@@ -141,7 +141,7 @@
 | 9 | Error Handling & Edge Cases | v2.1 | 3/3 | Complete | 2026-04-27 |
 | 10 | Simple Substitutions | v2.2 | 2/2 | Complete | 2026-04-27 |
 | 11 | OnlineWallpaper Migration | v2.2 | 1/5 | Complete | 2026-04-27 |
-| 12 | SettingPage Migration | v2.2 | 0/5 | Pending | — |
+| 12 | SettingPage Migration | v2.2 | 2/2 | Complete | 2026-04-27 |
 | 13 | Verification & Enforcement | v2.2 | 0/4 | Pending | — |
 
 ---
