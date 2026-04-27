@@ -18,7 +18,6 @@
     <ImagePreview
       :showing="imgShow"
       :img-info="imgInfo"
-      @preview="preview"
       @download-img="downloadImg"
       @set-bg="setBg"
       @close="closePreview"
@@ -83,7 +82,7 @@ import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
-import { useWallpaperList, useDownload, useSettings, useAlert } from '@/composables'
+import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
@@ -98,8 +97,9 @@ const {
   saveCustomParams
 } = useWallpaperList()
 const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
-const { settings, update: updateSettings } = useSettings()
+const { settings, selectFolder, update: updateSettings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
+const { setWallpaper } = useWallpaperSetter()
 
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
@@ -249,13 +249,7 @@ const setBg = async (imgItem: WallpaperItem): Promise<void> => {
     }
 
     // 设置为桌面壁纸
-    const setResult = await window.electronAPI.setWallpaper(downloadResult.filePath)
-
-    if (setResult.success) {
-      showSuccess('壁纸设置成功！')
-    } else {
-      showError('设置壁纸失败: ' + (setResult.error || '未知错误'))
-    }
+    await setWallpaper(downloadResult.filePath)
   } catch (error: any) {
     console.error('设置壁纸错误:', error)
     showError('设置壁纸失败: ' + error.message)
@@ -282,24 +276,21 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
   error: string | null
 }> => {
   // 从store获取下载目录
-  const downloadPath = settings.value.downloadPath
+  let downloadPath = settings.value.downloadPath
 
   if (!downloadPath) {
     // 如果没有设置下载目录，提示用户
-    const selectedDir = await window.electronAPI.selectFolder()
-    if (!selectedDir) {
+    const selectResult = await selectFolder()
+    if (!selectResult.success || !selectResult.data) {
       return { success: false, filePath: null, error: '未选择下载目录' }
     }
 
     // 保存下载目录到 electron-store
-    await updateSettings({ downloadPath: selectedDir })
+    await updateSettings({ downloadPath: selectResult.data })
+    downloadPath = selectResult.data
   }
 
-  const saveDir = downloadPath || (await window.electronAPI.selectFolder())
-
-  if (!saveDir) {
-    return { success: false, filePath: null, error: '未选择下载目录' }
-  }
+  const saveDir = downloadPath
 
   // 生成文件名（从URL提取扩展名）
   let ext = '.jpg'
@@ -311,12 +302,19 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
   }
   const filename = `wallhaven-${imgItem.id}${ext}`
 
-  // 调用Electron API下载
-  return await window.electronAPI.downloadWallpaper({
+  // 通过 electronClient 下载
+  const { electronClient } = await import('@/clients')
+  const result = await electronClient.downloadWallpaper({
     url: imgItem.path,
     filename,
     saveDir
   })
+
+  return {
+    success: result.success,
+    filePath: result.data || null,
+    error: result.error?.message || null
+  }
 }
 
 const closePreview = (): void => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div>
     <!-- Alert 提示框 -->
     <Alert
       v-if="alert.visible"
@@ -24,13 +24,11 @@
 
     <!-- 图片预览组件 -->
     <ImagePreview
-      v-if="previewItem"
-      :showing="!!previewItem"
+      :showing="imgShow"
       :img-info="previewItem"
       @close="closePreview"
       @download-img="() => {}"
       @set-bg="setAsWallpaper"
-      @preview="preview"
     />
   </div>
 </template>
@@ -41,11 +39,13 @@ import LocalWallpaperMain from '@/components/LocalWallpaperMain.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import type { WallpaperItem } from '@/types'
-import { useSettings, useAlert } from '@/composables'
+import { useSettings, useAlert, useLocalFiles, useWallpaperSetter } from '@/composables'
 import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 const { settings } = useSettings()
 const { alert, showSuccess, showError, hideAlert } = useAlert()
+const { readDirectory, openFolder: openFolderAction, deleteFile } = useLocalFiles()
+const { setWallpaper } = useWallpaperSetter()
 
 // 响应式数据
 const loading = ref<boolean>(false)
@@ -67,15 +67,15 @@ const refreshList = async (): Promise<void> => {
   loading.value = true
 
   try {
-    const result = await window.electronAPI.readDirectory(downloadPath.value)
+    const result = await readDirectory(downloadPath.value)
 
-    if (result.error) {
+    if (!result.success || !result.data) {
       console.error('读取目录失败:', result.error)
       localWallpapers.value = []
       return
     }
 
-    localWallpapers.value = result.files.map(file => ({
+    localWallpapers.value = result.data.map(file => ({
       name: file.name,
       path: file.path,
       thumbnailPath: file.thumbnailPath || '',
@@ -94,22 +94,11 @@ const refreshList = async (): Promise<void> => {
   }
 }
 
-const preview = (imgItem: WallpaperItem | null) => {
-  previewItem.value = imgItem
-  imgShow.value = true
-}
 
 const openFolder = async (): Promise<void> => {
   if (!downloadPath.value) return
 
-  try {
-    const result = await window.electronAPI.openFolder(downloadPath.value)
-    if (!result.success) {
-      console.error('打开文件夹失败:', result.error)
-    }
-  } catch (error) {
-    console.error('打开文件夹错误:', error)
-  }
+  await openFolderAction(downloadPath.value)
 }
 
 const previewWallpaper = (wallpaper: LocalWallpaper): void => {
@@ -146,20 +135,9 @@ const closePreview = (): void => {
 }
 
 const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {
-  try {
-    const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
+  const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
 
-    const result = await window.electronAPI.setWallpaper(imagePath)
-
-    if (result.success) {
-      showSuccess('壁纸设置成功！')
-    } else {
-      showError('设置壁纸失败: ' + (result.error || '未知错误'))
-    }
-  } catch (error: any) {
-    console.error('设置壁纸错误:', error)
-    showError('设置壁纸失败: ' + error.message)
-  }
+  await setWallpaper(imagePath)
 }
 
 const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promise<void> => {
@@ -168,18 +146,11 @@ const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promis
     return
   }
 
-  try {
-    const result = await window.electronAPI.deleteFile(wallpaper.path)
+  const result = await deleteFile(wallpaper.path)
 
-    if (result.success) {
-      localWallpapers.value.splice(index, 1)
-      showSuccess('文件已删除')
-    } else {
-      showError('删除失败: ' + (result.error || '未知错误'))
-    }
-  } catch (error: any) {
-    console.error('删除文件错误:', error)
-    showError('删除失败: ' + error.message)
+  if (result.success) {
+    localWallpapers.value.splice(index, 1)
+    showSuccess('文件已删除')
   }
 }
 
