@@ -9,7 +9,7 @@
 
 - ✅ **v2.0 架构重构** — Phases 1-5 (shipped 2026-04-26)
 - ✅ **v2.1 下载断点续传** — Phases 6-9 (shipped 2026-04-27) — [Archive](milestones/v2.1-ROADMAP.md)
-- 🔵 **v2.2 Store 分层迁移** — Phases 10-13 (in progress)
+- ✅ **v2.2 Store 分层迁移** — Phases 10-13 (shipped 2026-04-27)
 
 ---
 
@@ -142,9 +142,9 @@
 | 10 | Simple Substitutions | v2.2 | 2/2 | Complete | 2026-04-27 |
 | 11 | OnlineWallpaper Migration | v2.2 | 1/5 | Complete | 2026-04-27 |
 | 12 | SettingPage Migration | v2.2 | 2/2 | Complete | 2026-04-27 |
-| 13 | Verification & Enforcement | v2.2 | 0/4 | Pending | — |
+| 13 | Verification & Enforcement | v2.2 | 3/3 | Complete | 2026-04-27 |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.2 roadmap created*
+*最后更新：2026-04-27 v2.2 complete*
