@@ -20,7 +20,7 @@
           <input
             type="text"
             id="download-path"
-            v-model="settings.downloadPath"
+            v-model="formSettings.downloadPath"
             placeholder="选择壁纸下载目录"
             readonly
           />
@@ -32,12 +32,12 @@
       </div>
 
       <div class="setting-item">
-        <label for="max-concurrent">多线程下载数量: {{ settings.maxConcurrentDownloads }}</label>
+        <label for="max-concurrent">多线程下载数量: {{ formSettings.maxConcurrentDownloads }}</label>
         <div class="framed">
           <input
             type="range"
             id="max-concurrent"
-            v-model.number="settings.maxConcurrentDownloads"
+            v-model.number="formSettings.maxConcurrentDownloads"
             min="1"
             max="10"
             step="1"
@@ -57,7 +57,7 @@
         <input
           type="password"
           id="api-key"
-          v-model="settings.apiKey"
+          v-model="formSettings.apiKey"
           placeholder="输入您的 Wallhaven API Key"
         />
         <p class="setting-hint">
@@ -75,7 +75,7 @@
       <div class="setting-item">
         <label for="wallpaper-fit">壁纸适配模式</label>
         <div class="framed">
-          <select id="wallpaper-fit" v-model="settings.wallpaperFit">
+          <select id="wallpaper-fit" v-model="formSettings.wallpaperFit">
             <option value="fill">填充 (Fill)</option>
             <option value="fit">适应 (Fit)</option>
             <option value="stretch">拉伸 (Stretch)</option>
@@ -89,11 +89,11 @@
 
       <div class="setting-preview">
         <p class="preview-label">预览效果：</p>
-        <div class="fit-preview" :class="'fit-' + settings.wallpaperFit">
+        <div class="fit-preview" :class="'fit-' + formSettings.wallpaperFit">
           <div class="preview-screen">
             <div class="preview-wallpaper"></div>
           </div>
-          <span class="fit-description">{{ getFitDescription(settings.wallpaperFit) }}</span>
+          <span class="fit-description">{{ getFitDescription(formSettings.wallpaperFit) }}</span>
         </div>
       </div>
     </section>
@@ -140,20 +140,25 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, toRaw, ref } from 'vue'
-import { useWallpaperStore } from '@/stores/wallpaper'
+import { reactive, ref, onMounted } from 'vue'
 import { useSettings, useAlert } from '@/composables'
 import { settingsService } from '@/services'
 import type { WallpaperFit } from '@/types'
 import Alert from '@/components/Alert.vue'
 
-// Pinia Store
-const wallpaperStore = useWallpaperStore()
-const settings = wallpaperStore.settings
-
 // Composables
-const { update: updateSettings, reset: resetSettingsComposable } = useSettings()
+const {
+  settings,
+  editableSettings,
+  startEdit,
+  saveChanges,
+  reset: resetStoreSettings,
+  getDefaults
+} = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
+
+// Form binding uses editable copy
+const formSettings = editableSettings
 
 // 缓存信息
 const cacheInfo = reactive({
@@ -178,9 +183,10 @@ const browseDownloadPath = async (): Promise<void> => {
     console.log('[SettingPage] Selected path:', selectedPath)
 
     if (selectedPath) {
-      settings.downloadPath = selectedPath
-      // 自动保存设置到 electron-store
-      await updateSettings({ downloadPath: selectedPath })
+      // 更新可编辑设置
+      formSettings.value.downloadPath = selectedPath
+      // 保存设置
+      await saveChanges()
     }
   } catch (error: any) {
     console.error('选择文件夹失败:', error)
@@ -190,21 +196,18 @@ const browseDownloadPath = async (): Promise<void> => {
 
 const saveSettings = async (): Promise<void> => {
   // 验证设置
-  if (settings.maxConcurrentDownloads < 1 || settings.maxConcurrentDownloads > 10) {
+  if (formSettings.value.maxConcurrentDownloads < 1 || formSettings.value.maxConcurrentDownloads > 10) {
     showWarning('多线程下载数量必须在 1-10 之间')
     return
   }
 
   try {
-    // 将 reactive 对象转换为普通对象，避免 IPC 克隆错误
-    const plainSettings = toRaw(settings)
-
-    // 保存设置到 electron-store
-    await updateSettings(plainSettings)
-
-    console.log('[SettingPage] 设置已保存到 electron-store')
-
-    showSuccess('设置已保存')
+    // 使用 saveChanges 保存设置
+    const success = await saveChanges()
+    if (success) {
+      console.log('[SettingPage] 设置已保存到 electron-store')
+      showSuccess('设置已保存')
+    }
   } catch (error: any) {
     console.error('保存设置错误:', error)
     showError('保存设置失败: ' + error.message)
@@ -217,18 +220,11 @@ const resetSettings = async (): Promise<void> => {
     return
   }
 
-  // 重置为默认值（普通对象）
-  const defaultSettings = {
-    downloadPath: '',
-    maxConcurrentDownloads: 3,
-    apiKey: '',
-    wallpaperFit: 'fill' as WallpaperFit,
-  }
+  // 重置 store 到默认值
+  await resetStoreSettings()
 
-  await updateSettings(defaultSettings)
-
-  // 同时更新本地显示
-  Object.assign(settings, defaultSettings)
+  // 刷新本地可编辑副本
+  startEdit()
 
   showSuccess('已恢复默认设置')
 }
@@ -263,7 +259,7 @@ const clearCache = async (): Promise<void> => {
 
   try {
     // 1. 清空缩略图和临时文件缓存
-    const cacheResult = await settingsService.clearAppCache(settings.downloadPath || undefined)
+    const cacheResult = await settingsService.clearAppCache(settings.value.downloadPath || undefined)
 
     if (!cacheResult.success) {
       throw new Error(cacheResult.error?.message || '清理缓存失败')
@@ -276,14 +272,8 @@ const clearCache = async (): Promise<void> => {
       console.warn('[SettingPage] Store clear failed:', storeResult.error?.message)
     }
 
-    // 3. 重置本地设置状态
-    const defaultSettings = {
-      downloadPath: '',
-      maxConcurrentDownloads: 3,
-      apiKey: '',
-      wallpaperFit: 'fill' as WallpaperFit,
-    }
-    Object.assign(settings, defaultSettings)
+    // 3. 刷新本地可编辑副本
+    startEdit()
 
     // 4. 更新缓存信息
     cacheInfo.thumbnailsCount = 0
@@ -313,7 +303,7 @@ const clearCache = async (): Promise<void> => {
 
 const fetchCacheInfo = async (): Promise<void> => {
   try {
-    const result = await settingsService.getCacheInfo(settings.downloadPath || undefined)
+    const result = await settingsService.getCacheInfo(settings.value.downloadPath || undefined)
 
     if (result.success && result.data) {
       cacheInfo.thumbnailsCount = result.data.thumbnailsCount
@@ -325,8 +315,9 @@ const fetchCacheInfo = async (): Promise<void> => {
   }
 }
 
-// 初始化获取缓存信息
+// 初始化：获取缓存信息并启动表单编辑
 fetchCacheInfo()
+startEdit()
 
 </script>
 
