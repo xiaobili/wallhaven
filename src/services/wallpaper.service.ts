@@ -204,6 +204,14 @@ class WallpaperServiceImpl {
   clearCache(): void {
     this.cache.clear()
   }
+
+  /**
+   * 设置桌面壁纸
+   * @param imagePath - 图片文件路径
+   */
+  async setWallpaper(imagePath: string): Promise<IpcResponse<void>> {
+    return wallpaperRepository.setWallpaper(imagePath)
+  }
 }
 
 /** 壁纸服务单例 */

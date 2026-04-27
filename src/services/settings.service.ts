@@ -3,7 +3,7 @@
  * 封装设置相关的业务逻辑，提供内存缓存优化
  */
 
-import type { IpcResponse } from '@/shared/types/ipc'
+import type { IpcResponse, LocalFile } from '@/shared/types/ipc'
 import type { AppSettings, WallpaperFit } from '@/types'
 import { settingsRepository, type CacheInfo, type ClearCacheResult } from '@/repositories'
 
@@ -149,6 +149,35 @@ class SettingsServiceImpl {
    */
   async getCacheInfo(downloadPath?: string): Promise<IpcResponse<CacheInfo>> {
     return settingsRepository.getCacheInfo(downloadPath)
+  }
+
+  // ============================================
+  // 文件操作方法
+  // ============================================
+
+  /**
+   * 在系统文件管理器中打开文件夹
+   * @param folderPath - 文件夹路径
+   */
+  async openFolder(folderPath: string): Promise<IpcResponse<void>> {
+    return settingsRepository.openFolder(folderPath)
+  }
+
+  /**
+   * 读取目录内容
+   * @param dirPath - 目录路径
+   * @returns 返回目录中的文件列表
+   */
+  async readDirectory(dirPath: string): Promise<IpcResponse<LocalFile[]>> {
+    return settingsRepository.readDirectory(dirPath)
+  }
+
+  /**
+   * 删除文件
+   * @param filePath - 文件路径
+   */
+  async deleteFile(filePath: string): Promise<IpcResponse<void>> {
+    return settingsRepository.deleteFile(filePath)
   }
 }
 
