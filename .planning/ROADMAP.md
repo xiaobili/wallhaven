@@ -11,6 +11,7 @@
 - ✅ **v2.1 下载断点续传** — Phases 6-9 (shipped 2026-04-27) — [Archive](milestones/v2.1-ROADMAP.md)
 - ✅ **v2.2 Store 分层迁移** — Phases 10-13 (shipped 2026-04-27)
 - ✅ **v2.3 ElectronAPI 分层重构** — Phase 14 (shipped 2026-04-27)
+- ✅ **v2.4 ImagePreview 导航功能** — Phase 15 (shipped 2026-04-27)
 
 ---
 
@@ -166,6 +167,38 @@
 
 ---
 
+### v2.4 ImagePreview 导航功能 (Phase 15)
+
+**Goal**: 为 ImagePreview 组件添加上一张/下一张切换功能
+
+**Status**: ✅ Complete (shipped 2026-04-27)
+
+#### Phase 15: ImagePreview Navigation
+
+**Requirements**: NAV-01
+
+**Goal**: 添加图片预览导航功能
+
+**Files**: `ImagePreview.vue`, `LocalWallpaper.vue`, `OnlineWallpaper.vue`
+
+**Changes**:
+- 添加上一张/下一张导航按钮
+- 添加键盘快捷键支持
+- 确保导航状态正确同步
+
+**Success Criteria**:
+1. ✅ 用户可以在预览模式下切换到上一张/下一张图片
+2. ✅ 支持键盘左右箭头快捷操作
+3. ✅ 导航按钮 UI 与现有设计风格一致
+4. ✅ 所有现有功能行为不变
+
+**Depends on**: None
+
+**Plans**:
+- [x] Plan 1: ImagePreview 组件增强 + Views 集成
+
+---
+
 ## Progress
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
@@ -184,8 +217,9 @@
 | 12 | SettingPage Migration | v2.2 | 2/2 | Complete | 2026-04-27 |
 | 13 | Verification & Enforcement | v2.2 | 3/3 | Complete | 2026-04-27 |
 | 14 | ElectronAPI Layer Refactor | v2.3 | 6/6 | Complete | 2026-04-27 |
+| 15 | ImagePreview Navigation | v2.4 | 1/1 | Complete | 2026-04-27 |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.3 shipped*
+*最后更新：2026-04-27 v2.4 shipped*

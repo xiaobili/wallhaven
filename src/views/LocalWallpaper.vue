@@ -15,8 +15,11 @@
       :showing="imgShow"
       :img-info="previewItem"
       :is-local="true"
+      :wallpaper-list="wallpaperList"
+      :current-index="previewIndex"
       @close="closePreview"
       @set-bg="setAsWallpaper"
+      @navigate="handleNavigate"
     />
     <!-- 主内容区域 -->
     <LocalWallpaperMain
@@ -56,6 +59,40 @@ const imgShow = ref<boolean>(false)
 
 // 计算属性
 const downloadPath = computed(() => settings.value.downloadPath)
+
+// 将 localWallpapers 转换为 WallpaperItem[] 格式
+const wallpaperList = computed<WallpaperItem[]>(() => {
+  return localWallpapers.value.map((wp) => ({
+    id: wp.name,
+    url: getImageUrl(wp.path),
+    short_url: getImageUrl(wp.path),
+    views: 0,
+    favorites: 0,
+    source: '',
+    purity: 'sfw',
+    category: 'general',
+    dimension_x: wp.width || 0,
+    dimension_y: wp.height || 0,
+    resolution: `${wp.width || 0}x${wp.height || 0}`,
+    ratio: '',
+    file_size: wp.size,
+    file_type: getImageType(wp.name),
+    created_at: wp.modifiedTime,
+    colors: [],
+    path: getImageUrl(wp.path),
+    thumbs: {
+      large: getImageUrl(wp.path),
+      original: getImageUrl(wp.path),
+      small: getImageUrl(wp.path),
+    },
+  }))
+})
+
+// 当前预览索引
+const previewIndex = computed(() => {
+  if (!previewItem.value) return -1
+  return localWallpapers.value.findIndex(wp => wp.name === previewItem.value?.id)
+})
 
 // 方法
 const refreshList = async (): Promise<void> => {
@@ -134,6 +171,19 @@ const previewWallpaper = (wallpaper: LocalWallpaper): void => {
 const closePreview = (): void => {
   previewItem.value = null
   imgShow.value = false
+}
+
+const handleNavigate = (direction: 'prev' | 'next'): void => {
+  const newIndex = direction === 'prev'
+    ? previewIndex.value - 1
+    : previewIndex.value + 1
+
+  if (newIndex >= 0 && newIndex < localWallpapers.value.length) {
+    const wallpaper = localWallpapers.value[newIndex]
+    if (wallpaper) {
+      previewWallpaper(wallpaper)
+    }
+  }
 }
 
 const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {

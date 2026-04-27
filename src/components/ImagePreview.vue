@@ -7,6 +7,24 @@
       class="close_btn"
       @click="close"
     />
+    <!-- 左侧导航按钮 - 上一张 -->
+    <div
+      v-if="canNavigatePrev"
+      class="nav-btn nav-btn-prev"
+      title="上一张"
+      @click="navigatePrev"
+    >
+      <i class="fas fa-chevron-left" />
+    </div>
+    <!-- 右侧导航按钮 - 下一张 -->
+    <div
+      v-if="canNavigateNext"
+      class="nav-btn nav-btn-next"
+      title="下一张"
+      @click="navigateNext"
+    >
+      <i class="fas fa-chevron-right" />
+    </div>
     <div class="img-view">
       <img
         v-if="imgInfo"
@@ -64,11 +82,15 @@ interface Props {
   showing: boolean;
   imgInfo: WallpaperItem | null;
   isLocal: boolean;
+  wallpaperList?: WallpaperItem[];
+  currentIndex?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showing: false,
   isLocal: false,
+  wallpaperList: () => [],
+  currentIndex: -1,
 });
 
 // 定义 emits
@@ -76,6 +98,7 @@ const emit = defineEmits<{
   close: [value: boolean];
   'set-bg': [item: WallpaperItem];
   'download-img': [item: WallpaperItem];
+  navigate: [direction: 'prev' | 'next'];
 }>();
 
 // 响应式数据
@@ -86,6 +109,15 @@ const imgBgSrc = ref<string>("");
 const calHeight = computed(() => {
   return parseInt((clientHeight.value * 0.9).toString()) + "px";
 });
+
+// 导航计算属性
+const canNavigatePrev = computed(() => {
+  return props.currentIndex > 0 && props.wallpaperList.length > 1
+})
+
+const canNavigateNext = computed(() => {
+  return props.currentIndex >= 0 && props.currentIndex < props.wallpaperList.length - 1
+})
 
 // 监听窗口大小变化
 const onresize = () => {
@@ -114,15 +146,42 @@ const downloadImg = (imgItem: WallpaperItem | null) => {
   emit('download-img', imgItem);
 };
 
+// 导航方法
+const navigatePrev = () => {
+  if (canNavigatePrev.value) {
+    emit('navigate', 'prev')
+  }
+}
+
+const navigateNext = () => {
+  if (canNavigateNext.value) {
+    emit('navigate', 'next')
+  }
+}
+
+// 键盘事件处理
+const handleKeydown = (event: KeyboardEvent) => {
+  // 只在预览显示时响应
+  if (!props.showing) return
+
+  if (event.key === 'ArrowLeft') {
+    navigatePrev()
+  } else if (event.key === 'ArrowRight') {
+    navigateNext()
+  }
+}
+
 // 组件挂载时执行
 onMounted(() => {
   clientHeight.value = document.documentElement.clientHeight;
   window.addEventListener('resize', onresize);
+  window.addEventListener('keydown', handleKeydown);
 });
 
 // 组件卸载时移除事件监听
 onUnmounted(() => {
   window.removeEventListener('resize', onresize);
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -281,5 +340,41 @@ onUnmounted(() => {
     transform: scale(0);
     opacity: 0;
   }
+}
+
+/* 导航按钮样式 */
+.nav-btn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  background-color: rgba(34, 34, 34, 0.8);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: background-color 0.3s, opacity 0.3s;
+  font-size: 20px;
+  color: #d7ce82;
+}
+
+.nav-btn:hover {
+  background-color: rgba(34, 34, 34, 1);
+}
+
+.nav-btn-prev {
+  left: 40px;
+}
+
+.nav-btn-next {
+  right: 40px;
+}
+
+/* 悬浮时显示导航按钮 */
+.mask:hover .nav-btn {
+  opacity: 1;
 }
 </style>

@@ -19,9 +19,13 @@
       v-show="imgShow"
       :showing="imgShow"
       :img-info="imgInfo"
+      :is-local="false"
+      :wallpaper-list="wallpaperList"
+      :current-index="previewIndex"
       @download-img="downloadImg"
       @set-bg="setBg"
       @close="closePreview"
+      @navigate="handleNavigate"
     />
 
     <SearchBar
@@ -114,6 +118,21 @@ const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
 const apiKey = computed(() => settings.value.apiKey)
+
+// 从 wallpapers 中提取扁平化的壁纸列表
+const wallpaperList = computed<WallpaperItem[]>(() => {
+  const allWallpapers: WallpaperItem[] = []
+  wallpapers.value.sections.forEach(section => {
+    allWallpapers.push(...section.data)
+  })
+  return allWallpapers
+})
+
+// 当前预览索引
+const previewIndex = computed(() => {
+  if (!imgInfo.value) return -1
+  return wallpaperList.value.findIndex(wp => wp.id === imgInfo.value?.id)
+})
 
 // Lifecycle hooks
 onMounted(() => {
@@ -321,6 +340,19 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
 const closePreview = (): void => {
   imgShow.value = false
   imgInfo.value = null
+}
+
+const handleNavigate = (direction: 'prev' | 'next'): void => {
+  const newIndex = direction === 'prev'
+    ? previewIndex.value - 1
+    : previewIndex.value + 1
+
+  if (newIndex >= 0 && newIndex < wallpaperList.value.length) {
+    const wallpaper = wallpaperList.value[newIndex]
+    if (wallpaper) {
+      preview(wallpaper)
+    }
+  }
 }
 
 /**
