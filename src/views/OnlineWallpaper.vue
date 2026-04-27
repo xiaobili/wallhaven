@@ -16,6 +16,7 @@
     />
 
     <ImagePreview
+      v-show="imgShow"
       :showing="imgShow"
       :img-info="imgInfo"
       @download-img="downloadImg"

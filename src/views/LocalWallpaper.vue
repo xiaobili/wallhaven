@@ -24,6 +24,7 @@
 
     <!-- 图片预览组件 -->
     <ImagePreview
+      v-show="imgShow"
       :showing="imgShow"
       :img-info="previewItem"
       @close="closePreview"
@@ -43,7 +44,7 @@ import { useSettings, useAlert, useLocalFiles, useWallpaperSetter } from '@/comp
 import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 const { settings } = useSettings()
-const { alert, showSuccess, hideAlert } = useAlert()
+const { alert, showSuccess, hideAlert,showError } = useAlert()
 const { readDirectory, openFolder: openFolderAction, deleteFile } = useLocalFiles()
 const { setWallpaper } = useWallpaperSetter()
 
@@ -103,6 +104,7 @@ const openFolder = async (): Promise<void> => {
 
 const previewWallpaper = (wallpaper: LocalWallpaper): void => {
   const imageUrl = getImageUrl(wallpaper.path)
+  imgShow.value = true
 
   previewItem.value = {
     id: wallpaper.name,
@@ -132,12 +134,18 @@ const previewWallpaper = (wallpaper: LocalWallpaper): void => {
 
 const closePreview = (): void => {
   previewItem.value = null
+  imgShow.value = false
 }
 
 const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promise<void> => {
   const imagePath = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
 
-  await setWallpaper(imagePath)
+  const result = await setWallpaper(imagePath)
+  if (result) {
+    showSuccess('壁纸设置成功')
+  } else {
+    showError('壁纸设置失败')
+  }
 }
 
 const deleteWallpaper = async (wallpaper: LocalWallpaper, index: number): Promise<void> => {
