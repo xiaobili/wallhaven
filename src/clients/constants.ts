@@ -10,6 +10,8 @@ export const STORAGE_KEYS = {
   DOWNLOAD_FINISHED_LIST: 'downloadFinishedList',
   /** 壁纸查询参数存储键 */
   WALLPAPER_QUERY_PARAMS: 'wallpaperQueryParams',
+  /** 收藏数据存储键 */
+  FAVORITES_DATA: 'favoritesData',
 } as const
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
