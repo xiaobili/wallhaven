@@ -4,7 +4,7 @@ milestone: v2.5
 milestone_name: 壁纸收藏功能
 status: Phase 21 complete
 last_updated: "2026-04-28T09:30:00.000Z"
-last_activity: 2026-04-28 — Phase 21 complete
+last_activity: 2026-04-28 — Quick task 260428-r6c: 收藏页侧边栏固定定位
 progress:
   total_phases: 12
   completed_phases: 5
@@ -114,6 +114,14 @@ Add local favorites system so users can save and organize their favorite wallpap
 - 收藏夹创建、重命名、删除
 - 添加/移除/移动收藏
 - 收藏浏览、过滤、下载
+
+---
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260428-r6c | 收藏页侧边栏固定定位 | 2026-04-28 | 31fbece | [260428-r6c-fix-favorite-sidebar-sticky](./quick/260428-r6c-fix-favorite-sidebar-sticky/) |
 
 ---
 
