@@ -34,11 +34,20 @@
             <figure
               class="thumb"
               :class="['thumb-' + (liItem.id), 'thumb-' + (liItem.purity), 'thumb-' + (liItem.category), { 'selected': isSelected(liItem.id) }]"
-              :data-wallpaper-id="liItem.id" 
+              :data-wallpaper-id="liItem.id"
               style="width:300px;height:200px"
               @click.ctrl.exact.prevent="toggleSelect(liItem.id)"
               @click.meta.exact.prevent="toggleSelect(liItem.id)"
             >
+              <!-- 收藏状态指示器 -->
+              <div
+                v-if="isFavorite(liItem.id)"
+                class="favorite-indicator"
+                title="已收藏"
+              >
+                <i class="fas fa-heart" />
+              </div>
+
               <!-- 选择框 -->
               <div
                 class="thumb-checkbox"
@@ -48,6 +57,16 @@
                   v-if="isSelected(liItem.id)"
                   class="fas fa-check check-icon"
                 />
+              </div>
+
+              <!-- 收藏按钮 -->
+              <div
+                class="thumb-favorite-btn"
+                :class="{ 'is-favorite': isFavorite(liItem.id) }"
+                :title="isFavorite(liItem.id) ? '已收藏' : '添加到收藏'"
+                @click.stop="emit('toggle-favorite', liItem, $event)"
+              >
+                <i :class="isFavorite(liItem.id) ? 'fas fa-heart' : 'far fa-heart'" />
               </div>
 
               <a
@@ -118,6 +137,7 @@ const props = defineProps<{
   loading: boolean;
   error: boolean;
   selectedIds?: string[];  // 选中的壁纸ID列表
+  favoriteIds?: Set<string>;  // 收藏的壁纸ID集合
 }>();
 
 const emit = defineEmits<{
@@ -126,6 +146,7 @@ const emit = defineEmits<{
   'download-img': [item: WallpaperItem];
   'close-search-modal': [];
   'select-wallpaper': [id: string];  // 切换选择状态
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // 切换收藏状态
 }>();
 
 /**
@@ -133,6 +154,13 @@ const emit = defineEmits<{
  */
 const isSelected = (id: string): boolean => {
   return props.selectedIds?.includes(id) || false
+}
+
+/**
+ * 检查是否已收藏
+ */
+const isFavorite = (id: string): boolean => {
+  return props.favoriteIds?.has(id) || false
 }
 
 /**
@@ -286,5 +314,58 @@ onUnmounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 收藏按钮样式 */
+.thumb-favorite-btn {
+  position: absolute;
+  top: 8px;
+  left: 40px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 150;
+  transition: all 0.2s ease;
+  opacity: 0;
+  visibility: hidden;
+  color: #fff;
+}
+
+.thumb:hover .thumb-favorite-btn {
+  opacity: 0.7;
+  visibility: visible;
+}
+
+.thumb-favorite-btn:hover {
+  background: rgba(255, 107, 107, 0.7);
+  border-color: #ff6b6b;
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.thumb-favorite-btn.is-favorite {
+  background: #ff6b6b;
+  border-color: #ff6b6b;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 收藏指示器样式 */
+.favorite-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  background: #ff6b6b;
+  border-radius: 50%;
+  z-index: 160;
+  pointer-events: none;
 }
 </style>
