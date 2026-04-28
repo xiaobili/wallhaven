@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: 壁纸收藏功能
 status: planning
-last_updated: "2026-04-28T07:48:10.581Z"
-last_activity: 2026-04-28 — Phase 19 planning complete (auto mode)
+last_updated: "2026-04-28T08:15:00.000Z"
+last_activity: 2026-04-28 — Phase 20 context gathered (auto mode)
 progress:
-  total_phases: 12
-  completed_phases: 5
-  total_plans: 13
-  completed_plans: 14
-  percent: 100
+  total_phases: 6
+  completed_phases: 4
+  total_plans: 6
+  completed_plans: 7
+  percent: 67
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-28
-> 当前阶段：执行中
+> 当前阶段：规划中
 > 项目状态：🚀 Executing
 
 ---
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 20 (Favorites Operations UI) — Ready to discuss
+Phase: 20 (Favorites Operations UI) — Ready to plan
 Plan: —
-Status: Phase 19 complete (auto mode)
-Last activity: 2026-04-28 — Phase 19 complete (auto mode)
+Status: Phase 19 complete, Phase 20 context gathered
+Last activity: 2026-04-28 — Phase 20 context gathered (auto mode)
 
 ---
 
@@ -47,46 +47,46 @@ Add local favorites system so users can save and organize their favorite wallpap
 
 ### Requirements to Deliver
 
-| Requirement | Description | Phase |
-|-------------|-------------|-------|
-| COLL-01 | Create new collection with custom name | 19 |
-| COLL-02 | Rename existing collection | 19 |
-| COLL-03 | Delete collection with confirmation | 19 |
-| COLL-04 | Default "Favorites" collection (non-deletable) | 16, 19 |
-| COLL-05 | View list of all collections | 18, 19 |
-| FAV-01 | Add wallpaper to collection from card | 20 |
-| FAV-02 | Add wallpaper to collection from preview | 20 |
-| FAV-03 | Remove wallpaper from collection | 20 |
-| FAV-04 | Move wallpaper between collections | 20 |
-| FAV-05 | Favorite indicator on wallpapers | 18, 20 |
-| FAV-06 | Wallpaper in multiple collections | 18, 20 |
-| BROW-01 | Access favorites page from navigation | 19, 21 |
-| BROW-02 | View wallpapers in selected collection | 21 |
-| BROW-03 | Filter wallpapers by collection | 21 |
-| BROW-04 | See which collection(s) wallpaper belongs to | 21 |
-| BROW-05 | Download favorited wallpapers | 21 |
-| PERS-01 | Persist across app restarts | 17 |
-| PERS-02 | Store locally with electron-store | 16 |
-| PERS-03 | Handle storage errors gracefully | 17 |
+| Requirement | Description | Phase | Status |
+|-------------|-------------|-------|--------|
+| COLL-01 | Create new collection with custom name | 19 | ✅ Complete |
+| COLL-02 | Rename existing collection | 19 | ✅ Complete |
+| COLL-03 | Delete collection with confirmation | 19 | ✅ Complete |
+| COLL-04 | Default "Favorites" collection (non-deletable) | 16, 19 | ✅ Complete |
+| COLL-05 | View list of all collections | 18, 19 | ✅ Complete |
+| FAV-01 | Add wallpaper to collection from card | 20 | Pending |
+| FAV-02 | Add wallpaper to collection from preview | 20 | Pending |
+| FAV-03 | Remove wallpaper from collection | 20 | Pending |
+| FAV-04 | Move wallpaper between collections | 20 | Pending |
+| FAV-05 | Favorite indicator on wallpapers | 18, 20 | Partial |
+| FAV-06 | Wallpaper in multiple collections | 18, 20 | Partial |
+| BROW-01 | Access favorites page from navigation | 19 | ✅ Complete |
+| BROW-02 | View wallpapers in selected collection | 21 | Pending |
+| BROW-03 | Filter wallpapers by collection | 21 | Pending |
+| BROW-04 | See which collection(s) wallpaper belongs to | 21 | Pending |
+| BROW-05 | Download favorited wallpapers | 21 | Pending |
+| PERS-01 | Persist across app restarts | 17 | ✅ Complete |
+| PERS-02 | Store locally with electron-store | 16 | ✅ Complete |
+| PERS-03 | Handle storage errors gracefully | 17 | ✅ Complete |
 
 **Coverage**: 19/19 requirements mapped (100%)
 
 ### Key Objectives
 
-1. **Custom collections** — Create named collections (动漫, 风景, etc.)
-2. **Favorites operations** — Add/remove/move wallpapers between collections
-3. **Favorites browsing page** — View and filter by collection
-4. **Local persistence** — All data saved locally
+1. **Custom collections** — Create named collections (动漫, 风景, etc.) ✅
+2. **Favorites operations** — Add/remove/move wallpapers between collections (Phase 20)
+3. **Favorites browsing page** — View and filter by collection (Phase 21)
+4. **Local persistence** — All data saved locally ✅
 
 ### Phase Overview
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 16 | Data Layer Foundation | PERS-02, COLL-04 | Pending |
-| 17 | Business Layer (Service) | PERS-01, PERS-03 | Pending |
-| 18 | Composable Layer | COLL-05, FAV-05, FAV-06 | Pending |
-| 19 | Collections Management UI | COLL-01, COLL-02, COLL-03, COLL-04 | Pending |
-| 20 | Favorites Operations UI | FAV-01, FAV-02, FAV-03, FAV-04 | Pending |
+| 16 | Data Layer Foundation | PERS-02, COLL-04 | ✅ Complete |
+| 17 | Business Layer (Service) | PERS-01, PERS-03 | ✅ Complete |
+| 18 | Composable Layer | COLL-05, FAV-05, FAV-06 | ✅ Complete |
+| 19 | Collections Management UI | COLL-01, COLL-02, COLL-03, COLL-04 | ✅ Complete |
+| 20 | Favorites Operations UI | FAV-01, FAV-02, FAV-03, FAV-04 | Context gathered |
 | 21 | Favorites Browsing UI | BROW-01, BROW-02, BROW-03, BROW-04, BROW-05 | Pending |
 
 ### Shipped Milestones
@@ -107,24 +107,20 @@ Add local favorites system so users can save and organize their favorite wallpap
 - 2026-04-27: v2.3 ElectronAPI 分层重构 shipped
 - 2026-04-27: v2.4 ImagePreview 导航功能 shipped
 - 2026-04-28: v2.5 壁纸收藏功能 roadmap created (Phases 16-21)
+- 2026-04-28: Phases 16-19 complete
+- 2026-04-28: Phase 20 context gathered (auto mode)
 
 ---
 
 ## Next Steps
 
-Ready to begin Phase 16 discussion:
+Phase 20 context captured. Ready to plan:
 
 ```
-/gsd-discuss-phase 16
-```
-
-Or jump directly to planning:
-
-```
-/gsd-plan-phase 16
+/gsd-plan-phase 20
 ```
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 v2.5 roadmap created*
+*最后更新：2026-04-28 Phase 20 context gathered*
