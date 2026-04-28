@@ -13,3 +13,6 @@ export { settingsService } from './settings.service'
 
 // 窗口服务
 export { windowService } from './window.service'
+
+// 收藏夹服务
+export { collectionsService } from './collections.service'
