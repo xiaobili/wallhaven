@@ -1,0 +1,231 @@
+<template>
+  <div class="collection-sidebar">
+    <div class="sidebar-header">
+      <h3>收藏夹</h3>
+      <button
+        class="create-btn"
+        title="新建收藏夹"
+        @click="showCreateModal = true"
+      >
+        <i class="fas fa-plus" />
+      </button>
+    </div>
+
+    <div class="sidebar-content">
+      <div
+        v-if="loading"
+        class="loading-state"
+      >
+        <i class="fas fa-spinner fa-spin" />
+        <span>加载中...</span>
+      </div>
+
+      <div
+        v-else-if="collections.length === 0"
+        class="empty-state"
+      >
+        <i class="fas fa-folder-open" />
+        <p>还没有收藏夹</p>
+        <p class="hint">
+          点击上方 + 按钮创建
+        </p>
+      </div>
+
+      <div
+        v-else
+        class="collection-list"
+      >
+        <CollectionItem
+          v-for="collection in collections"
+          :key="collection.id"
+          :collection="collection"
+          :count="getCollectionCount(collection.id)"
+          :is-active="selectedId === collection.id"
+          @select="handleSelect"
+          @rename="handleRename"
+          @delete="handleDelete"
+        />
+      </div>
+    </div>
+
+    <CreateCollectionModal
+      :visible="showCreateModal"
+      :existing-names="existingNames"
+      @close="showCreateModal = false"
+      @confirm="handleCreateConfirm"
+    />
+
+    <RenameCollectionModal
+      :visible="showRenameModal"
+      :current-name="renameTarget?.name || ''"
+      :collection-id="renameTarget?.id || ''"
+      :existing-names="existingNames"
+      @close="handleRenameClose"
+      @confirm="handleRenameConfirm"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import CollectionItem from './CollectionItem.vue'
+import CreateCollectionModal from './CreateCollectionModal.vue'
+import RenameCollectionModal from './RenameCollectionModal.vue'
+import { useCollections, useFavorites, useAlert } from '@/composables'
+import type { Collection } from '@/types'
+
+const emit = defineEmits<{
+  select: [collectionId: string]
+}>()
+
+const { collections, loading, load, create, rename, delete: deleteCollection } = useCollections()
+const { favorites } = useFavorites()
+const { showSuccess, showError } = useAlert()
+
+const showCreateModal = ref(false)
+const showRenameModal = ref(false)
+const renameTarget = ref<Collection | null>(null)
+const selectedId = ref<string | null>(null)
+
+const existingNames = computed(() =>
+  collections.value.map(c => c.name)
+)
+
+const getCollectionCount = (collectionId: string): number =>
+  favorites.value.filter(f => f.collectionId === collectionId).length
+
+const handleSelect = (collection: Collection) => {
+  selectedId.value = collection.id
+  emit('select', collection.id)
+}
+
+const handleRename = (collection: Collection) => {
+  renameTarget.value = collection
+  showRenameModal.value = true
+}
+
+const handleRenameClose = () => {
+  showRenameModal.value = false
+  renameTarget.value = null
+}
+
+const handleDelete = async (collection: Collection) => {
+  const confirmed = window.confirm(
+    `确定要删除收藏夹"${collection.name}"吗？\n收藏的壁纸将从该收藏夹移除。`
+  )
+  if (!confirmed) return
+
+  const success = await deleteCollection(collection.id)
+  if (success) {
+    showSuccess('收藏夹已删除')
+    if (selectedId.value === collection.id) {
+      selectedId.value = null
+    }
+  } else {
+    showError('删除收藏夹失败')
+  }
+}
+
+const handleCreateConfirm = async (name: string) => {
+  const success = await create(name)
+  if (success) {
+    showSuccess('收藏夹创建成功')
+    showCreateModal.value = false
+  } else {
+    showError('创建收藏夹失败')
+  }
+}
+
+const handleRenameConfirm = async (id: string, name: string) => {
+  const success = await rename(id, name)
+  if (success) {
+    showSuccess('收藏夹已重命名')
+    showRenameModal.value = false
+    renameTarget.value = null
+  } else {
+    showError('重命名失败')
+  }
+}
+
+onMounted(() => {
+  load()
+})
+</script>
+
+<style scoped>
+.collection-sidebar {
+  width: 200px;
+  background: #1a1a1a;
+  border-right: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1em;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-header h3 {
+  color: #8cc;
+  margin: 0;
+  font-size: 1em;
+}
+
+.create-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #85aaaf;
+  cursor: pointer;
+  padding: 0.35em 0.5em;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.create-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: #666;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5em 0;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2em;
+  color: #888;
+  text-align: center;
+}
+
+.empty-state i {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0.25em 0;
+}
+
+.empty-state .hint {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.collection-list {
+  display: flex;
+  flex-direction: column;
+}
+</style>
