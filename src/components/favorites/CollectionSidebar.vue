@@ -176,12 +176,15 @@ onMounted(() => {
 
 <style scoped>
 .collection-sidebar {
+  position: fixed;
+  top: 40px;
+  left: 180px;
   width: 200px;
+  height: calc(100vh - 40px);
   background: #1a1a1a;
   border-right: 1px solid #333;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .sidebar-header {
