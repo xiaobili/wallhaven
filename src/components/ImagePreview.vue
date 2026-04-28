@@ -54,6 +54,16 @@
           </div>
         </div>
         <div
+          class="sidebar-fixed_box favorite-btn"
+          :class="{ 'is-favorite': isFavorite }"
+          :title="isFavorite ? '已收藏' : '添加到收藏'"
+          @click="handleFavoriteClick"
+        >
+          <div class="icon-wrap">
+            <i :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'" />
+          </div>
+        </div>
+        <div
           v-show="!isLocal"
           class="sidebar-fixed_box share-middle-icon sidebar-share"
           title="下载"
@@ -84,6 +94,7 @@ interface Props {
   isLocal: boolean;
   wallpaperList?: WallpaperItem[];
   currentIndex?: number;
+  favoriteIds?: Set<string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -99,6 +110,7 @@ const emit = defineEmits<{
   'set-bg': [item: WallpaperItem];
   'download-img': [item: WallpaperItem];
   navigate: [direction: 'prev' | 'next'];
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];
 }>();
 
 // 响应式数据
@@ -117,6 +129,11 @@ const canNavigatePrev = computed(() => {
 
 const canNavigateNext = computed(() => {
   return props.currentIndex >= 0 && props.currentIndex < props.wallpaperList.length - 1
+})
+
+const isFavorite = computed(() => {
+  if (!props.imgInfo) return false
+  return props.favoriteIds?.has(props.imgInfo.id) || false
 })
 
 // 监听窗口大小变化
@@ -157,6 +174,12 @@ const navigateNext = () => {
   if (canNavigateNext.value) {
     emit('navigate', 'next')
   }
+}
+
+// 收藏点击处理
+const handleFavoriteClick = (event: MouseEvent) => {
+  if (!props.imgInfo) return
+  emit('toggle-favorite', props.imgInfo, event)
 }
 
 // 键盘事件处理
@@ -376,5 +399,26 @@ onUnmounted(() => {
 /* 悬浮时显示导航按钮 */
 .mask:hover .nav-btn {
   opacity: 1;
+}
+
+/* 收藏按钮样式 */
+.favorite-btn {
+  border: 1px solid #E9E9E9;
+  background-color: #222;
+  transition: background 0.3s;
+}
+
+.favorite-btn:hover {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+.favorite-btn.is-favorite {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+.favorite-btn.is-favorite .icon-wrap {
+  color: #fff;
 }
 </style>
