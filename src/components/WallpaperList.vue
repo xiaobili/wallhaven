@@ -40,13 +40,13 @@
               @click.meta.exact.prevent="toggleSelect(liItem.id)"
             >
               <!-- 收藏状态指示器 -->
-              <div
+              <!-- <div
                 v-if="isFavorite(liItem.id)"
                 class="favorite-indicator"
                 title="已收藏"
               >
                 <i class="fas fa-heart" />
-              </div>
+              </div> -->
 
               <!-- 选择框 -->
               <div

@@ -125,18 +125,15 @@ const { setWallpaper } = useWallpaperSetter()
 
 // Favorites composable
 const {
-  favorites,
   favoriteIds,
   add: addFavorite,
   remove: removeFavorite,
-  move: moveFavorite,
   isInCollection,
   load: loadFavorites
 } = useFavorites()
 
 // Collections composable for getDefault
 const {
-  collections,
   getDefault,
   load: loadCollections
 } = useCollections()
@@ -180,6 +177,8 @@ onMounted(() => {
   loadHistory()
   // 加载收藏数据
   loadFavorites()
+  // 加载收藏夹列表
+  loadCollections()
   // 添加点击外部关闭下拉菜单
   document.addEventListener('click', handleClickOutside)
 })
@@ -479,7 +478,7 @@ const generateFilename = (imgItem: WallpaperItem): string => {
 /**
  * 处理收藏按钮左键点击 - 快速添加/移除默认收藏夹
  */
-const handleToggleFavorite = async (item: WallpaperItem, event: MouseEvent): Promise<void> => {
+const handleToggleFavorite = async (item: WallpaperItem): Promise<void> => {
   const defaultCollection = getDefault()
   if (!defaultCollection) {
     showWarning('请先设置默认收藏夹')

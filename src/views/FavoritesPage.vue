@@ -71,13 +71,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, shallowRef } from 'vue'
+import { ref, computed, shallowRef, onActivated } from 'vue'
 import CollectionSidebar from '@/components/favorites/CollectionSidebar.vue'
 import FavoriteWallpaperCard from '@/components/favorites/FavoriteWallpaperCard.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import { useCollections, useFavorites, useAlert, useDownload, useWallpaperSetter } from '@/composables'
-import type { WallpaperItem, FavoriteItem } from '@/types'
+import type { WallpaperItem } from '@/types'
 
 defineOptions({ name: 'FavoritesPage' })
 
@@ -197,7 +197,7 @@ const handleSetBg = async (wallpaperData: WallpaperItem): Promise<void> => {
 }
 
 // Lifecycle
-onMounted(async () => {
+onActivated(async () => {
   await Promise.all([loadCollections(), loadFavorites()])
 })
 </script>

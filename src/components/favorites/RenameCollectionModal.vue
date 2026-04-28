@@ -1,55 +1,57 @@
 <template>
-  <transition name="modal-fade">
-    <div
-      v-if="visible"
-      class="modal-overlay"
-      @click.self="handleCancel"
-    >
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3>重命名收藏夹</h3>
-          <button
-            class="modal-close"
-            @click="handleCancel"
-          >
-            <i class="fas fa-times" />
-          </button>
-        </div>
-        <div class="modal-body">
-          <label for="collection-name">收藏夹名称</label>
-          <input
-            id="collection-name"
-            v-model="collectionName"
-            type="text"
-            placeholder="请输入收藏夹名称"
-            maxlength="20"
-            @keyup.enter="handleConfirm"
-          >
-          <p
-            v-if="errorMessage"
-            class="error-message"
-          >
-            {{ errorMessage }}
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button
-            class="btn btn-cancel"
-            @click="handleCancel"
-          >
-            取消
-          </button>
-          <button
-            class="btn btn-confirm"
-            :disabled="!isValid"
-            @click="handleConfirm"
-          >
-            保存
-          </button>
+  <Teleport to="body">
+    <transition name="modal-fade">
+      <div
+        v-if="visible"
+        class="modal-overlay"
+        @click.self="handleCancel"
+      >
+        <div class="modal-container">
+          <div class="modal-header">
+            <h3>重命名收藏夹</h3>
+            <button
+              class="modal-close"
+              @click="handleCancel"
+            >
+              <i class="fas fa-times" />
+            </button>
+          </div>
+          <div class="modal-body">
+            <label for="collection-name">收藏夹名称</label>
+            <input
+              id="collection-name"
+              v-model="collectionName"
+              type="text"
+              placeholder="请输入收藏夹名称"
+              maxlength="20"
+              @keyup.enter="handleConfirm"
+            >
+            <p
+              v-if="errorMessage"
+              class="error-message"
+            >
+              {{ errorMessage }}
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-cancel"
+              @click="handleCancel"
+            >
+              取消
+            </button>
+            <button
+              class="btn btn-confirm"
+              :disabled="!isValid"
+              @click="handleConfirm"
+            >
+              保存
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </transition>
+    </transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -134,7 +136,7 @@ const handleConfirm = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal-container {
