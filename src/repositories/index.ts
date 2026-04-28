@@ -13,3 +13,6 @@ export { wallpaperRepository } from './wallpaper.repository'
 
 // 窗口仓储
 export { windowRepository } from './window.repository'
+
+// 收藏功能仓储
+export { favoritesRepository } from './favorites.repository'
