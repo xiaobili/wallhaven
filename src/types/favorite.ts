@@ -46,6 +46,8 @@ export interface FavoritesData {
   favorites: FavoriteItem[]
   /** 数据版本号（便于未来迁移） */
   version: number
+  /** 默认收藏夹ID */
+  defaultCollectionId?: string
 }
 
 // ==================== 错误码类型 ====================

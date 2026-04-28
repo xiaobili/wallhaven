@@ -117,6 +117,22 @@ class CollectionsServiceImpl {
   }
 
   /**
+   * 设置默认收藏夹
+   * 设置后清除缓存
+   * @param id - 收藏夹 ID
+   */
+  async setDefault(id: string): Promise<IpcResponse<Collection>> {
+    const result = await favoritesRepository.setDefaultCollection(id)
+
+    // 成功时清除缓存
+    if (result.success) {
+      this.clearCache()
+    }
+
+    return result
+  }
+
+  /**
    * 清除内存缓存
    * 下次获取收藏夹时将从 Repository 重新加载
    */

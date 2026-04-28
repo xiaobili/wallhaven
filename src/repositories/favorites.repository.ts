@@ -44,10 +44,12 @@ export const favoritesRepository = {
 
     if (result.success && result.data === null) {
       // 首次访问：初始化默认收藏夹
+      const defaultCollection = createDefaultCollection()
       const initialData: FavoritesData = {
-        collections: [createDefaultCollection()],
+        collections: [defaultCollection],
         favorites: [],
         version: 1,
+        defaultCollectionId: defaultCollection.id,
       }
       const setResult = await electronClient.storeSet(STORAGE_KEYS.FAVORITES_DATA, initialData)
       if (!setResult.success) {
@@ -175,7 +177,8 @@ export const favoritesRepository = {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
     }
 
-    if (collection.isDefault) {
+    // 检查是否为默认收藏夹（通过 isDefault 标志或 defaultCollectionId 字段）
+    if (collection.isDefault || data.defaultCollectionId === id) {
       return createError(FavoritesErrorCodes.COLLECTION_IS_DEFAULT, '无法删除默认收藏夹')
     }
 
@@ -192,6 +195,45 @@ export const favoritesRepository = {
     }
 
     return { success: true }
+  },
+
+  /**
+   * 设置默认收藏夹
+   * @param id - 要设为默认的收藏夹 ID
+   */
+  async setDefaultCollection(id: string): Promise<IpcResponse<Collection>> {
+    const result = await this.getData()
+    if (!result.success || !result.data) {
+      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+    }
+
+    const data = result.data
+    const collection = data.collections.find(c => c.id === id)
+    if (!collection) {
+      return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
+    }
+
+    // 更新所有收藏夹的 isDefault 标志，并设置 defaultCollectionId
+    const updatedCollections = data.collections.map(c => ({
+      ...c,
+      isDefault: c.id === id,
+      updatedAt: c.id === id ? new Date().toISOString() : c.updatedAt,
+    }))
+
+    const updatedData: FavoritesData = {
+      collections: updatedCollections,
+      favorites: data.favorites,
+      version: data.version,
+      defaultCollectionId: id,
+    }
+
+    const setResult = await this.setData(updatedData)
+    if (!setResult.success) {
+      return createError(FavoritesErrorCodes.STORAGE_ERROR, '保存默认收藏夹设置失败')
+    }
+
+    const updatedCollection = updatedCollections.find(c => c.id === id)
+    return { success: true, data: updatedCollection! }
   },
 
   // ==================== 收藏项操作 ====================
