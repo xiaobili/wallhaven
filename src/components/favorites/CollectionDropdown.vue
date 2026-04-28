@@ -1,11 +1,12 @@
 <template>
   <Teleport to="body">
-    <div
-      v-if="visible"
-      class="collection-dropdown"
-      :style="dropdownStyle"
-      @click.stop
-    >
+    <Transition name="dropdown">
+      <div
+        v-if="visible"
+        class="collection-dropdown"
+        :style="dropdownStyle"
+        @click.stop
+      >
       <!-- Collection list with checkboxes -->
       <div
         v-for="collection in collections"
@@ -14,10 +15,20 @@
         :class="{ 'selected': isInCollection(collection.id) }"
         @click="toggleCollection(collection.id)"
       >
-        <i v-if="isInCollection(collection.id)" class="fas fa-check" />
-        <i v-else class="far fa-square" />
+        <i
+          v-if="isInCollection(collection.id)"
+          class="fas fa-check"
+        />
+        <i
+          v-else
+          class="far fa-square"
+        />
         <span>{{ collection.name }}</span>
-        <i v-if="collection.isDefault" class="fas fa-star default-star" title="默认收藏夹" />
+        <i
+          v-if="collection.isDefault"
+          class="fas fa-star default-star"
+          title="默认收藏夹"
+        />
         <button
           v-if="isInCollection(collection.id) && !collection.isDefault"
           class="remove-btn"
@@ -27,17 +38,21 @@
         </button>
       </div>
       <!-- Empty state -->
-      <div v-if="collections.length === 0" class="dropdown-empty">
+      <div
+        v-if="collections.length === 0"
+        class="dropdown-empty"
+      >
         暂无收藏夹
       </div>
-    </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useFavorites, useCollections } from '@/composables'
-import type { WallpaperItem, Collection } from '@/types'
+import type { WallpaperItem } from '@/types'
 
 interface Props {
   wallpaperId: string
@@ -105,6 +120,7 @@ const removeFromCollection = async (collectionId: string): Promise<void> => {
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transform-origin: top left;
 }
 
 .dropdown-item {
@@ -173,5 +189,36 @@ const removeFromCollection = async (collectionId: string): Promise<void> => {
   text-align: center;
   color: #888;
   font-size: 13px;
+}
+
+/* macOS-style dropdown animation */
+.dropdown-enter-active {
+  animation: dropdown-open 0.2s ease-out;
+}
+
+.dropdown-leave-active {
+  animation: dropdown-close 0.15s ease-in;
+}
+
+@keyframes dropdown-open {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes dropdown-close {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8) translateY(-8px);
+  }
 }
 </style>
