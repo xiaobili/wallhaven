@@ -6,16 +6,6 @@
       :style="dropdownStyle"
       @click.stop
     >
-      <!-- Quick add to default collection -->
-      <div
-        v-if="defaultCollection"
-        class="dropdown-item quick-add"
-        @click="quickAdd"
-      >
-        <i class="fas fa-star" />
-        <span>快速添加到"{{ defaultCollection.name }}"</span>
-      </div>
-      <div class="dropdown-divider" />
       <!-- Collection list with checkboxes -->
       <div
         v-for="collection in collections"
@@ -27,6 +17,7 @@
         <i v-if="isInCollection(collection.id)" class="fas fa-check" />
         <i v-else class="far fa-square" />
         <span>{{ collection.name }}</span>
+        <i v-if="collection.isDefault" class="fas fa-star default-star" title="默认收藏夹" />
         <button
           v-if="isInCollection(collection.id) && !collection.isDefault"
           class="remove-btn"
@@ -71,7 +62,6 @@ const {
 
 const {
   collections,
-  getDefault,
   load: loadCollections
 } = useCollections()
 
@@ -81,8 +71,6 @@ onMounted(async () => {
 })
 
 // Computed
-const defaultCollection = computed(() => getDefault())
-
 const dropdownStyle = computed(() => ({
   position: 'fixed' as const,
   left: `${props.position.x}px`,
@@ -95,11 +83,6 @@ const isInCollection = (collectionId: string): boolean => {
   return favorites.value.some(
     f => f.wallpaperId === props.wallpaperId && f.collectionId === collectionId
   )
-}
-
-const quickAdd = async (): Promise<void> => {
-  if (!defaultCollection.value) return
-  await addFavorite(props.wallpaperId, defaultCollection.value.id, props.wallpaperData)
 }
 
 const toggleCollection = async (collectionId: string): Promise<void> => {
@@ -143,12 +126,16 @@ const removeFromCollection = async (collectionId: string): Promise<void> => {
   color: #667eea;
 }
 
-.dropdown-item.quick-add {
-  color: #ff6b6b;
+.default-star {
+  color: #d4af37;
+  font-size: 0.8em;
+  margin-left: auto;
 }
 
-.dropdown-item.quick-add:hover {
-  background: rgba(255, 107, 107, 0.2);
+.default-star {
+  color: #d4af37;
+  font-size: 0.8em;
+  margin-left: auto;
 }
 
 .dropdown-item i {
@@ -179,12 +166,6 @@ const removeFromCollection = async (collectionId: string): Promise<void> => {
 
 .remove-btn:hover {
   color: #ff4757;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #3a3a3a;
-  margin: 4px 0;
 }
 
 .dropdown-empty {
