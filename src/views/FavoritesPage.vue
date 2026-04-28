@@ -1,41 +1,6 @@
 <template>
-  <div class="favorites-page">
-    <CollectionSidebar @select="handleCollectionSelect" />
-
-    <div class="favorites-content">
-      <div class="collection-content">
-        <div class="content-header">
-          <h2>{{ selectedCollection?.name || '全部收藏' }}</h2>
-          <span class="wallpaper-count">{{ filteredFavorites.length }} 张壁纸</span>
-        </div>
-
-        <div
-          v-if="filteredFavorites.length === 0"
-          class="empty-collection"
-        >
-          <i class="fas fa-images" />
-          <p v-if="!selectedCollectionId">还没有收藏任何壁纸</p>
-          <p v-else>这个收藏夹还没有壁纸</p>
-          <p class="hint">去在线壁纸页面发现喜欢的壁纸吧</p>
-        </div>
-
-        <div
-          v-else
-          class="favorites-grid"
-        >
-          <FavoriteWallpaperCard
-            v-for="favorite in filteredFavorites"
-            :key="`${favorite.wallpaperId}-${favorite.collectionId}`"
-            :favorite="favorite"
-            :collection-names="getCollectionNamesForWallpaper(favorite.wallpaperId)"
-            @preview="handlePreview"
-            @download="handleDownload"
-            @set-bg="handleSetBg"
-          />
-        </div>
-      </div>
-    </div>
-
+  <div>
+    <!-- ImagePreview 放在顶层，确保 position: fixed 正确计算 -->
     <ImagePreview
       v-show="imgShow"
       :showing="imgShow"
@@ -43,7 +8,7 @@
       :is-local="false"
       :wallpaper-list="favoriteWallpaperList"
       :current-index="previewIndex"
-      :favorite-ids="favoriteIds.value"
+      :favorite-ids="favoriteIds"
       @download-img="handleDownload"
       @set-bg="handleSetBg"
       @close="closePreview"
@@ -58,6 +23,50 @@
       :duration="alert.duration"
       @close="hideAlert"
     />
+
+    <div class="favorites-page">
+      <CollectionSidebar @select="handleCollectionSelect" />
+
+      <div class="favorites-content">
+        <div class="collection-content">
+          <div class="content-header">
+            <h2>{{ selectedCollection?.name || '全部收藏' }}</h2>
+            <span class="wallpaper-count">{{ filteredFavorites.length }} 张壁纸</span>
+          </div>
+
+          <div
+            v-if="filteredFavorites.length === 0"
+            class="empty-collection"
+          >
+            <i class="fas fa-images" />
+            <p v-if="!selectedCollectionId">
+              还没有收藏任何壁纸
+            </p>
+            <p v-else>
+              这个收藏夹还没有壁纸
+            </p>
+            <p class="hint">
+              去在线壁纸页面发现喜欢的壁纸吧
+            </p>
+          </div>
+
+          <div
+            v-else
+            class="favorites-grid"
+          >
+            <FavoriteWallpaperCard
+              v-for="favorite in filteredFavorites"
+              :key="`${favorite.wallpaperId}-${favorite.collectionId}`"
+              :favorite="favorite"
+              :collection-names="getCollectionNamesForWallpaper(favorite.wallpaperId)"
+              @preview="handlePreview"
+              @download="handleDownload"
+              @set-bg="handleSetBg"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -196,7 +205,7 @@ onMounted(async () => {
 <style scoped>
 .favorites-page {
   min-height: calc(100vh - 40px);
-  margin-top: 40px;
+  padding: 40px;
 }
 
 .favorites-content {
