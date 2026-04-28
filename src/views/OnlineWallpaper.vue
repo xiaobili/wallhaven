@@ -519,7 +519,6 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
  */
 const closeFavoriteDropdown = (): void => {
   showFavoriteDropdown.value = false
-  dropdownWallpaper.value = null
 }
 
 /**

@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <Transition name="dropdown" appear>
+    <Transition name="dropdown">
       <div
         v-if="visible"
         class="collection-dropdown"
@@ -192,8 +192,7 @@ const removeFromCollection = async (collectionId: string): Promise<void> => {
 }
 
 /* macOS-style dropdown animation */
-.dropdown-enter-active,
-.dropdown-appear-active {
+.dropdown-enter-active {
   animation: dropdown-open 0.2s ease-out;
 }
 
