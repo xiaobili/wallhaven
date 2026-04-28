@@ -507,7 +507,7 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
   } else if (showFavoriteDropdown.value) {
     // 点击不同图片，先关闭再打开（触发动画）
     showFavoriteDropdown.value = false
-    // 使用 nextTick 确保 leave 动画开始后再触发 enter
+    // 使用 requestAnimationFrame 确保 leave 动画开始后再触发 enter
     requestAnimationFrame(() => {
       dropdownWallpaper.value = item
       const rect = (event.target as HTMLElement).getBoundingClientRect()
@@ -518,14 +518,17 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
       showFavoriteDropdown.value = true
     })
   } else {
-    // 首次打开
+    // 首次打开 - 需要让组件先挂载，再触发 visible 变化以播放动画
     dropdownWallpaper.value = item
     const rect = (event.target as HTMLElement).getBoundingClientRect()
     dropdownPosition.value = {
       x: rect.left,
       y: rect.bottom + 4
     }
-    showFavoriteDropdown.value = true
+    // 延迟设置 visible，让 Transition 检测到 false → true 的变化
+    requestAnimationFrame(() => {
+      showFavoriteDropdown.value = true
+    })
   }
 }
 
