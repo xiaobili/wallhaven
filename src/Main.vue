@@ -38,6 +38,15 @@
             下载中心<span class="li-border" />
           </router-link>
         </li>
+        <li class="menu-item">
+          <router-link
+            to="/favorites"
+            class="menu-native"
+          >
+            <i class="fas fa-heart" />
+            我的收藏<span class="li-border" />
+          </router-link>
+        </li>
       </ul>
       <label class="menu-title more">更多</label>
       <ul class="menu-ul">

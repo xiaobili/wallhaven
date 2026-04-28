@@ -35,6 +35,15 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/favorites',
+    name: 'FavoritesPage',
+    component: () => import('@/views/FavoritesPage.vue'),
+    meta: {
+      title: '我的收藏',
+      icon: 'fas fa-heart',
+    },
+  },
+  {
     path: '/setting',
     name: 'SettingPage',
     component: () => import('@/views/SettingPage.vue'),
