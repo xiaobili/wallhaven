@@ -2,21 +2,21 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: 壁纸收藏功能
-status: Phase 21 complete
-last_updated: "2026-04-28T09:30:00.000Z"
-last_activity: 2026-04-28 — Quick task 260428-r6c: 收藏页侧边栏固定定位
+status: Phase 22 context gathered
+last_updated: "2026-04-28T11:00:00.000Z"
+last_activity: 2026-04-28 — Phase 22 context gathered
 progress:
-  total_phases: 12
-  completed_phases: 5
-  total_plans: 13
+  total_phases: 13
+  completed_phases: 6
+  total_plans: 16
   completed_plans: 15
-  percent: 100
+  percent: 90
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-28
-> 当前阶段：准备执行
+> 当前阶段：Phase 22 待规划
 > 项目状态：🚀 Executing
 
 ---
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 21 (Favorites Browsing UI) — ✅ Complete
-Plan: 2/2 plans executed
-Status: Phase 21 complete
-Last activity: 2026-04-28 — Phase 21 complete
+Phase: 22 (Default Collection & Quick Favorite) — 📝 Context gathered
+Plan: 0/3 plans defined
+Status: Phase 22 context gathered
+Last activity: 2026-04-28 — Phase 22 context gathered
 
 ---
 
@@ -43,7 +43,7 @@ Last activity: 2026-04-28 — Phase 21 complete
 
 ### Goal
 
-Add local favorites system so users can save and organize their favorite wallpapers into custom collections.
+Add local favorites system so users can save and organize their favorite wallpapers into custom collections, with quick favorite feature for default collection.
 
 ### Requirements to Deliver
 
@@ -54,12 +54,12 @@ Add local favorites system so users can save and organize their favorite wallpap
 | COLL-03 | Delete collection with confirmation | 19 | ✅ Complete |
 | COLL-04 | Default "Favorites" collection (non-deletable) | 16, 19 | ✅ Complete |
 | COLL-05 | View list of all collections | 18, 19 | ✅ Complete |
-| FAV-01 | Add wallpaper to collection from card | 20 | Ready to execute |
-| FAV-02 | Add wallpaper to collection from preview | 20 | Ready to execute |
-| FAV-03 | Remove wallpaper from collection | 20 | Ready to execute |
-| FAV-04 | Move wallpaper between collections | 20 | Ready to execute |
-| FAV-05 | Favorite indicator on wallpapers | 18, 20 | Partial |
-| FAV-06 | Wallpaper in multiple collections | 18, 20 | Partial |
+| FAV-01 | Add wallpaper to collection from card | 20 | ✅ Complete |
+| FAV-02 | Add wallpaper to collection from preview | 20 | ✅ Complete |
+| FAV-03 | Remove wallpaper from collection | 20 | ✅ Complete |
+| FAV-04 | Move wallpaper between collections | 20 | ✅ Complete |
+| FAV-05 | Favorite indicator on wallpapers | 18, 20 | ✅ Complete |
+| FAV-06 | Wallpaper in multiple collections | 18, 20 | ✅ Complete |
 | BROW-01 | Access favorites page from navigation | 19 | ✅ Complete |
 | BROW-02 | View wallpapers in selected collection | 21 | ✅ Complete |
 | BROW-03 | Filter wallpapers by collection | 21 | ✅ Complete |
@@ -68,8 +68,11 @@ Add local favorites system so users can save and organize their favorite wallpap
 | PERS-01 | Persist across app restarts | 17 | ✅ Complete |
 | PERS-02 | Store locally with electron-store | 16 | ✅ Complete |
 | PERS-03 | Handle storage errors gracefully | 17 | ✅ Complete |
+| DFC-01 | Set default collection for quick favorite | 22 | Pending |
+| DFC-02 | Left-click adds to default collection | 22 | Pending |
+| DFC-03 | Right-click shows collection selector | 22 | Pending |
 
-**Coverage**: 19/19 requirements mapped (100%)
+**Coverage**: 22/22 requirements mapped (100%)
 
 ### Phase Overview
 
@@ -81,6 +84,7 @@ Add local favorites system so users can save and organize their favorite wallpap
 | 19 | Collections Management UI | COLL-01, COLL-02, COLL-03, COLL-04 | ✅ Complete |
 | 20 | Favorites Operations UI | FAV-01, FAV-02, FAV-03, FAV-04 | ✅ Complete |
 | 21 | Favorites Browsing UI | BROW-01, BROW-02, BROW-03, BROW-04, BROW-05 | ✅ Complete |
+| 22 | Default Collection & Quick Favorite | DFC-01, DFC-02, DFC-03 | 📋 Pending |
 
 ### Shipped Milestones
 
@@ -103,17 +107,20 @@ Add local favorites system so users can save and organize their favorite wallpap
 - 2026-04-28: Phases 16-19 complete
 - 2026-04-28: Phase 20 context gathered and planned (auto mode)
 - 2026-04-28: Phase 21 complete (auto mode)
+- 2026-04-28: Phase 22 added: Default Collection & Quick Favorite
+- 2026-04-28: Phase 22 context gathered
 
 ---
 
 ## Next Steps
 
-✅ **v2.5 壁纸收藏功能里程碑完成！**
+📝 **Phase 22: Default Collection & Quick Favorite**
 
-所有 Phase 16-21 已完成。收藏功能已实现：
-- 收藏夹创建、重命名、删除
-- 添加/移除/移动收藏
-- 收藏浏览、过滤、下载
+Phase 22 context has been gathered. Ready for planning.
+
+**Description**: 收藏页面添加设置默认收藏夹功能，且在线壁纸页面添加收藏夹功能修改为左键点击添加到默认收藏夹，右键点击弹出收藏夹列表
+
+**Next command**: `/gsd-plan-phase 22`
 
 ---
 
@@ -126,4 +133,4 @@ Add local favorites system so users can save and organize their favorite wallpap
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 v2.5 里程碑完成*
+*最后更新：2026-04-28 Phase 22 added*
