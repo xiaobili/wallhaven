@@ -68,7 +68,7 @@
   >
     <!-- 使用 KeepAlive 缓存路由组件，避免重复渲染 -->
     <router-view v-slot="{ Component, route }">
-      <KeepAlive :include="['OnlineWallpaper', 'LocalWallpaper', 'DownloadWallpaper']">
+      <KeepAlive :include="['OnlineWallpaper', 'LocalWallpaper', 'DownloadWallpaper', 'FavoritesPage']">
         <component
           :is="Component"
           :key="route.path"

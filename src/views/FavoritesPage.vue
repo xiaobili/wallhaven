@@ -70,6 +70,8 @@ import Alert from '@/components/Alert.vue'
 import { useCollections, useFavorites, useAlert, useDownload, useWallpaperSetter } from '@/composables'
 import type { WallpaperItem, FavoriteItem } from '@/types'
 
+defineOptions({ name: 'FavoritesPage' })
+
 // Composables
 const { collections, load: loadCollections } = useCollections()
 const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper } = useFavorites()
