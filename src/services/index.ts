@@ -16,3 +16,6 @@ export { windowService } from './window.service'
 
 // 收藏夹服务
 export { collectionsService } from './collections.service'
+
+// 收藏项服务
+export { favoritesService } from './favorites.service'
