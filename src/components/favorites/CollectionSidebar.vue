@@ -57,6 +57,7 @@
           @select="handleSelect"
           @rename="handleRename"
           @delete="handleDelete"
+          @set-default="handleSetDefault"
         />
       </div>
     </div>
@@ -91,7 +92,7 @@ const emit = defineEmits<{
   select: [collectionId: string | null]
 }>()
 
-const { collections, loading, load, create, rename, delete: deleteCollection } = useCollections()
+const { collections, loading, load, create, rename, delete: deleteCollection, setDefault } = useCollections()
 const { favorites } = useFavorites()
 const { showSuccess, showError } = useAlert()
 
@@ -146,6 +147,10 @@ const handleDelete = async (collection: Collection) => {
   } else {
     showError('删除收藏夹失败')
   }
+}
+
+const handleSetDefault = async (collection: Collection) => {
+  await setDefault(collection.id)
 }
 
 const handleCreateConfirm = async (name: string) => {

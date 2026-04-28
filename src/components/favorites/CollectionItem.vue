@@ -18,13 +18,24 @@
       />
     </div>
     <div class="collection-info">
-      <span class="collection-name">{{ collection.name }}</span>
+      <span class="collection-name">
+        {{ collection.name }}
+        <span v-if="collection.isDefault" class="default-badge">默认</span>
+      </span>
       <span class="collection-count">{{ count }} 张</span>
     </div>
     <div
       v-show="showActions"
       class="collection-actions"
     >
+      <button
+        v-if="!collection.isDefault"
+        class="action-btn set-default-btn"
+        title="设为默认"
+        @click.stop="handleSetDefault"
+      >
+        <i class="fas fa-star" />
+      </button>
       <button
         class="action-btn"
         title="重命名"
@@ -63,6 +74,7 @@ const emit = defineEmits<{
   select: [collection: Collection]
   rename: [collection: Collection]
   delete: [collection: Collection]
+  setDefault: [collection: Collection]
 }>()
 
 const showActions = ref(false)
@@ -77,6 +89,10 @@ const handleRename = () => {
 
 const handleDelete = () => {
   emit('delete', props.collection)
+}
+
+const handleSetDefault = () => {
+  emit('setDefault', props.collection)
 }
 </script>
 
@@ -143,6 +159,18 @@ const handleDelete = () => {
   margin-top: 0.15em;
 }
 
+.default-badge {
+  display: inline-block;
+  font-size: 0.7em;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  margin-left: 0.5em;
+  vertical-align: middle;
+  font-weight: 500;
+}
+
 .collection-actions {
   display: flex;
   gap: 0.25em;
@@ -172,5 +200,9 @@ const handleDelete = () => {
 
 .delete-btn:hover {
   color: #ff6b6b;
+}
+
+.set-default-btn:hover {
+  color: #d4af37;
 }
 </style>
