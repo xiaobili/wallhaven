@@ -195,13 +195,13 @@ onMounted(async () => {
 
 <style scoped>
 .favorites-page {
-  display: flex;
   min-height: calc(100vh - 40px);
   margin-top: 40px;
 }
 
 .favorites-content {
   flex: 1;
+  margin-left: 200px;
   padding: 1.5em;
   overflow-y: auto;
 }
