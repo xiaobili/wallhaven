@@ -3,21 +3,9 @@
     <CollectionSidebar @select="handleCollectionSelect" />
 
     <div class="favorites-content">
-      <div
-        v-if="!selectedCollectionId"
-        class="empty-content"
-      >
-        <i class="fas fa-heart" />
-        <h3>我的收藏</h3>
-        <p>从左侧选择一个收藏夹开始浏览</p>
-      </div>
-
-      <div
-        v-else
-        class="collection-content"
-      >
+      <div class="collection-content">
         <div class="content-header">
-          <h2>{{ selectedCollection?.name || '收藏夹' }}</h2>
+          <h2>{{ selectedCollection?.name || '全部收藏' }}</h2>
           <span class="wallpaper-count">{{ filteredFavorites.length }} 张壁纸</span>
         </div>
 
@@ -26,8 +14,9 @@
           class="empty-collection"
         >
           <i class="fas fa-images" />
-          <p>这个收藏夹还没有壁纸</p>
-          <p class="hint">在在线壁纸页面点击心形图标添加壁纸</p>
+          <p v-if="!selectedCollectionId">还没有收藏任何壁纸</p>
+          <p v-else>这个收藏夹还没有壁纸</p>
+          <p class="hint">去在线壁纸页面发现喜欢的壁纸吧</p>
         </div>
 
         <div
@@ -94,13 +83,28 @@ const imgInfo = shallowRef<WallpaperItem | null>(null)
 const imgShow = ref<boolean>(false)
 
 // Computed
-const selectedCollection = computed(() =>
-  collections.value.find(c => c.id === selectedCollectionId.value)
-)
+const selectedCollection = computed(() => {
+  if (!selectedCollectionId.value) return null
+  return collections.value.find(c => c.id === selectedCollectionId.value)
+})
 
-const filteredFavorites = computed(() =>
-  favorites.value.filter(f => f.collectionId === selectedCollectionId.value)
-)
+const filteredFavorites = computed(() => {
+  if (!selectedCollectionId.value) {
+    // "All favorites" mode - deduplicate by wallpaperId, sort newest first
+    const seen = new Set<string>()
+    return favorites.value
+      .slice()
+      .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
+      .filter(f => {
+        if (seen.has(f.wallpaperId)) return false
+        seen.add(f.wallpaperId)
+        return true
+      })
+  }
+  return favorites.value
+    .filter(f => f.collectionId === selectedCollectionId.value)
+    .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
+})
 
 // Extract WallpaperItem[] for ImagePreview navigation
 const favoriteWallpaperList = computed<WallpaperItem[]>(() =>
@@ -119,7 +123,7 @@ const getCollectionNamesForWallpaper = (wallpaperId: string): string[] => {
 }
 
 // Event handlers
-const handleCollectionSelect = (collectionId: string): void => {
+const handleCollectionSelect = (collectionId: string | null): void => {
   selectedCollectionId.value = collectionId
 }
 
@@ -198,32 +202,6 @@ onMounted(async () => {
   flex: 1;
   padding: 1.5em;
   overflow-y: auto;
-}
-
-.empty-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #888;
-  text-align: center;
-}
-
-.empty-content i {
-  font-size: 4em;
-  margin-bottom: 1em;
-  opacity: 0.3;
-}
-
-.empty-content h3 {
-  color: #8cc;
-  margin: 0 0 0.5em;
-}
-
-.empty-content p {
-  margin: 0;
-  opacity: 0.7;
 }
 
 .content-header {

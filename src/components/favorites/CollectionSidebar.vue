@@ -35,6 +35,19 @@
         v-else
         class="collection-list"
       >
+        <div
+          class="collection-item all-favorites-item"
+          :class="{ active: !selectedId }"
+          @click="handleSelectAll"
+        >
+          <div class="collection-icon">
+            <i class="fas fa-heart" />
+          </div>
+          <div class="collection-info">
+            <span class="collection-name">全部收藏</span>
+            <span class="collection-count">{{ uniqueWallpaperCount }} 张</span>
+          </div>
+        </div>
         <CollectionItem
           v-for="collection in collections"
           :key="collection.id"
@@ -75,7 +88,7 @@ import { useCollections, useFavorites, useAlert } from '@/composables'
 import type { Collection } from '@/types'
 
 const emit = defineEmits<{
-  select: [collectionId: string]
+  select: [collectionId: string | null]
 }>()
 
 const { collections, loading, load, create, rename, delete: deleteCollection } = useCollections()
@@ -91,8 +104,17 @@ const existingNames = computed(() =>
   collections.value.map(c => c.name)
 )
 
+const uniqueWallpaperCount = computed(() =>
+  new Set(favorites.value.map(f => f.wallpaperId)).size
+)
+
 const getCollectionCount = (collectionId: string): number =>
   favorites.value.filter(f => f.collectionId === collectionId).length
+
+const handleSelectAll = () => {
+  selectedId.value = null
+  emit('select', null)
+}
 
 const handleSelect = (collection: Collection) => {
   selectedId.value = collection.id
@@ -227,5 +249,63 @@ onMounted(() => {
 .collection-list {
   display: flex;
   flex-direction: column;
+}
+
+.all-favorites-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75em 1em;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.all-favorites-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.all-favorites-item.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.all-favorites-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: linear-gradient(to bottom, #275660, #183640);
+  border-radius: 0 2px 2px 0;
+}
+
+.all-favorites-item .collection-icon {
+  width: 24px;
+  text-align: center;
+  color: #ff6b6b;
+  margin-right: 0.75em;
+}
+
+.all-favorites-item .collection-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.all-favorites-item .collection-name {
+  color: #ddd;
+  font-size: 0.95em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.all-favorites-item .collection-count {
+  color: #888;
+  font-size: 0.8em;
+  margin-top: 0.15em;
 }
 </style>
