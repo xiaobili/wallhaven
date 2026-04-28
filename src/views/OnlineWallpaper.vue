@@ -22,10 +22,12 @@
       :is-local="false"
       :wallpaper-list="wallpaperList"
       :current-index="previewIndex"
+      :favorite-ids="favoriteIds.value"
       @download-img="downloadImg"
       @set-bg="setBg"
       @close="closePreview"
       @navigate="handleNavigate"
+      @toggle-favorite="handleToggleFavorite"
     />
 
     <SearchBar
@@ -71,11 +73,23 @@
       :loading="loading"
       :error="error"
       :selected-ids="selectedWallpapers"
+      :favorite-ids="favoriteIds.value"
       @set-bg="setBg"
       @preview="preview"
       @download-img="downloadImg"
       @select-wallpaper="toggleSelection"
       @close-search-modal="closeSearchModal"
+      @toggle-favorite="handleToggleFavorite"
+    />
+
+    <!-- Collection Dropdown -->
+    <CollectionDropdown
+      v-if="showFavoriteDropdown && dropdownWallpaper"
+      :wallpaper-id="dropdownWallpaper.id"
+      :wallpaper-data="dropdownWallpaper"
+      :visible="showFavoriteDropdown"
+      :position="dropdownPosition"
+      @close="closeFavoriteDropdown"
     />
   </div>
 </template>
@@ -87,7 +101,8 @@ import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
-import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter } from '@/composables'
+import CollectionDropdown from '@/components/favorites/CollectionDropdown.vue'
+import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter, useFavorites } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
@@ -106,6 +121,16 @@ const { settings, selectFolder, update: updateSettings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 const { setWallpaper } = useWallpaperSetter()
 
+// Favorites composable
+const {
+  favorites,
+  favoriteIds,
+  add: addFavorite,
+  remove: removeFavorite,
+  move: moveFavorite,
+  load: loadFavorites
+} = useFavorites()
+
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 const desktopInfo = ref<string>('')
@@ -115,6 +140,11 @@ const imgShow = ref<boolean>(false)
 const selectedWallpapers = ref<string[]>([])
 const downloading = ref<boolean>(false)
 const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
+
+// Favorite dropdown state
+const showFavoriteDropdown = ref<boolean>(false)
+const dropdownPosition = ref<{ x: number; y: number }>({ x: 0, y: 0 })
+const dropdownWallpaper = ref<WallpaperItem | null>(null)
 
 // Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
 const apiKey = computed(() => settings.value.apiKey)
@@ -138,6 +168,10 @@ const previewIndex = computed(() => {
 onMounted(() => {
   // 加载下载历史记录
   loadHistory()
+  // 加载收藏数据
+  loadFavorites()
+  // 添加点击外部关闭下拉菜单
+  document.addEventListener('click', handleClickOutside)
 })
 
 onActivated(() => {
@@ -153,6 +187,7 @@ onDeactivated(() => {
 onUnmounted(() => {
   // 组件真正卸载时，确保清理监听器
   window.removeEventListener('scroll', throttledScrollEvent)
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // Methods
@@ -429,6 +464,39 @@ const generateFilename = (imgItem: WallpaperItem): string => {
     }
   }
   return `wallhaven-${imgItem.id}${ext}`
+}
+
+/**
+ * 处理收藏按钮点击 - 显示下拉菜单
+ */
+const handleToggleFavorite = (item: WallpaperItem, event: MouseEvent): void => {
+  dropdownWallpaper.value = item
+  const rect = (event.target as HTMLElement).getBoundingClientRect()
+  dropdownPosition.value = {
+    x: rect.left,
+    y: rect.bottom + 4
+  }
+  showFavoriteDropdown.value = true
+}
+
+/**
+ * 关闭收藏下拉菜单
+ */
+const closeFavoriteDropdown = (): void => {
+  showFavoriteDropdown.value = false
+  dropdownWallpaper.value = null
+}
+
+/**
+ * 点击外部关闭下拉菜单
+ */
+const handleClickOutside = (event: MouseEvent): void => {
+  if (showFavoriteDropdown.value) {
+    const target = event.target as HTMLElement
+    if (!target.closest('.collection-dropdown') && !target.closest('.thumb-favorite-btn')) {
+      closeFavoriteDropdown()
+    }
+  }
 }
 
 </script>
