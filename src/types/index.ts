@@ -227,3 +227,7 @@ export interface AppSettings {
   // 桌面设置
   wallpaperFit: WallpaperFit
 }
+
+// ==================== 收藏功能类型 ====================
+
+export * from './favorite'
