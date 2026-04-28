@@ -86,7 +86,7 @@
 
     <!-- Collection Dropdown -->
     <CollectionDropdown
-      v-if="showFavoriteDropdown && dropdownWallpaper"
+      v-if="dropdownWallpaper"
       :wallpaper-id="dropdownWallpaper.id"
       :wallpaper-data="dropdownWallpaper"
       :visible="showFavoriteDropdown"
@@ -501,13 +501,17 @@ const handleToggleFavorite = async (item: WallpaperItem): Promise<void> => {
  * 处理收藏按钮右键点击 - 显示收藏夹下拉菜单
  */
 const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): void => {
-  dropdownWallpaper.value = item
+  if (showFavoriteDropdown.value && dropdownWallpaper.value?.id === item.id) {
+    closeFavoriteDropdown()
+  } else {
+      dropdownWallpaper.value = item
   const rect = (event.target as HTMLElement).getBoundingClientRect()
   dropdownPosition.value = {
     x: rect.left,
     y: rect.bottom + 4
   }
   showFavoriteDropdown.value = true
+  }
 }
 
 /**
