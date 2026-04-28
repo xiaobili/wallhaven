@@ -131,8 +131,9 @@ All requirements for the Favorites feature have been delivered:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260428-r6c | 收藏页侧边栏固定定位 | 2026-04-28 | 31fbece | [260428-r6c-fix-favorite-sidebar-sticky](./quick/260428-r6c-fix-favorite-sidebar-sticky/) |
+| 250428-2242 | CollectionDropdown 动画 | 2026-04-28 | 5dfcd4a | [250428-2242-collection-dropdown-animation](./quick/250428-2242-collection-dropdown-animation/) |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 Phase 22 complete*
+*最后更新：2026-04-28 Quick Task 250428-2242*
