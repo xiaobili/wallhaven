@@ -16,3 +16,7 @@ export { useSettings, type UseSettingsReturn } from './settings/useSettings'
 
 // Local Files
 export { useLocalFiles, type UseLocalFilesReturn } from './local/useLocalFiles'
+
+// Favorites
+export { useCollections, type UseCollectionsReturn } from './favorites/useCollections'
+export { useFavorites, type UseFavoritesReturn } from './favorites/useFavorites'
