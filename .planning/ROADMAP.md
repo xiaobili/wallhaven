@@ -12,7 +12,7 @@
 - ✅ **v2.2 Store 分层迁移** — Phases 10-13 (shipped 2026-04-27)
 - ✅ **v2.3 ElectronAPI 分层重构** — Phase 14 (shipped 2026-04-27)
 - ✅ **v2.4 ImagePreview 导航功能** — Phase 15 (shipped 2026-04-27)
-- 🔄 **v2.5 壁纸收藏功能** — Phases 16-21 (in progress)
+- 🔄 **v2.5 壁纸收藏功能** — Phases 16-22 (in progress)
 
 ---
 
@@ -200,9 +200,9 @@
 
 ---
 
-## v2.5 壁纸收藏功能 (Phases 16-21)
+## v2.5 壁纸收藏功能 (Phases 16-22)
 
-**Goal**: Add local favorites system with custom collections support
+**Goal**: Add local favorites system with custom collections support and quick favorite feature
 
 **Status**: 🔄 In Progress
 
@@ -355,6 +355,34 @@ Plans:
 
 ---
 
+### Phase 22: Default Collection & Quick Favorite
+
+**Requirements**: DFC-01, DFC-02, DFC-03
+
+**Goal**: 收藏页面添加设置默认收藏夹功能，且在线壁纸页面添加收藏夹功能修改为左键点击添加到默认收藏夹，右键点击弹出收藏夹列表
+
+**Tasks**:
+1. Add default collection setting to FavoritesPage sidebar
+2. Persist default collection preference
+3. Modify OnlineWallpaper favorite button behavior (left-click → default collection, right-click → collection list)
+
+**Success Criteria**:
+1. Given the favorites page, when user sets a collection as default, then it is persisted and shown with a default indicator
+2. Given a wallpaper card in OnlineWallpaper, when user left-clicks the favorite icon, then the wallpaper is added to the default collection
+3. Given a wallpaper card in OnlineWallpaper, when user right-clicks the favorite icon, then a collection selector dropdown appears
+4. Given the default collection setting, when user changes it, then subsequent left-clicks use the new default
+
+**Depends on**: Phase 20
+
+**Plans**:
+- [ ] 22-01-PLAN.md — Data Layer: Add defaultCollectionId to types, repository, and service
+- [ ] 22-02-PLAN.md — Composable Layer: Add setDefault method to useCollections
+- [ ] 22-03-PLAN.md — UI Layer: Add "设为默认" button and "默认" badge in CollectionItem
+- [ ] 22-04-PLAN.md — UI Layer: Implement left/right click behavior for favorite buttons
+- [ ] 22-05-PLAN.md — Cleanup: Remove quick-add option from CollectionDropdown
+
+---
+
 ## Requirements Coverage Matrix (v2.5)
 
 | Requirement | Phase | Description |
@@ -378,8 +406,11 @@ Plans:
 | **PERS-01** | 17 | Persist across app restarts |
 | **PERS-02** | 16 | Store locally with electron-store |
 | **PERS-03** | 17 | Handle storage errors gracefully |
+| **DFC-01** | 22 | Set default collection for quick favorite |
+| **DFC-02** | 22 | Left-click adds to default collection |
+| **DFC-03** | 22 | Right-click shows collection selector |
 
-**Coverage:** 19/19 requirements (100%)
+**Coverage:** 22/22 requirements (100%)
 
 ---
 
@@ -402,6 +433,9 @@ Phase 19      Phase 20
     └──────┬──────┘
            ▼
        Phase 21 (Browsing UI)
+           │
+           ▼
+       Phase 22 (Default Collection & Quick Favorite)
 ```
 
 ---
@@ -427,12 +461,13 @@ Phase 19      Phase 20
 | 15 | ImagePreview Navigation | v2.4 | 1/1 | Complete | 2026-04-27 |
 | 16 | Data Layer Foundation | v2.5 | 2/2 | Complete | 2026-04-28 |
 | 17 | Business Layer (Service) | v2.5 | 2/2 | Complete | 2026-04-28 |
-| 18 | Composable Layer | v2.5 | 0/3 | Pending | — |
-| 19 | Collections Management UI | v2.5 | 0/7 | Pending | — |
-| 20 | Favorites Operations UI | v2.5 | 0/6 | Pending | — |
-| 21 | Favorites Browsing UI | v2.5 | 0/2 | Pending | — |
+| 18 | Composable Layer | v2.5 | 0/3 | Complete | 2026-04-28 |
+| 19 | Collections Management UI | v2.5 | 0/7 | Complete | 2026-04-28 |
+| 20 | Favorites Operations UI | v2.5 | 0/6 | Complete | 2026-04-28 |
+| 21 | Favorites Browsing UI | v2.5 | 0/2 | Complete | 2026-04-28 |
+| 22 | Default Collection & Quick Favorite | v2.5 | 0/5 | Ready to execute | — |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 Phase 21 plans created*
+*最后更新：2026-04-28 Phase 22 added*
