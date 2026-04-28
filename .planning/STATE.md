@@ -4,7 +4,7 @@ milestone: v2.5
 milestone_name: 壁纸收藏功能
 status: planning
 last_updated: "2026-04-28T00:00:00.000Z"
-last_activity: 2026-04-28 — Roadmap created for v2.5
+last_activity: 2026-04-28 — Phase 16 context gathered (auto mode)
 progress:
   total_phases: 6
   completed_phases: 0
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 16 (Data Layer Foundation) — Not started
+Phase: 16 (Data Layer Foundation) — Context gathered
 Plan: —
-Status: Roadmap created, ready for phase discussion
-Last activity: 2026-04-28 — Roadmap created with 6 phases (16-21)
+Status: Ready for planning
+Last activity: 2026-04-28 — Phase 16 context gathered (auto mode)
 
 ---
 
