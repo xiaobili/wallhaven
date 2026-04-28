@@ -18,6 +18,7 @@ export interface UseFavoritesReturn {
   remove: (wallpaperId: string, collectionId: string) => Promise<boolean>
   move: (wallpaperId: string, fromCollectionId: string, toCollectionId: string) => Promise<boolean>
   isFavorite: (wallpaperId: string) => boolean
+  isInCollection: (wallpaperId: string, collectionId: string) => boolean
   getCollectionsForWallpaper: (wallpaperId: string) => string[]
   getByCollection: (collectionId: string) => FavoriteItem[]
 }
@@ -45,6 +46,10 @@ export function useFavorites(): UseFavoritesReturn {
   }
 
   const isFavorite = (wallpaperId: string): boolean => favoriteIds.value.has(wallpaperId)
+
+  const isInCollection = (wallpaperId: string, collectionId: string): boolean => {
+    return favorites.value.some(f => f.wallpaperId === wallpaperId && f.collectionId === collectionId)
+  }
 
   const add = async (wallpaperId: string, collectionId: string, wallpaperData: WallpaperItem): Promise<boolean> => {
     const result = await favoritesService.add(wallpaperId, collectionId, wallpaperData)
@@ -102,6 +107,6 @@ export function useFavorites(): UseFavoritesReturn {
     favoriteIds: computed(() => favoriteIds.value),
     loading: computed(() => loading.value),
     error: computed(() => error.value),
-    load, add, remove, move, isFavorite, getCollectionsForWallpaper, getByCollection,
+    load, add, remove, move, isFavorite, isInCollection, getCollectionsForWallpaper, getByCollection,
   }
 }

@@ -63,8 +63,9 @@
               <div
                 class="thumb-favorite-btn"
                 :class="{ 'is-favorite': isFavorite(liItem.id) }"
-                :title="isFavorite(liItem.id) ? '已收藏' : '添加到收藏'"
-                @click.stop="emit('toggle-favorite', liItem, $event)"
+                :title="isFavorite(liItem.id) ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'"
+                @click.stop="handleFavoriteLeftClick(liItem, $event)"
+                @contextmenu.prevent="handleFavoriteRightClick(liItem, $event)"
               >
                 <i :class="isFavorite(liItem.id) ? 'fas fa-heart' : 'far fa-heart'" />
               </div>
@@ -146,7 +147,8 @@ const emit = defineEmits<{
   'download-img': [item: WallpaperItem];
   'close-search-modal': [];
   'select-wallpaper': [id: string];  // 切换选择状态
-  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // 切换收藏状态
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // left click - quick add
+  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent];  // right click - show dropdown
 }>();
 
 /**
@@ -161,6 +163,21 @@ const isSelected = (id: string): boolean => {
  */
 const isFavorite = (id: string): boolean => {
   return props.favoriteIds?.has(id) || false
+}
+
+/**
+ * 处理收藏按钮左键点击 - 快速添加/移除默认收藏夹
+ */
+const handleFavoriteLeftClick = (item: WallpaperItem, event: MouseEvent): void => {
+  emit('toggle-favorite', item, event)
+}
+
+/**
+ * 处理收藏按钮右键点击 - 显示收藏夹下拉菜单
+ */
+const handleFavoriteRightClick = (item: WallpaperItem, event: MouseEvent): void => {
+  event.preventDefault()
+  emit('show-favorite-dropdown', item, event)
 }
 
 /**

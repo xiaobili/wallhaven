@@ -28,6 +28,7 @@
       @close="closePreview"
       @navigate="handleNavigate"
       @toggle-favorite="handleToggleFavorite"
+      @show-favorite-dropdown="handleShowFavoriteDropdown"
     />
 
     <SearchBar
@@ -80,6 +81,7 @@
       @select-wallpaper="toggleSelection"
       @close-search-modal="closeSearchModal"
       @toggle-favorite="handleToggleFavorite"
+      @show-favorite-dropdown="handleShowFavoriteDropdown"
     />
 
     <!-- Collection Dropdown -->
@@ -102,7 +104,7 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import CollectionDropdown from '@/components/favorites/CollectionDropdown.vue'
-import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter, useFavorites } from '@/composables'
+import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter, useFavorites, useCollections } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
@@ -128,8 +130,16 @@ const {
   add: addFavorite,
   remove: removeFavorite,
   move: moveFavorite,
+  isInCollection,
   load: loadFavorites
 } = useFavorites()
+
+// Collections composable for getDefault
+const {
+  collections,
+  getDefault,
+  load: loadCollections
+} = useCollections()
 
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
@@ -467,9 +477,31 @@ const generateFilename = (imgItem: WallpaperItem): string => {
 }
 
 /**
- * 处理收藏按钮点击 - 显示下拉菜单
+ * 处理收藏按钮左键点击 - 快速添加/移除默认收藏夹
  */
-const handleToggleFavorite = (item: WallpaperItem, event: MouseEvent): void => {
+const handleToggleFavorite = async (item: WallpaperItem, event: MouseEvent): Promise<void> => {
+  const defaultCollection = getDefault()
+  if (!defaultCollection) {
+    showWarning('请先设置默认收藏夹')
+    return
+  }
+
+  // 检查是否已在默认收藏夹中
+  if (isInCollection(item.id, defaultCollection.id)) {
+    // 已在默认收藏夹中，移除
+    await removeFavorite(item.id, defaultCollection.id)
+    showSuccess(`已从"${defaultCollection.name}"移除`)
+  } else {
+    // 不在默认收藏夹中，添加
+    await addFavorite(item.id, defaultCollection.id, item)
+    showSuccess(`已添加到"${defaultCollection.name}"`)
+  }
+}
+
+/**
+ * 处理收藏按钮右键点击 - 显示收藏夹下拉菜单
+ */
+const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): void => {
   dropdownWallpaper.value = item
   const rect = (event.target as HTMLElement).getBoundingClientRect()
   dropdownPosition.value = {

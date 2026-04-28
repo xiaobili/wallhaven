@@ -56,8 +56,9 @@
         <div
           class="sidebar-fixed_box favorite-btn"
           :class="{ 'is-favorite': isFavorite }"
-          :title="isFavorite ? '已收藏' : '添加到收藏'"
+          :title="isFavorite ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'"
           @click="handleFavoriteClick"
+          @contextmenu.prevent="handleFavoriteRightClick"
         >
           <div class="icon-wrap">
             <i :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'" />
@@ -110,7 +111,8 @@ const emit = defineEmits<{
   'set-bg': [item: WallpaperItem];
   'download-img': [item: WallpaperItem];
   navigate: [direction: 'prev' | 'next'];
-  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // left click
+  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent];  // right click
 }>();
 
 // 响应式数据
@@ -180,6 +182,13 @@ const navigateNext = () => {
 const handleFavoriteClick = (event: MouseEvent) => {
   if (!props.imgInfo) return
   emit('toggle-favorite', props.imgInfo, event)
+}
+
+// 收藏右键点击处理 - 显示下拉菜单
+const handleFavoriteRightClick = (event: MouseEvent) => {
+  if (!props.imgInfo) return
+  event.preventDefault()
+  emit('show-favorite-dropdown', props.imgInfo, event)
 }
 
 // 键盘事件处理
