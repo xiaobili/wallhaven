@@ -21,6 +21,7 @@ export interface UseCollectionsReturn {
   delete: (id: string) => Promise<boolean>
   getById: (id: string) => Collection | undefined
   getDefault: () => Collection | undefined
+  setDefault: (id: string) => Promise<boolean>
 }
 
 export function useCollections(): UseCollectionsReturn {
@@ -78,10 +79,21 @@ export function useCollections(): UseCollectionsReturn {
   const getById = (id: string): Collection | undefined => collections.value.find(c => c.id === id)
   const getDefault = (): Collection | undefined => collections.value.find(c => c.isDefault)
 
+  const setDefault = async (id: string): Promise<boolean> => {
+    const result = await collectionsService.setDefault(id)
+    if (result.success) {
+      await load()
+      showSuccess('已设为默认收藏夹')
+      return true
+    }
+    showError(result.error?.message || '设置默认收藏夹失败')
+    return false
+  }
+
   return {
     collections: computed(() => collections.value),
     loading: computed(() => loading.value),
     error: computed(() => error.value),
-    load, create, rename, delete: deleteCollection, getById, getDefault,
+    load, create, rename, delete: deleteCollection, getById, getDefault, setDefault,
   }
 }
