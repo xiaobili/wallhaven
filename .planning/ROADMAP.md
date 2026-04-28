@@ -414,8 +414,8 @@ Phase 19      Phase 20
 | 13 | Verification & Enforcement | v2.2 | 3/3 | Complete | 2026-04-27 |
 | 14 | ElectronAPI Layer Refactor | v2.3 | 6/6 | Complete | 2026-04-27 |
 | 15 | ImagePreview Navigation | v2.4 | 1/1 | Complete | 2026-04-27 |
-| 16 | Data Layer Foundation | v2.5 | 0/4 | Pending | — |
-| 17 | Business Layer (Service) | v2.5 | 0/3 | Pending | — |
+| 16 | Data Layer Foundation | v2.5 | 2/2 | Complete | 2026-04-28 |
+| 17 | Business Layer (Service) | v2.5 | 2/2 | Complete | 2026-04-28 |
 | 18 | Composable Layer | v2.5 | 0/3 | Pending | — |
 | 19 | Collections Management UI | v2.5 | 0/5 | Pending | — |
 | 20 | Favorites Operations UI | v2.5 | 0/6 | Pending | — |
