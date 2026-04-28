@@ -1,56 +1,71 @@
 # Requirements: Wallhaven 壁纸浏览器
 
-**Defined:** 2026-04-27
-**Milestone:** v2.2 Store 分层迁移
-**Core Value:** 分层架构强化 — Views 通过 Composables 访问 Store，不再直接引用
+**Defined:** 2026-04-28
+**Milestone:** v2.5 壁纸收藏功能
+**Core Value:** 收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
 ---
 
-## v2.2 Requirements
+## v2.5 Requirements
 
-将 views 中直接使用的 store 全部迁移到 composables，强化 View → Composable → Store 分层架构。
+为壁纸浏览器添加本地收藏功能，支持自定义收藏夹分类管理。
 
-### 简单迁移 (Simple Migration)
+### Collections Management (收藏夹管理)
 
-- [x] **SMIG-01**: LocalWallpaper.vue 移除 `useWallpaperStore` 导入，改用 `useSettings()` 获取 `downloadPath` ✓ Phase 10
-- [x] **SMIG-02**: DownloadWallpaper.vue 移除 `useDownloadStore` 导入，改用 `useDownload()` 获取列表状态 ✓ Phase 10
-- [x] **SMIG-03**: OnlineWallpaper.vue 移除直接 store 状态访问，改用 `useWallpaperList()` 获取 `wallpapers`, `loading`, `error` ✓ Phase 11
+- [ ] **COLL-01**: User can create a new collection with a custom name (e.g., 动漫, 风景)
+- [ ] **COLL-02**: User can rename an existing collection
+- [ ] **COLL-03**: User can delete a collection (with confirmation)
+- [ ] **COLL-04**: System provides a default "Favorites" collection that cannot be deleted
+- [ ] **COLL-05**: User can view list of all collections in the favorites page
 
-### 复杂迁移 (Complex Migration)
+### Favorites Operations (收藏操作)
 
-- [x] **CMIG-01**: OnlineWallpaper.vue 移除 `settings.apiKey` 直接访问，改用 `useSettings()` ✓ Phase 11
-- [ ] **CMIG-02**: SettingPage.vue 扩展 `useSettings` composable 支持 v-model 响应式绑定
-- [ ] **CMIG-03**: SettingPage.vue 移除 `useWallpaperStore` 导入，使用扩展后的 `useSettings()`
+- [ ] **FAV-01**: User can add a wallpaper to a specific collection from wallpaper card
+- [ ] **FAV-02**: User can add a wallpaper to a collection from image preview
+- [ ] **FAV-03**: User can remove a wallpaper from a collection
+- [ ] **FAV-04**: User can move a wallpaper between collections
+- [ ] **FAV-05**: User can see favorite indicator on wallpapers that are in any collection
+- [ ] **FAV-06**: Wallpaper can exist in multiple collections
 
-### 清理与验证 (Cleanup & Verification)
+### Favorites Browsing (收藏浏览)
 
-- [ ] **CLUP-01**: 验证所有 4 个 views 文件中无 `useWallpaperStore` 或 `useDownloadStore` 导入
-- [ ] **CLUP-02**: 添加 ESLint `no-restricted-imports` 规则防止 store 直接导入
-- [ ] **CLUP-03**: TypeScript 编译通过，无类型错误
-- [ ] **CLUP-04**: 所有现有功能行为不变（手动测试验证）
+- [ ] **BROW-01**: User can access favorites page from main navigation
+- [ ] **BROW-02**: User can view all wallpapers in a selected collection
+- [ ] **BROW-03**: User can filter wallpapers by collection
+- [ ] **BROW-04**: User can see which collection(s) a wallpaper belongs to
+- [ ] **BROW-05**: User can download favorited wallpapers from the favorites page
+
+### Persistence (持久化)
+
+- [ ] **PERS-01**: Collections and favorites persist across app restarts
+- [ ] **PERS-02**: Collection data is stored locally using electron-store
+- [ ] **PERS-03**: System handles storage errors gracefully with user notification
 
 ---
 
-## v2.3+ Requirements (Deferred)
+## Future Requirements (Deferred)
 
 以下需求在后续里程碑考虑：
 
-- [ ] 创建 `useLocalWallpaper` composable 封装本地壁纸操作
-- [ ] 为 Composables 添加单元测试
-- [ ] 为 Services 添加单元测试
-- [ ] 为 Repositories 添加单元测试
+- [ ] 为收藏功能添加单元测试
+- [ ] 收藏夹搜索功能
+- [ ] 收藏夹排序功能
+- [ ] 收藏数据导出/导入
+- [ ] Wallhaven 云同步收藏
 
 ---
 
 ## Out of Scope
 
+v2.5 里程碑排除范围：
+
 | 功能 | 原因 |
 |------|------|
-| 新功能开发 | 本次为纯架构迁移 |
-| UI/UX 变更 | 保持用户体验一致 |
-| 性能优化 | 非本次迁移重点 |
-| Store 结构变更 | Store 保持作为数据容器 |
-| 新增设置项 | 保持功能不变 |
+| Wallhaven 云同步收藏 | 需要用户账号体系，增加复杂度，本地优先 |
+| 收藏夹自动分类 | AI 分类功能复杂度高，可后续迭代 |
+| 批量操作 | MVP 聚焦基础功能，批量可后续迭代 |
+| 收藏夹密码保护 | 非核心需求，可后续迭代 |
+| 收藏夹分享 | 需要网络功能，超出本地应用范围 |
 
 ---
 
@@ -60,23 +75,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SMIG-01 | Phase 10 | ✅ Complete |
-| SMIG-02 | Phase 10 | ✅ Complete |
-| SMIG-03 | Phase 11 | ✅ Complete |
-| CMIG-01 | Phase 11 | ✅ Complete |
-| CMIG-02 | Phase 12 | ⏳ Pending |
-| CMIG-03 | Phase 12 | ⏳ Pending |
-| CLUP-01 | Phase 13 | ⏳ Pending |
-| CLUP-02 | Phase 13 | ⏳ Pending |
-| CLUP-03 | Phase 13 | ⏳ Pending |
-| CLUP-04 | Phase 13 | ⏳ Pending |
+| COLL-01 | — | Pending |
+| COLL-02 | — | Pending |
+| COLL-03 | — | Pending |
+| COLL-04 | — | Pending |
+| COLL-05 | — | Pending |
+| FAV-01 | — | Pending |
+| FAV-02 | — | Pending |
+| FAV-03 | — | Pending |
+| FAV-04 | — | Pending |
+| FAV-05 | — | Pending |
+| FAV-06 | — | Pending |
+| BROW-01 | — | Pending |
+| BROW-02 | — | Pending |
+| BROW-03 | — | Pending |
+| BROW-04 | — | Pending |
+| BROW-05 | — | Pending |
+| PERS-01 | — | Pending |
+| PERS-02 | — | Pending |
+| PERS-03 | — | Pending |
 
 **Coverage:**
-- v2.2 requirements: 10 total
-- Mapped to phases: 10
-- Unmapped: 0 ✓
+- v2.5 requirements: 19 total
+- Mapped to phases: 0
+- Unmapped: 19 ⚠️
 
 ---
-
-*Requirements defined: 2026-04-27*
-*Last updated: 2026-04-27 roadmap created*
+*Requirements defined: 2026-04-28*
+*Last updated: 2026-04-28 after v2.5 milestone definition*

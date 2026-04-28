@@ -1,62 +1,61 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.4
-milestone_name: ImagePreview 导航功能
-status: complete
-last_updated: "2026-04-27T12:30:00.000Z"
-last_activity: 2026-04-27 — Phase 15 completed
+milestone: v2.5
+milestone_name: 壁纸收藏功能
+status: planning
+last_updated: "2026-04-28T00:00:00.000Z"
+last_activity: 2026-04-28 — Milestone v2.5 started
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # 项目状态
 
-> 更新时间：2026-04-27
-> 当前阶段：v2.4 Phase 15 已完成
-> 项目状态：✅ Complete
+> 更新时间：2026-04-28
+> 当前阶段：定义需求
+> 项目状态：📋 Planning
 
 ---
 
 ## Project Reference
 
-参见：.planning/PROJECT.md (更新于 2026-04-27)
+参见：.planning/PROJECT.md (更新于 2026-04-28)
 
 **Core value**：断点续传，下载无忧 — 大文件下载不再担心中断，随时随地暂停恢复
-**Milestone in progress**：v2.4 ImagePreview 导航功能
+**Milestone in progress**：v2.5 壁纸收藏功能
 
 ---
 
 ## Current Position
 
-Phase: 15 — ImagePreview Navigation
-Plan: 1/1 plans completed
-Status: ✅ Complete
-Last activity: 2026-04-27 — Phase 15 completed (1 plan)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-28 — Milestone v2.5 started
 
 ---
 
-## Current Milestone: v2.4 ImagePreview 导航功能
+## Current Milestone: v2.5 壁纸收藏功能
 
 ### Goal
 
-为 ImagePreview 组件添加上一张/下一张切换功能。
+Add local favorites system so users can save and organize their favorite wallpapers.
 
 ### Requirements to Deliver
 
 | Requirement | Description | Phase |
 |-------------|-------------|-------|
-| NAV-01 | ImagePreview 导航功能 | Phase 15 |
+| (To be defined in REQUIREMENTS.md) | — | — |
 
 ### Key Objectives
 
-1. **导航按钮** — 添加上一张/下一张切换按钮 ✅
-2. **键盘支持** — 左右箭头快捷键切换 ✅
-3. **UI 一致** — 与现有设计风格保持一致 ✅
-4. **功能不变** — 所有现有行为保持不变 ✅
+1. **Add to favorites UI** — Star/favorite button on wallpaper cards and preview
+2. **Favorites browsing page** — Dedicated page to view all favorited wallpapers
+3. **Local persistence** — Favorites saved locally, survive app restarts
 
 ### Shipped Milestones
 
@@ -73,19 +72,11 @@ Last activity: 2026-04-27 — Phase 15 completed (1 plan)
 - 2026-04-26: v2.0 架构重构 shipped
 - 2026-04-27: v2.1 下载断点续传 shipped
 - 2026-04-27: v2.2 Store 分层迁移 shipped
-- 2026-04-27: Phase 14 added: ElectronAPI Layer Refactor
-- 2026-04-27: Phase 15 added: ImagePreview Navigation
-- 2026-04-27: Phase 15 completed: ImagePreview Navigation
-
----
-
-## Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 270427-001 | 提取 LocalWallpaper Main 组件 | 2026-04-27 | - | [270427-001-extract-main-component](./quick/270427-001-extract-main-component/) |
+- 2026-04-27: v2.3 ElectronAPI 分层重构 shipped
+- 2026-04-27: v2.4 ImagePreview 导航功能 shipped
+- 2026-04-28: v2.5 壁纸收藏功能 started
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.4 completed*
+*最后更新：2026-04-28 v2.5 milestone started*
