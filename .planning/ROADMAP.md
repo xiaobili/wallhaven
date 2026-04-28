@@ -274,7 +274,7 @@
 
 ### Phase 19: Collections Management UI
 
-**Requirements**: COLL-01, COLL-02, COLL-03, COLL-04
+**Requirements**: COLL-01, COLL-02, COLL-03, COLL-04, COLL-05, BROW-01
 
 **Goal**: Implement UI for creating, renaming, and deleting collections.
 
@@ -283,7 +283,7 @@
 2. Create FavoritesPage Base (`src/views/FavoritesPage.vue`)
 3. Create Collection Management Components (modals for create/rename/delete)
 4. Wire Up Collection Operations (sidebar with collection list)
-5. Add Navigation Entry (`src/views/Main.vue`)
+5. Add Navigation Entry (`src/Main.vue`)
 
 **Success Criteria**:
 1. Given the favorites page, when user clicks "Create Collection" button, then a modal appears allowing name input
@@ -291,7 +291,14 @@
 3. Given the default "Favorites" collection, when user hovers, then no delete option is shown
 4. Given the sidebar, when user views collections, then all collections are listed with favorite counts
 
-**Plans**: — (to be defined)
+**Plans**:
+- [ ] Plan 1: Add Favorites Route (Wave 1)
+- [ ] Plan 2: Add Navigation Entry (Wave 1)
+- [ ] Plan 3: Create CreateCollectionModal Component (Wave 2)
+- [ ] Plan 4: Create RenameCollectionModal Component (Wave 2)
+- [ ] Plan 5: Create CollectionItem Component (Wave 3)
+- [ ] Plan 6: Create CollectionSidebar Component (Wave 4)
+- [ ] Plan 7: Create FavoritesPage Base Component (Wave 5)
 
 ---
 
@@ -340,7 +347,11 @@
 4. Given an empty collection, when user views it, then a helpful empty state message is displayed
 5. Given the main navigation, when user clicks "我的收藏", then the favorites page is shown
 
-**Plans**: — (to be defined)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — Create FavoriteWallpaperCard component + Upgrade FavoritesPage with card grid, ImagePreview, download, and set-bg
+- [ ] 21-02-PLAN.md — Add "All Favorites" sidebar filter + FavoritesPage filtering/dedup/sorting/empty states + KeepAlive caching
 
 ---
 
@@ -417,11 +428,11 @@ Phase 19      Phase 20
 | 16 | Data Layer Foundation | v2.5 | 2/2 | Complete | 2026-04-28 |
 | 17 | Business Layer (Service) | v2.5 | 2/2 | Complete | 2026-04-28 |
 | 18 | Composable Layer | v2.5 | 0/3 | Pending | — |
-| 19 | Collections Management UI | v2.5 | 0/5 | Pending | — |
+| 19 | Collections Management UI | v2.5 | 0/7 | Pending | — |
 | 20 | Favorites Operations UI | v2.5 | 0/6 | Pending | — |
-| 21 | Favorites Browsing UI | v2.5 | 0/6 | Pending | — |
+| 21 | Favorites Browsing UI | v2.5 | 0/2 | Pending | — |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 v2.5 roadmap created*
+*最后更新：2026-04-28 Phase 21 plans created*
