@@ -1,18 +1,22 @@
 /**
  * 收藏项管理 Composable
  * 封装收藏项状态管理逻辑，提供 O(1) 收藏状态查询
+ *
+ * 使用 Pinia Store 共享状态，确保所有组件访问同一份数据
  */
 
-import { computed, ref, type ComputedRef } from 'vue'
-import { favoritesService, collectionsService } from '@/services'
+import { computed, type ComputedRef } from 'vue'
+import { useFavoritesStore } from '@/stores/modules/favorites'
+import { favoritesService } from '@/services'
 import { useAlert } from '@/composables'
-import type { FavoriteItem, WallpaperItem, Collection } from '@/types'
+import type { FavoriteItem, WallpaperItem } from '@/types'
 
 export interface UseFavoritesReturn {
   favorites: ComputedRef<FavoriteItem[]>
   favoriteIds: ComputedRef<Set<string>>
   loading: ComputedRef<boolean>
   error: ComputedRef<string | null>
+  uniqueWallpaperCount: ComputedRef<number>
   load: () => Promise<void>
   add: (wallpaperId: string, collectionId: string, wallpaperData: WallpaperItem) => Promise<boolean>
   remove: (wallpaperId: string, collectionId: string) => Promise<boolean>
@@ -21,40 +25,28 @@ export interface UseFavoritesReturn {
   isInCollection: (wallpaperId: string, collectionId: string) => boolean
   getCollectionsForWallpaper: (wallpaperId: string) => string[]
   getByCollection: (collectionId: string) => FavoriteItem[]
+  getCollectionCount: (collectionId: string) => number
 }
 
 export function useFavorites(): UseFavoritesReturn {
   const { showError, showSuccess } = useAlert()
-  const favorites = ref<FavoriteItem[]>([])
-  const favoriteIds = ref<Set<string>>(new Set())
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const cachedCollections = ref<Collection[]>([])
+  const store = useFavoritesStore()
 
   const load = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-    const result = await favoritesService.getAll()
-    if (result.success && result.data) {
-      favorites.value = result.data
-      favoriteIds.value = new Set(result.data.map(f => f.wallpaperId))
-    } else {
-      error.value = result.error?.message || '加载收藏失败'
-      showError(error.value)
+    await store.loadFavorites()
+    if (store.error) {
+      showError(store.error)
     }
-    loading.value = false
   }
 
-  const isFavorite = (wallpaperId: string): boolean => favoriteIds.value.has(wallpaperId)
+  const isFavorite = (wallpaperId: string): boolean => store.isFavorite(wallpaperId)
 
-  const isInCollection = (wallpaperId: string, collectionId: string): boolean => {
-    return favorites.value.some(f => f.wallpaperId === wallpaperId && f.collectionId === collectionId)
-  }
+  const isInCollection = (wallpaperId: string, collectionId: string): boolean =>
+    store.isInCollection(wallpaperId, collectionId)
 
   const add = async (wallpaperId: string, collectionId: string, wallpaperData: WallpaperItem): Promise<boolean> => {
     const result = await favoritesService.add(wallpaperId, collectionId, wallpaperData)
     if (result.success) {
-      favoriteIds.value.add(wallpaperId)
       await load()
       showSuccess('已添加到收藏')
       return true
@@ -66,8 +58,6 @@ export function useFavorites(): UseFavoritesReturn {
   const remove = async (wallpaperId: string, collectionId: string): Promise<boolean> => {
     const result = await favoritesService.remove(wallpaperId, collectionId)
     if (result.success) {
-      const stillInOther = favorites.value.some(f => f.wallpaperId === wallpaperId && f.collectionId !== collectionId)
-      if (!stillInOther) favoriteIds.value.delete(wallpaperId)
       await load()
       showSuccess('已从收藏移除')
       return true
@@ -87,26 +77,29 @@ export function useFavorites(): UseFavoritesReturn {
     return false
   }
 
-  const getCollectionsForWallpaper = (wallpaperId: string): string[] => {
-    const items = favorites.value.filter(f => f.wallpaperId === wallpaperId)
-    const collectionIds = items.map(f => f.collectionId)
-    return cachedCollections.value.filter(c => collectionIds.includes(c.id)).map(c => c.name)
-  }
+  const getCollectionsForWallpaper = (wallpaperId: string): string[] =>
+    store.getCollectionNamesForWallpaper(wallpaperId)
 
-  const getByCollection = (collectionId: string): FavoriteItem[] => favorites.value.filter(f => f.collectionId === collectionId)
+  const getByCollection = (collectionId: string): FavoriteItem[] =>
+    store.getByCollection(collectionId)
 
-  // Load collections for getCollectionsForWallpaper
-  const loadCollections = async () => {
-    const result = await collectionsService.getAll()
-    if (result.success && result.data) cachedCollections.value = result.data
-  }
-  loadCollections()
+  const getCollectionCount = (collectionId: string): number =>
+    store.getCollectionCount(collectionId)
 
   return {
-    favorites: computed(() => favorites.value),
-    favoriteIds: computed(() => favoriteIds.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
-    load, add, remove, move, isFavorite, isInCollection, getCollectionsForWallpaper, getByCollection,
+    favorites: computed(() => store.favorites),
+    favoriteIds: computed(() => store.favoriteIds),
+    loading: computed(() => store.loading),
+    error: computed(() => store.error),
+    uniqueWallpaperCount: computed(() => store.uniqueWallpaperCount),
+    load,
+    add,
+    remove,
+    move,
+    isFavorite,
+    isInCollection,
+    getCollectionsForWallpaper,
+    getByCollection,
+    getCollectionCount,
   }
 }

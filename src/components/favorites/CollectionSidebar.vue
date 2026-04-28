@@ -92,8 +92,8 @@ const emit = defineEmits<{
   select: [collectionId: string | null]
 }>()
 
-const { collections, loading, load, create, rename, delete: deleteCollection, setDefault } = useCollections()
-const { favorites } = useFavorites()
+const { collections, loading, load: loadCollections, create, rename, delete: deleteCollection, setDefault } = useCollections()
+const { load: loadFavorites, uniqueWallpaperCount, getCollectionCount } = useFavorites()
 const { showSuccess, showError } = useAlert()
 
 const showCreateModal = ref(false)
@@ -104,13 +104,6 @@ const selectedId = ref<string | null>(null)
 const existingNames = computed(() =>
   collections.value.map(c => c.name)
 )
-
-const uniqueWallpaperCount = computed(() =>
-  new Set(favorites.value.map(f => f.wallpaperId)).size
-)
-
-const getCollectionCount = (collectionId: string): number =>
-  favorites.value.filter(f => f.collectionId === collectionId).length
 
 const handleSelectAll = () => {
   selectedId.value = null
@@ -174,8 +167,9 @@ const handleRenameConfirm = async (id: string, name: string) => {
   }
 }
 
-onMounted(() => {
-  load()
+onMounted(async () => {
+  // 同时加载收藏夹和收藏项数据
+  await Promise.all([loadCollections(), loadFavorites()])
 })
 </script>
 

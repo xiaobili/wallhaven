@@ -1,9 +1,12 @@
 /**
  * 收藏夹管理 Composable
  * 封装收藏夹状态管理逻辑
+ *
+ * 使用 Pinia Store 共享状态，确保所有组件访问同一份数据
  */
 
-import { computed, ref, type ComputedRef } from 'vue'
+import { computed, type ComputedRef } from 'vue'
+import { useFavoritesStore } from '@/stores/modules/favorites'
 import { collectionsService } from '@/services'
 import { useAlert } from '@/composables'
 import type { Collection } from '@/types'
@@ -26,21 +29,13 @@ export interface UseCollectionsReturn {
 
 export function useCollections(): UseCollectionsReturn {
   const { showError, showSuccess } = useAlert()
-  const collections = ref<Collection[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const store = useFavoritesStore()
 
   const load = async (): Promise<void> => {
-    loading.value = true
-    error.value = null
-    const result = await collectionsService.getAll()
-    if (result.success && result.data) {
-      collections.value = result.data
-    } else {
-      error.value = result.error?.message || '加载收藏夹失败'
-      showError(error.value)
+    await store.loadCollections()
+    if (store.error) {
+      showError(store.error)
     }
-    loading.value = false
   }
 
   const create = async (name: string): Promise<boolean> => {
@@ -69,6 +64,8 @@ export function useCollections(): UseCollectionsReturn {
     const result = await collectionsService.delete(id)
     if (result.success) {
       await load()
+      // 同时刷新收藏项（删除收藏夹会移除相关收藏项）
+      await store.loadFavorites()
       showSuccess('收藏夹删除成功')
       return true
     }
@@ -76,8 +73,11 @@ export function useCollections(): UseCollectionsReturn {
     return false
   }
 
-  const getById = (id: string): Collection | undefined => collections.value.find(c => c.id === id)
-  const getDefault = (): Collection | undefined => collections.value.find(c => c.isDefault)
+  const getById = (id: string): Collection | undefined =>
+    store.collections.find(c => c.id === id)
+
+  const getDefault = (): Collection | undefined =>
+    store.collections.find(c => c.isDefault)
 
   const setDefault = async (id: string): Promise<boolean> => {
     const result = await collectionsService.setDefault(id)
@@ -91,9 +91,15 @@ export function useCollections(): UseCollectionsReturn {
   }
 
   return {
-    collections: computed(() => collections.value),
-    loading: computed(() => loading.value),
-    error: computed(() => error.value),
-    load, create, rename, delete: deleteCollection, getById, getDefault, setDefault,
+    collections: computed(() => store.collections),
+    loading: computed(() => store.loading),
+    error: computed(() => store.error),
+    load,
+    create,
+    rename,
+    delete: deleteCollection,
+    getById,
+    getDefault,
+    setDefault,
   }
 }
