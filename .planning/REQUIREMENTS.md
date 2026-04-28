@@ -75,31 +75,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COLL-01 | — | Pending |
-| COLL-02 | — | Pending |
-| COLL-03 | — | Pending |
-| COLL-04 | — | Pending |
-| COLL-05 | — | Pending |
-| FAV-01 | — | Pending |
-| FAV-02 | — | Pending |
-| FAV-03 | — | Pending |
-| FAV-04 | — | Pending |
-| FAV-05 | — | Pending |
-| FAV-06 | — | Pending |
-| BROW-01 | — | Pending |
-| BROW-02 | — | Pending |
-| BROW-03 | — | Pending |
-| BROW-04 | — | Pending |
-| BROW-05 | — | Pending |
-| PERS-01 | — | Pending |
-| PERS-02 | — | Pending |
-| PERS-03 | — | Pending |
+| COLL-01 | 19 | Pending |
+| COLL-02 | 19 | Pending |
+| COLL-03 | 19 | Pending |
+| COLL-04 | 16, 19 | Pending |
+| COLL-05 | 18, 19 | Pending |
+| FAV-01 | 20 | Pending |
+| FAV-02 | 20 | Pending |
+| FAV-03 | 20 | Pending |
+| FAV-04 | 20 | Pending |
+| FAV-05 | 18, 20 | Pending |
+| FAV-06 | 18, 20 | Pending |
+| BROW-01 | 19, 21 | Pending |
+| BROW-02 | 21 | Pending |
+| BROW-03 | 21 | Pending |
+| BROW-04 | 21 | Pending |
+| BROW-05 | 21 | Pending |
+| PERS-01 | 17 | Pending |
+| PERS-02 | 16 | Pending |
+| PERS-03 | 17 | Pending |
 
 **Coverage:**
 - v2.5 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-28*
-*Last updated: 2026-04-28 after v2.5 milestone definition*
+*Last updated: 2026-04-28 after roadmap creation*

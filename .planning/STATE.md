@@ -4,9 +4,9 @@ milestone: v2.5
 milestone_name: 壁纸收藏功能
 status: planning
 last_updated: "2026-04-28T00:00:00.000Z"
-last_activity: 2026-04-28 — Milestone v2.5 started
+last_activity: 2026-04-28 — Roadmap created for v2.5
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -16,7 +16,7 @@ progress:
 # 项目状态
 
 > 更新时间：2026-04-28
-> 当前阶段：定义需求
+> 当前阶段：规划完成
 > 项目状态：📋 Planning
 
 ---
@@ -25,17 +25,17 @@ progress:
 
 参见：.planning/PROJECT.md (更新于 2026-04-28)
 
-**Core value**：断点续传，下载无忧 — 大文件下载不再担心中断，随时随地暂停恢复
+**Core value**：收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 **Milestone in progress**：v2.5 壁纸收藏功能
 
 ---
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 16 (Data Layer Foundation) — Not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-28 — Milestone v2.5 started
+Status: Roadmap created, ready for phase discussion
+Last activity: 2026-04-28 — Roadmap created with 6 phases (16-21)
 
 ---
 
@@ -43,19 +43,51 @@ Last activity: 2026-04-28 — Milestone v2.5 started
 
 ### Goal
 
-Add local favorites system so users can save and organize their favorite wallpapers.
+Add local favorites system so users can save and organize their favorite wallpapers into custom collections.
 
 ### Requirements to Deliver
 
 | Requirement | Description | Phase |
 |-------------|-------------|-------|
-| (To be defined in REQUIREMENTS.md) | — | — |
+| COLL-01 | Create new collection with custom name | 19 |
+| COLL-02 | Rename existing collection | 19 |
+| COLL-03 | Delete collection with confirmation | 19 |
+| COLL-04 | Default "Favorites" collection (non-deletable) | 16, 19 |
+| COLL-05 | View list of all collections | 18, 19 |
+| FAV-01 | Add wallpaper to collection from card | 20 |
+| FAV-02 | Add wallpaper to collection from preview | 20 |
+| FAV-03 | Remove wallpaper from collection | 20 |
+| FAV-04 | Move wallpaper between collections | 20 |
+| FAV-05 | Favorite indicator on wallpapers | 18, 20 |
+| FAV-06 | Wallpaper in multiple collections | 18, 20 |
+| BROW-01 | Access favorites page from navigation | 19, 21 |
+| BROW-02 | View wallpapers in selected collection | 21 |
+| BROW-03 | Filter wallpapers by collection | 21 |
+| BROW-04 | See which collection(s) wallpaper belongs to | 21 |
+| BROW-05 | Download favorited wallpapers | 21 |
+| PERS-01 | Persist across app restarts | 17 |
+| PERS-02 | Store locally with electron-store | 16 |
+| PERS-03 | Handle storage errors gracefully | 17 |
+
+**Coverage**: 19/19 requirements mapped (100%)
 
 ### Key Objectives
 
-1. **Add to favorites UI** — Star/favorite button on wallpaper cards and preview
-2. **Favorites browsing page** — Dedicated page to view all favorited wallpapers
-3. **Local persistence** — Favorites saved locally, survive app restarts
+1. **Custom collections** — Create named collections (动漫, 风景, etc.)
+2. **Favorites operations** — Add/remove/move wallpapers between collections
+3. **Favorites browsing page** — View and filter by collection
+4. **Local persistence** — All data saved locally
+
+### Phase Overview
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 16 | Data Layer Foundation | PERS-02, COLL-04 | Pending |
+| 17 | Business Layer (Service) | PERS-01, PERS-03 | Pending |
+| 18 | Composable Layer | COLL-05, FAV-05, FAV-06 | Pending |
+| 19 | Collections Management UI | COLL-01, COLL-02, COLL-03, COLL-04 | Pending |
+| 20 | Favorites Operations UI | FAV-01, FAV-02, FAV-03, FAV-04 | Pending |
+| 21 | Favorites Browsing UI | BROW-01, BROW-02, BROW-03, BROW-04, BROW-05 | Pending |
 
 ### Shipped Milestones
 
@@ -74,9 +106,23 @@ Add local favorites system so users can save and organize their favorite wallpap
 - 2026-04-27: v2.2 Store 分层迁移 shipped
 - 2026-04-27: v2.3 ElectronAPI 分层重构 shipped
 - 2026-04-27: v2.4 ImagePreview 导航功能 shipped
-- 2026-04-28: v2.5 壁纸收藏功能 started
+- 2026-04-28: v2.5 壁纸收藏功能 roadmap created (Phases 16-21)
+
+---
+
+## Next Steps
+
+Ready to begin Phase 16 discussion:
+```
+/gsd-discuss-phase 16
+```
+
+Or jump directly to planning:
+```
+/gsd-plan-phase 16
+```
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-28 v2.5 milestone started*
+*最后更新：2026-04-28 v2.5 roadmap created*

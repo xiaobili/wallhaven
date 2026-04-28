@@ -1,7 +1,7 @@
 # Roadmap: Wallhaven 壁纸浏览器架构重构
 
 > 创建时间：2025-04-25
-> 最后更新：2026-04-27
+> 最后更新：2026-04-28
 
 ---
 
@@ -12,6 +12,7 @@
 - ✅ **v2.2 Store 分层迁移** — Phases 10-13 (shipped 2026-04-27)
 - ✅ **v2.3 ElectronAPI 分层重构** — Phase 14 (shipped 2026-04-27)
 - ✅ **v2.4 ImagePreview 导航功能** — Phase 15 (shipped 2026-04-27)
+- 🔄 **v2.5 壁纸收藏功能** — Phases 16-21 (in progress)
 
 ---
 
@@ -199,6 +200,201 @@
 
 ---
 
+## v2.5 壁纸收藏功能 (Phases 16-21)
+
+**Goal**: Add local favorites system with custom collections support
+
+**Status**: 🔄 In Progress
+
+---
+
+### Phase 16: Data Layer Foundation
+
+**Requirements**: PERS-02, COLL-04
+
+**Goal**: Establish type definitions, storage constants, and repository layer for favorites persistence.
+
+**Tasks**:
+1. Define Types (`src/types/favorite.ts`) — Collection, FavoriteItem, FavoritesData interfaces
+2. Add Storage Constants (`src/clients/constants.ts`) — FAVORITES_DATA key
+3. Create Favorites Repository (`src/repositories/favorites.repository.ts`) — CRUD operations
+4. Export Repository (`src/repositories/index.ts`)
+
+**Success Criteria**:
+1. Given no existing data, when app starts, then a default "Favorites" collection is created automatically
+2. Given the repository, when `getCollections()` is called, then it returns an array of Collection objects
+3. Given the repository, when `createCollection('动漫')` is called, then a new collection with name '动漫' is persisted
+4. Given the repository, when attempting to delete the default collection, then the operation returns an error
+
+**Plans**: — (to be defined)
+
+---
+
+### Phase 17: Business Layer (Service)
+
+**Requirements**: PERS-01, PERS-03
+
+**Goal**: Implement business logic for collections and favorites management with error handling.
+
+**Tasks**:
+1. Create Collections Service (`src/services/collections.service.ts`)
+2. Create Favorites Service (`src/services/favorites.service.ts`)
+3. Export Services (`src/services/index.ts`)
+
+**Success Criteria**:
+1. Given the service, when `create('风景')` is called, then a collection named '风景' is created and persisted
+2. Given a storage error, when any operation is performed, then a user-friendly error message is returned
+3. Given app restart, when `getAll()` is called, then previously saved collections and favorites are returned
+4. Given a wallpaper added to collection, when `isFavorite(wallpaperId)` is called, then it returns true
+
+**Plans**: — (to be defined)
+
+---
+
+### Phase 18: Composable Layer
+
+**Requirements**: COLL-05, FAV-05, FAV-06
+
+**Goal**: Create Vue composables for reactive state management of collections and favorites.
+
+**Tasks**:
+1. Create useCollections Composable (`src/composables/favorites/useCollections.ts`)
+2. Create useFavorites Composable (`src/composables/favorites/useFavorites.ts`)
+3. Export Composables (`src/composables/index.ts`)
+
+**Success Criteria**:
+1. Given a Vue component, when `useFavorites()` is called, then reactive favorites state is available
+2. Given favorites loaded, when `isFavorite(wallpaperId)` is called, then result is returned in O(1) time
+3. Given a wallpaper in multiple collections, when `getCollectionsForWallpaper(id)` is called, then all collection names are returned
+4. Given add/remove operations, when completed, then `favoriteIds` Set is automatically updated
+
+**Plans**: — (to be defined)
+
+---
+
+### Phase 19: Collections Management UI
+
+**Requirements**: COLL-01, COLL-02, COLL-03, COLL-04
+
+**Goal**: Implement UI for creating, renaming, and deleting collections.
+
+**Tasks**:
+1. Add Favorites Route (`src/router/index.ts`)
+2. Create FavoritesPage Base (`src/views/FavoritesPage.vue`)
+3. Create Collection Management Components (modals for create/rename/delete)
+4. Wire Up Collection Operations (sidebar with collection list)
+5. Add Navigation Entry (`src/views/Main.vue`)
+
+**Success Criteria**:
+1. Given the favorites page, when user clicks "Create Collection" button, then a modal appears allowing name input
+2. Given a non-default collection, when user clicks delete, then a confirmation dialog appears
+3. Given the default "Favorites" collection, when user hovers, then no delete option is shown
+4. Given the sidebar, when user views collections, then all collections are listed with favorite counts
+
+**Plans**: — (to be defined)
+
+---
+
+### Phase 20: Favorites Operations UI
+
+**Requirements**: FAV-01, FAV-02, FAV-03, FAV-04
+
+**Goal**: Implement UI for adding, removing, and moving wallpapers between collections.
+
+**Tasks**:
+1. Add Favorite Button to Wallpaper Cards (`src/components/WallpaperList.vue`)
+2. Add Favorite Button to Image Preview (`src/components/ImagePreview.vue`)
+3. Create Add To Collection Modal (`src/components/favorites/AddToCollectionModal.vue`)
+4. Create Move To Collection Modal (`src/components/favorites/MoveToCollectionModal.vue`)
+5. Add Favorite Indicator (`src/components/WallpaperList.vue`)
+6. Wire Up Favorites Logic in OnlineWallpaper (`src/views/OnlineWallpaper.vue`)
+
+**Success Criteria**:
+1. Given a wallpaper card, when user clicks the favorite icon, then a collection selector appears
+2. Given a wallpaper in preview, when user clicks favorite button, then a dropdown shows available collections
+3. Given a favorited wallpaper, when user clicks remove, then it is removed from the selected collection
+4. Given a wallpaper in one collection, when user selects "Move to", then it moves to the new collection
+
+**Plans**: — (to be defined)
+
+---
+
+### Phase 21: Favorites Browsing UI
+
+**Requirements**: BROW-01, BROW-02, BROW-03, BROW-04, BROW-05
+
+**Goal**: Implement complete favorites browsing experience with filtering and download capabilities.
+
+**Tasks**:
+1. Implement Favorites Grid (`src/views/FavoritesPage.vue`)
+2. Implement Collection Filtering
+3. Add Collection Badge on Wallpapers
+4. Add Download Capability
+5. Implement Empty States
+6. Add Navigation Integration
+
+**Success Criteria**:
+1. Given the favorites page, when user clicks a collection in sidebar, then only wallpapers from that collection are shown
+2. Given a favorited wallpaper card, when viewed, then a badge shows which collection(s) it belongs to
+3. Given a favorite wallpaper, when user clicks download, then the download starts using existing download flow
+4. Given an empty collection, when user views it, then a helpful empty state message is displayed
+5. Given the main navigation, when user clicks "我的收藏", then the favorites page is shown
+
+**Plans**: — (to be defined)
+
+---
+
+## Requirements Coverage Matrix (v2.5)
+
+| Requirement | Phase | Description |
+|-------------|-------|-------------|
+| **COLL-01** | 19 | Create new collection with custom name |
+| **COLL-02** | 19 | Rename existing collection |
+| **COLL-03** | 19 | Delete collection with confirmation |
+| **COLL-04** | 16, 19 | Default "Favorites" collection (non-deletable) |
+| **COLL-05** | 18, 19 | View list of all collections |
+| **FAV-01** | 20 | Add wallpaper to collection from card |
+| **FAV-02** | 20 | Add wallpaper to collection from preview |
+| **FAV-03** | 20 | Remove wallpaper from collection |
+| **FAV-04** | 20 | Move wallpaper between collections |
+| **FAV-05** | 18, 20 | Favorite indicator on wallpapers |
+| **FAV-06** | 18, 20 | Wallpaper in multiple collections |
+| **BROW-01** | 19, 21 | Access favorites page from navigation |
+| **BROW-02** | 21 | View wallpapers in selected collection |
+| **BROW-03** | 21 | Filter wallpapers by collection |
+| **BROW-04** | 21 | See which collection(s) wallpaper belongs to |
+| **BROW-05** | 21 | Download favorited wallpapers |
+| **PERS-01** | 17 | Persist across app restarts |
+| **PERS-02** | 16 | Store locally with electron-store |
+| **PERS-03** | 17 | Handle storage errors gracefully |
+
+**Coverage:** 19/19 requirements (100%)
+
+---
+
+## Dependencies
+
+```
+Phase 16 (Data Layer)
+    │
+    ▼
+Phase 17 (Business Layer)
+    │
+    ▼
+Phase 18 (Composable Layer)
+    │
+    ├─────────────┐
+    ▼             ▼
+Phase 19      Phase 20
+(Collections UI) (Favorites UI)
+    │             │
+    └──────┬──────┘
+           ▼
+       Phase 21 (Browsing UI)
+```
+
+---
+
 ## Progress
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
@@ -218,8 +414,14 @@
 | 13 | Verification & Enforcement | v2.2 | 3/3 | Complete | 2026-04-27 |
 | 14 | ElectronAPI Layer Refactor | v2.3 | 6/6 | Complete | 2026-04-27 |
 | 15 | ImagePreview Navigation | v2.4 | 1/1 | Complete | 2026-04-27 |
+| 16 | Data Layer Foundation | v2.5 | 0/4 | Pending | — |
+| 17 | Business Layer (Service) | v2.5 | 0/3 | Pending | — |
+| 18 | Composable Layer | v2.5 | 0/3 | Pending | — |
+| 19 | Collections Management UI | v2.5 | 0/5 | Pending | — |
+| 20 | Favorites Operations UI | v2.5 | 0/6 | Pending | — |
+| 21 | Favorites Browsing UI | v2.5 | 0/6 | Pending | — |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-27 v2.4 shipped*
+*最后更新：2026-04-28 v2.5 roadmap created*
