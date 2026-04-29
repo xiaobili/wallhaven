@@ -14,6 +14,7 @@
 - ✅ **v2.4 ImagePreview 导航功能** — Phase 15 (shipped 2026-04-27)
 - ✅ **v2.5 壁纸收藏功能** — Phases 16-22 (shipped 2026-04-29) — [Archive](milestones/v2.5-ROADMAP.md)
 - ✅ **v2.6 设置页缓存优化** — Phase 23 (shipped 2026-04-29)
+- ✅ **v2.7 图片切换动画** — Phase 24 (shipped 2026-04-29)
 
 ---
 
@@ -110,11 +111,23 @@
 
 ## Current Milestone
 
-▶ **项目已完成** — 所有计划的里程碑已交付
+✅ **v2.7 图片切换动画** — Phase 24 (shipped 2026-04-29)
 
 ---
 
 ## Phases
+
+### Phase 24: ImagePreview Switch Animation — COMPLETE
+
+**Goal:** 为 ImagePreview 组件的图片切换功能添加动画效果，使用 animate.css 中的 slide-in-left 和 slide-in-right 动画类
+
+**Depends on:** Phase 15 (ImagePreview Navigation)
+
+**Plans:** 2/2 plans complete
+
+**Completed:** 2026-04-29
+
+---
 
 ### v2.6 设置页缓存优化 (Phase 23) — COMPLETE
 
@@ -139,6 +152,7 @@
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
 |-------|------|-----------|----------------|--------|-----------|
+| 24 | ImagePreview Switch Animation | v2.7 | 2/2 | Complete | 2026-04-29 |
 | 23 | Settings Cache Cleanup | v2.6 | 2/2 | Complete | 2026-04-29 |
 | 22 | Default Collection & Quick Favorite | v2.5 | 5/5 | Complete | 2026-04-28 |
 | 21 | Favorites Browsing UI | v2.5 | 2/2 | Complete | 2026-04-28 |
@@ -151,4 +165,4 @@
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-29 Phase 23 added*
+*最后更新：2026-04-29 Phase 24 added*

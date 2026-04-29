@@ -1,23 +1,23 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.6
-milestone_name: 设置页缓存优化
-status: Phase 23 Complete
-last_updated: "2026-04-29T12:35:00.000Z"
-last_activity: 2026-04-29 — Phase 23 completed (2/2 plans)
+milestone: v2.7
+milestone_name: 图片切换动画
+status: Complete
+last_updated: "2026-04-29T17:00:00.000Z"
+last_activity: 2026-04-29 — Phase 24 complete (2 plans)
 progress:
-  total_phases: 23
-  completed_phases: 23
-  total_plans: 50
-  completed_plans: 48
+  total_phases: 24
+  completed_phases: 24
+  total_plans: 54
+  completed_plans: 50
   percent: 100
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-29
-> 当前阶段：v2.6 设置页缓存优化
-> 项目状态：✅ Ready to Execute
+> 当前阶段：v2.7 图片切换动画
+> 项目状态：✅ Complete
 
 ---
 
@@ -26,13 +26,35 @@ progress:
 参见：.planning/PROJECT.md (更新于 2026-04-29)
 
 **Core value**：收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
-**Last milestone**：v2.5 壁纸收藏功能 (shipped 2026-04-29)
+**Last milestone**：v2.7 图片切换动画 (shipped 2026-04-29)
+
+---
+
+## Current Milestone: v2.7 图片切换动画
+
+### Summary
+
+**Status:** Complete
+**Phases:** 1 (Phase 24)
+**Plans:** 2/2 complete
+
+### Key Features Delivered
+
+1. **图片切换动画** — ImagePreview 组件图片切换时使用 slide-in-left/slide-in-right 动画
+2. **方向感知** — 左右导航使用不同动画方向
+3. **双向动画** — 旧图片滑出 + 新图片滑入同时进行
+
+---
+
+## Completed Milestone: v2.6 设置页缓存优化
+
+**Shipped:** 2026-04-29
+**Phases:** 1 (Phase 23)
+**Plans:** 2
 
 ---
 
 ## Completed Milestone: v2.5 壁纸收藏功能
-
-### Summary
 
 **Shipped:** 2026-04-29
 **Phases:** 7 (Phase 16-22)
@@ -70,31 +92,20 @@ progress:
 
 ## Roadmap Evolution
 
+- Phase 24 added: ImagePreview 图片切换功能添加动画
 - Phase 23 added: 修改设置页面清空缓存功能，点击清空缓存只删除缩略图和临时文件，其他设置项不变
 
 ---
 
 ## Current Phase
 
-**Phase 23: Settings Cache Cleanup** — ✅ Complete
+**Phase 24: ImagePreview Switch Animation** — Complete
 
-- Research: ✅ Completed (23-RESEARCH.md)
-- Plans: ✅ 2 plans executed
+- Research: ✅ Completed (24-RESEARCH.md)
+- Context: ✅ Gathered (24-CONTEXT.md)
+- Plans: ✅ 2 plans created
+- Execution: ✅ Complete
 - Verification: ✅ Passed
-
-**Plans:**
-| Plan | Wave | Files | Status |
-|------|------|-------|--------|
-| 23-01 | 1 | SettingPage.vue | ✅ Complete |
-| 23-02 | 1 | LocalWallpaper.vue | ✅ Complete |
-
----
-
-## Project Complete
-
-所有计划阶段已完成。项目进入维护状态。
-
----
 
 ---
 
@@ -107,4 +118,4 @@ progress:
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-29 README regenerated*
+*最后更新：2026-04-29 Phase 24 added*
