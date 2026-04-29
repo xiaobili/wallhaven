@@ -184,6 +184,7 @@ onMounted(async () => {
   border-right: 1px solid #333;
   display: flex;
   flex-direction: column;
+  background: url('@/static/icons/bg-dark-grain.png') repeat;
 }
 
 .sidebar-header {

@@ -59,7 +59,7 @@
           <li>防火墙或代理设置</li>
         </ul>
         <button
-          class="retry-button"
+          class="button red"
           @click="retryFetch"
         >
           <i class="fas fa-redo" /> 重试
@@ -555,7 +555,7 @@ const handleClickOutside = (event: MouseEvent): void => {
   justify-content: center;
   align-items: center;
   min-height: 400px;
-  padding: 20px;
+  padding: 140px;
 }
 
 .error-content {
