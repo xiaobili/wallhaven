@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import LocalWallpaperMain from '@/components/LocalWallpaperMain.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
@@ -267,6 +267,13 @@ const getImageType = (filename: string): string => {
 
 // 生命周期
 onMounted(() => {
+  if (downloadPath.value) {
+    refreshList()
+  }
+})
+
+onActivated(() => {
+  // Refresh list when returning to this page (thumbnails may have been cleared)
   if (downloadPath.value) {
     refreshList()
   }
