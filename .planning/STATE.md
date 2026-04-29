@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: Milestone complete
-last_updated: "2026-04-29T12:00:00.000Z"
-last_activity: 2026-04-29 — v2.5 milestone archived
+milestone: v2.6
+milestone_name: 设置页缓存优化
+status: Planning
+last_updated: "2026-04-29T17:00:00.000Z"
+last_activity: 2026-04-29 — Phase 23 context gathered
 progress:
-  total_phases: 22
+  total_phases: 23
   completed_phases: 22
   total_plans: 46
   completed_plans: 46
-  percent: 100
+  percent: 95
 ---
 
 # 项目状态
@@ -64,6 +64,12 @@ progress:
 - v2.3 ElectronAPI 分层重构 (2026-04-27)
 - v2.4 ImagePreview 导航功能 (2026-04-27)
 - v2.5 壁纸收藏功能 (2026-04-29)
+
+---
+
+## Roadmap Evolution
+
+- Phase 23 added: 修改设置页面清空缓存功能，点击清空缓存只删除缩略图和临时文件，其他设置项不变
 
 ---
 
