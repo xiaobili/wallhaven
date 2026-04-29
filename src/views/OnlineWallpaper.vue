@@ -118,7 +118,7 @@ const {
   loadMore: loadMoreWallpapers,
   saveCustomParams
 } = useWallpaperList()
-const { addTask, startDownload, loadHistory, isDownloading } = useDownload()
+const { addTask, startDownload, isDownloading } = useDownload()
 const { settings, selectFolder, update: updateSettings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 const { setWallpaper } = useWallpaperSetter()
@@ -129,13 +129,11 @@ const {
   add: addFavorite,
   remove: removeFavorite,
   isInCollection,
-  load: loadFavorites
 } = useFavorites()
 
 // Collections composable for getDefault
 const {
   getDefault,
-  load: loadCollections
 } = useCollections()
 
 // Refs - 使用 shallowRef 优化大型对象
@@ -173,12 +171,6 @@ const previewIndex = computed(() => {
 
 // Lifecycle hooks
 onMounted(() => {
-  // 加载下载历史记录
-  loadHistory()
-  // 加载收藏数据
-  loadFavorites()
-  // 加载收藏夹列表
-  loadCollections()
   // 添加点击外部关闭下拉菜单
   document.addEventListener('click', handleClickOutside)
 })

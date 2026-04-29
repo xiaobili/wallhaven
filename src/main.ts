@@ -65,11 +65,16 @@ app.mount('#app')
 
 // 异步初始化（在应用挂载后执行）
 async function initializeApp() {
-  const { useSettings, useDownload } = await import('./composables')
+  const { useSettings, useDownload, useFavorites, useCollections } = await import('./composables')
 
+  // 加载设置（必须在其他数据之前加载，因为其他 composable 可能依赖设置）
   await useSettings().load()
+  // 加载下载历史记录
   await useDownload().loadHistory()
-
+  // 加载收藏数据
+  await useFavorites().load()
+  // 加载收藏夹列表
+  await useCollections().load()
   // 清理孤儿临时文件（在恢复待处理下载之前）
   await useDownload().cleanupOrphanFiles()
 

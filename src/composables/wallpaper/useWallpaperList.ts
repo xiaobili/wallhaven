@@ -7,7 +7,7 @@
 
 import { computed, type ComputedRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams, PageData } from '@/types'
-import { useWallpaperStore } from '@/stores/wallpaper'
+import { useWallpaperStore } from '@/stores/modules/wallpaper'
 import { wallpaperService, type WallpaperSearchResult } from '@/services'
 import { useAlert } from '@/composables'
 

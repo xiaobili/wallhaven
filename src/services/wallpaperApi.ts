@@ -2,7 +2,7 @@
 
 import axios, { type AxiosResponse, type CancelTokenSource } from 'axios'
 import type { GetParams } from '@/types'
-import { useWallpaperStore } from '@/stores/wallpaper'
+import { useWallpaperStore } from '@/stores/modules/wallpaper'
 
 /**
  * 创建 axios 实例

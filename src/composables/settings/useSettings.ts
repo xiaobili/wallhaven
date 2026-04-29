@@ -20,7 +20,7 @@
  */
 
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
-import { useWallpaperStore } from '@/stores/wallpaper'
+import { useWallpaperStore } from '@/stores/modules/wallpaper'
 import { settingsService } from '@/services'
 import { useAlert } from '@/composables'
 import type { AppSettings } from '@/types'
