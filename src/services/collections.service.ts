@@ -6,6 +6,7 @@
 import type { IpcResponse } from '@/shared/types/ipc'
 import type { Collection, FavoritesData } from '@/types'
 import { favoritesRepository } from '@/repositories'
+import { favoritesService } from './favorites.service'
 
 /**
  * 收藏夹服务实现类
@@ -102,7 +103,7 @@ class CollectionsServiceImpl {
 
   /**
    * 删除收藏夹
-   * 删除后清除缓存
+   * 删除后清除缓存（包括收藏项服务的缓存，因为删除收藏夹会同时删除相关收藏项）
    * @param id - 收藏夹 ID
    */
   async delete(id: string): Promise<IpcResponse<void>> {
@@ -111,6 +112,8 @@ class CollectionsServiceImpl {
     // 成功时清除缓存
     if (result.success) {
       this.clearCache()
+      // 删除收藏夹会同时删除相关的收藏项，需要清除收藏项服务的缓存
+      favoritesService.clearCache()
     }
 
     return result
