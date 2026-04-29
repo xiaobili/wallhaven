@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import LocalWallpaperMain from '@/components/LocalWallpaperMain.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
@@ -272,12 +272,12 @@ onMounted(() => {
   }
 })
 
-onActivated(() => {
-  // Refresh list when returning to this page (thumbnails may have been cleared)
-  if (downloadPath.value) {
-    refreshList()
-  }
-})
+// onActivated(() => {
+//   // Refresh list when returning to this page (thumbnails may have been cleared)
+//   if (downloadPath.value) {
+//     refreshList()
+//   }
+// })
 </script>
 
 <style scoped>

@@ -202,7 +202,6 @@ import Alert from '@/components/Alert.vue'
 const {
   settings,
   editableSettings,
-  load,
   startEdit,
   saveChanges,
   reset: resetStoreSettings,
