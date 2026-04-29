@@ -26,7 +26,10 @@
       <i class="fas fa-chevron-right" />
     </div>
     <div class="img-view">
-      <Transition :name="transitionName">
+      <Transition
+        :name="transitionName"
+        mode="out-in"
+      >
         <img
           v-if="imgInfo"
           :key="imgInfo.id"
@@ -224,6 +227,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import '@/static/css/animate.css';
+
 .close_btn {
   z-index: 999;
   display: none;
