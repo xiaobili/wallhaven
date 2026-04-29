@@ -13,6 +13,7 @@
 - ✅ **v2.3 ElectronAPI 分层重构** — Phase 14 (shipped 2026-04-27)
 - ✅ **v2.4 ImagePreview 导航功能** — Phase 15 (shipped 2026-04-27)
 - ✅ **v2.5 壁纸收藏功能** — Phases 16-22 (shipped 2026-04-29) — [Archive](milestones/v2.5-ROADMAP.md)
+- ✅ **v2.6 设置页缓存优化** — Phase 23 (shipped 2026-04-29)
 
 ---
 
@@ -107,11 +108,47 @@
 
 ---
 
-## Next Milestone
+## Current Milestone
 
-▶ **Start Next Milestone** — `/gsd-new-milestone`
+▶ **项目已完成** — 所有计划的里程碑已交付
+
+---
+
+## Phases
+
+### v2.6 设置页缓存优化 (Phase 23) — COMPLETE
+
+- [x] Phase 23: Settings Cache Cleanup (2/2 plans) — completed 2026-04-29
+
+<details>
+<summary>✅ v2.5 壁纸收藏功能 (Phases 16-22) — SHIPPED 2026-04-29</summary>
+
+- [x] Phase 16: Data Layer Foundation (2/2 plans) — completed 2026-04-28
+- [x] Phase 17: Business Layer (Service) (2/2 plans) — completed 2026-04-28
+- [x] Phase 18: Composable Layer (1/1 plan) — completed 2026-04-28
+- [x] Phase 19: Collections Management UI (7/7 plans) — completed 2026-04-28
+- [x] Phase 20: Favorites Operations UI (4/4 plans) — completed 2026-04-28
+- [x] Phase 21: Favorites Browsing UI (2/2 plans) — completed 2026-04-28
+- [x] Phase 22: Default Collection & Quick Favorite (5/5 plans) — completed 2026-04-28
+
+</details>
+
+---
+
+## Progress
+
+| Phase | Name | Milestone | Plans Complete | Status | Completed |
+|-------|------|-----------|----------------|--------|-----------|
+| 23 | Settings Cache Cleanup | v2.6 | 2/2 | Complete | 2026-04-29 |
+| 22 | Default Collection & Quick Favorite | v2.5 | 5/5 | Complete | 2026-04-28 |
+| 21 | Favorites Browsing UI | v2.5 | 2/2 | Complete | 2026-04-28 |
+| 20 | Favorites Operations UI | v2.5 | 4/4 | Complete | 2026-04-28 |
+| 19 | Collections Management UI | v2.5 | 7/7 | Complete | 2026-04-28 |
+| 18 | Composable Layer | v2.5 | 1/1 | Complete | 2026-04-28 |
+| 17 | Business Layer (Service) | v2.5 | 2/2 | Complete | 2026-04-28 |
+| 16 | Data Layer Foundation | v2.5 | 2/2 | Complete | 2026-04-28 |
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-29 v2.5 milestone archived*
+*最后更新：2026-04-29 Phase 23 added*
