@@ -26,12 +26,15 @@
       <i class="fas fa-chevron-right" />
     </div>
     <div class="img-view">
-      <img
-        v-if="imgInfo"
-        class="img-class"
-        :src="imgInfo.path"
-        :style="{'max-height':calHeight}"
-      >
+      <Transition :name="transitionName">
+        <img
+          v-if="imgInfo"
+          :key="imgInfo.id"
+          class="img-class"
+          :src="imgInfo.path"
+          :style="{'max-height':calHeight}"
+        >
+      </Transition>
       <img
         v-show="!showing"
         class="img-class close-bg"
@@ -118,6 +121,7 @@ const emit = defineEmits<{
 // 响应式数据
 const clientHeight = ref<number>(1080);
 const imgBgSrc = ref<string>("");
+const transitionName = ref<string>('slide-right')
 
 // 计算属性
 const calHeight = computed(() => {
@@ -168,12 +172,14 @@ const downloadImg = (imgItem: WallpaperItem | null) => {
 // 导航方法
 const navigatePrev = () => {
   if (canNavigatePrev.value) {
+    transitionName.value = 'slide-left'  // New image enters from left
     emit('navigate', 'prev')
   }
 }
 
 const navigateNext = () => {
   if (canNavigateNext.value) {
+    transitionName.value = 'slide-right'  // New image enters from right
     emit('navigate', 'next')
   }
 }
@@ -317,6 +323,7 @@ onUnmounted(() => {
   vertical-align: middle;
   width: auto;
   margin-left: auto;
+  position: relative;
 }
 
 .img-class {
