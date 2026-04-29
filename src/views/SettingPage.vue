@@ -132,8 +132,8 @@
             class="setting-hint"
             style="margin-bottom: 1em;"
           >
-            清理应用产生的缓存数据，包括缩略图、临时文件和应用存储数据。<br>
-            注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件。
+            清理应用产生的缓存数据，包括缩略图和临时文件。<br>
+            注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件和您的设置。
           </p>
 
           <div
@@ -202,6 +202,7 @@ import Alert from '@/components/Alert.vue'
 const {
   settings,
   editableSettings,
+  load,
   startEdit,
   saveChanges,
   reset: resetStoreSettings,
@@ -297,9 +298,8 @@ const clearCache = async (): Promise<void> => {
     '确定要清空应用缓存吗？\n\n' +
     '这将删除：\n' +
     '• 缩略图缓存（下次访问时会重新生成）\n' +
-    '• 下载临时文件\n' +
-    '• 应用存储数据（设置将被重置）\n\n' +
-    '注意：不会删除已下载的壁纸文件。'
+    '• 下载临时文件\n\n' +
+    '注意：不会删除已下载的壁纸文件和您的设置。'
   )
 
   if (!confirmed) {
@@ -316,21 +316,11 @@ const clearCache = async (): Promise<void> => {
       throw new Error(cacheResult.error?.message || '清理缓存失败')
     }
 
-    // 2. 清空 Store 数据
-    const storeResult = await settingsService.clearStore()
-
-    if (!storeResult.success) {
-      console.warn('[SettingPage] Store clear failed:', storeResult.error?.message)
-    }
-
-    // 3. 刷新本地可编辑副本
-    startEdit()
-
-    // 4. 更新缓存信息
+    // 2. 更新缓存信息
     cacheInfo.thumbnailsCount = 0
     cacheInfo.tempFilesCount = 0
 
-    // 5. 显示成功消息
+    // 3. 显示成功消息
     const details = []
     if (cacheResult.data?.thumbnailsDeleted && cacheResult.data.thumbnailsDeleted > 0) {
       details.push(`${cacheResult.data.thumbnailsDeleted} 个缩略图`)
