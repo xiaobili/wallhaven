@@ -67,7 +67,7 @@
 
 ---
 
-### Phase 27: Preview Animation Optimization
+### Phase 27: Preview Animation Optimization ✓
 
 **Goal:** 优化预览窗口打开/关闭动画性能
 
@@ -81,7 +81,7 @@
 3. 预览窗口打开/关闭保持 60fps
 4. 动画视觉效果与原版相似（用户无感知差异）
 
-**Plans:** 0/0
+**Plans:** 1/1 ✓ Complete (2026-04-30)
 
 ---
 
@@ -110,8 +110,8 @@
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
 |-------|------|-----------|----------------|--------|-----------|
 | 25 | Animation Infrastructure | v2.8 | 0/0 | Pending | — |
-| 26 | Core Animation Optimization | v2.8 | 0/0 | Pending | — |
-| 27 | Preview Animation Optimization | v2.8 | 0/0 | Pending | — |
+| 26 | Core Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
+| 27 | Preview Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
 | 28 | Accessibility & Integration | v2.8 | 0/0 | Pending | — |
 
 ---
@@ -122,13 +122,13 @@
 |-------------|-------|--------|
 | ARCH-01 | Phase 25 | Pending |
 | ARCH-02 | Phase 25 | Pending |
-| CORE-01 | Phase 26 | Pending |
-| CORE-02 | Phase 26 | Pending |
-| CORE-03 | Phase 26 | Pending |
-| CORE-04 | Phase 26 | Pending |
-| CORE-05 | Phase 26 | Pending |
-| PREV-01 | Phase 27 | Pending |
-| PREV-02 | Phase 27 | Pending |
+| CORE-01 | Phase 26 | Complete |
+| CORE-02 | Phase 26 | Complete |
+| CORE-03 | Phase 26 | Complete |
+| CORE-04 | Phase 26 | Complete |
+| CORE-05 | Phase 26 | Complete |
+| PREV-01 | Phase 27 | Complete |
+| PREV-02 | Phase 27 | Complete |
 | A11Y-01 | Phase 28 | Pending |
 | A11Y-02 | Phase 28 | Pending |
 | ARCH-03 | Phase 28 | Pending |

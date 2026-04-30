@@ -2,22 +2,22 @@
 gsd_state_version: 1.0
 milestone: v2.8
 milestone_name: milestone
-status: ready_to_plan
-last_updated: "2026-04-30T14:00:00.000Z"
-last_activity: 2026-04-30 — Phase 27 context gathered
+status: complete
+last_updated: "2026-04-30T14:30:00.000Z"
+last_activity: 2026-04-30 — Phase 27 complete
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 25
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
+  percent: 50
 ---
 
 # 项目状态
 
 > 更新时间：2026-04-30
 > 当前阶段：v2.8 优化动画性能
-> 项目状态：✓ Phase 27 Context Gathered
+> 项目状态：✓ Phase 27 Complete
 
 ---
 
@@ -32,9 +32,22 @@ progress:
 
 ## Current Position
 
-Phase: 27
-Status: Context gathered, ready to plan
-Last activity: 2026-04-30 — Phase 27 context gathered (auto mode)
+Phase: 28 (next)
+Status: Ready to plan
+Last activity: 2026-04-30 — Phase 27 complete
+
+---
+
+## Completed: Phase 27 - Preview Animation Optimization
+
+**Completed:** 2026-04-30
+**Plans:** 1/1
+
+### Key Features Delivered
+
+1. **Modal 动画迁移** — blowUpModal/blowUpModalTwo → modal-open/modal-close
+2. **GPU 优化** — will-change 提示预提升 GPU 层
+3. **无障碍支持** — reduced-motion 模式使用 fade 动画
 
 ---
 
@@ -65,4 +78,4 @@ Last activity: 2026-04-30 — Phase 27 context gathered (auto mode)
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-30 Phase 27 context gathered*
+*最后更新：2026-04-30 Phase 27 complete*
