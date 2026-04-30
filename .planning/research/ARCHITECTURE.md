@@ -1,401 +1,515 @@
-# Architecture Research: Favorites Feature Integration
+# Architecture Research: Animation Performance Optimization
 
 ## Research Question
 
-**How should the favorites feature integrate with existing layered architecture? What new components/layers needed?**
+**How should animation code be structured for optimal performance? Include: CSS architecture for animations, Vue Transition patterns, composable animation logic, separation of animation definitions from component logic.**
 
 ---
 
 ## Executive Summary
 
-The favorites feature integrates cleanly into the existing 5-layer architecture (Client → Repository → Service → Composable → View). This research identifies the integration points, new components required, and build order.
+Animation optimization for the ImagePreview component requires a multi-layered approach: GPU-accelerated CSS properties, proper Vue Transition patterns, and potential extraction of animation logic into reusable composables. This research identifies the architectural changes needed to achieve smooth 60fps animations.
 
 ### Key Finding
 
-**No new IPC channels required.** The favorites feature uses existing generic `store-get/set/delete` channels, following the pattern established by `downloadRepository`.
+**Current animations use expensive properties (blur filter, large transforms)** that cause paint/layout thrashing. Optimization requires:
+1. Switch to GPU-accelerated properties only (`transform`, `opacity`)
+2. Extract animation CSS into dedicated animation modules
+3. Consider composable for animation state management
 
 ---
 
-## Current Architecture Overview
+## Current State Analysis
 
-### Layer Stack
+### ImagePreview.vue Animation Inventory
+
+| Animation | Type | Properties Used | Performance Issue |
+|-----------|------|-----------------|-------------------|
+| `blowUpModal` | Initial open | `transform: scale()` | ✅ Good (GPU) |
+| `blowUpModalTwo` | Close animation | `transform: scale()`, `opacity` | ✅ Good (GPU) |
+| `slide-in-blurred-left` | Navigate prev | `transform`, `filter: blur(40px)` | ⚠️ **Blur is expensive** |
+| `slide-in-blurred-right` | Navigate next | `transform`, `filter: blur(40px)` | ⚠️ **Blur is expensive** |
+| `.mask` fade | Open/close overlay | `opacity`, `visibility` | ✅ Good |
+
+### Current Animation Architecture
+
+```
+ImagePreview.vue
+├── <template>
+│   └── <Transition :name="slideDirection" mode="out-in">
+│       └── <img :key="imgInfo.id">
+├── <script>
+│   └── slideDirection ref (dynamic transition name)
+│   └── isInitialOpen ref (controls initial animation)
+└── <style scoped>
+    └── @keyframes definitions (200+ lines)
+    └── .slide-*-enter-active / .slide-*-leave-active
+```
+
+### Performance Problems Identified
+
+1. **Blur filter (`filter: blur(40px)`)** — Forces CPU paint, no GPU acceleration
+2. **Large transform values** — `translateX(-1000px)` with `scaleX(2.5) scaleY(0.2)` is extreme
+3. **Animation code mixed with component** — 200+ lines of CSS in single file
+4. **No `will-change` hints** — Browser can't pre-optimize
+5. **No animation composable** — Duplicated animation state logic if used elsewhere
+
+---
+
+## Target Architecture
+
+### Layer Stack for Animations
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      View Layer                              │
-│  (OnlineWallpaper, LocalWallpaper, DownloadWallpaper,       │
-│   SettingPage, ImagePreview, WallpaperList)                  │
+│  (ImagePreview.vue, other animated components)               │
+│  - Uses animation composables                                │
+│  - Minimal inline animation state                            │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Composable Layer                           │
-│  (useWallpaperList, useDownload, useSettings, useAlert,     │
-│   useWallpaperSetter, useLocalFiles)                         │
+│                  Composable Layer                            │
+│  (useImageTransition, useAnimationState)                     │
+│  - Animation direction state                                 │
+│  - Animation timing coordination                             │
+│  - Reduced motion detection                                  │
 └─────────────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    Service Layer                             │
-│  (wallpaperService, downloadService, settingsService,       │
-│   windowService)                                             │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Repository Layer                            │
-│  (wallpaperRepository, downloadRepository, settingsRepository│
-│   windowRepository)                                          │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Client Layer                              │
-│  (electronClient, apiClient)                                 │
-│  STORAGE_KEYS: appSettings, downloadFinishedList,           │
-│                wallpaperQueryParams                          │
+│                    CSS Layer                                 │
+│  (/static/css/animations.css)                                │
+│  - @keyframes definitions                                    │
+│  - Transition classes                                        │
+│  - GPU-optimized properties only                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Key Patterns
+---
 
-1. **IpcResponse Wrapper**: All async operations return `IpcResponse<T>` with `{ success, data?, error? }`
-2. **Store vs Repository Split**:
-   - Store: Reactive state management (Pinia)
-   - Repository: Data persistence (electron-store via electronClient)
-3. **Service as Orchestrator**: Services coordinate repositories and handle business logic
-4. **Composable as View Interface**: Composables expose computed refs and methods, hiding implementation
+## CSS Architecture for Animations
+
+### 1. Dedicated Animation Module
+
+**New File:** `src/static/css/animations.css`
+
+```css
+/**
+ * Animation Module - GPU-optimized animations
+ *
+ * Principles:
+ * - Only use transform and opacity (GPU-accelerated)
+ * - Avoid filter: blur() (CPU-bound)
+ * - Use will-change sparingly for known animations
+ * - Respect prefers-reduced-motion
+ */
+
+/* ============================================
+ * Image Transitions (ImagePreview component)
+ * ============================================ */
+
+/* Base transition setup */
+.img-transition-base {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Slide left (navigate to previous image) */
+@keyframes slide-left-enter {
+  from {
+    transform: translateX(-100%) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-left-leave {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Slide right (navigate to next image) */
+@keyframes slide-right-enter {
+  from {
+    transform: translateX(100%) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-right-leave {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Modal scale animation (open/close) */
+@keyframes modal-scale-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes modal-scale-out {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+/* Transition classes for Vue <Transition> */
+.slide-left-enter-active {
+  animation: slide-left-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-left-leave-active {
+  animation: slide-left-leave 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-right-enter-active {
+  animation: slide-right-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-right-leave-active {
+  animation: slide-right-leave 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    animation: none;
+    transition: opacity 0.15s ease;
+  }
+}
+```
+
+### 2. GPU Optimization Rules
+
+| Property | GPU Accelerated | Recommendation |
+|----------|----------------|----------------|
+| `transform` | ✅ Yes | **Use for all animations** |
+| `opacity` | ✅ Yes | **Use for all animations** |
+| `filter: blur()` | ❌ No | **Avoid in animations** |
+| `box-shadow` | ❌ No | Avoid animating |
+| `width/height` | ❌ No | Never animate |
+| `margin/padding` | ❌ No | Never animate |
+| `background-position` | ⚠️ Partial | Acceptable for simple cases |
+
+### 3. Performance Hints
+
+```css
+/* Apply to elements that WILL animate */
+.will-animate {
+  will-change: transform, opacity;
+  /* Remove after animation completes via JS */
+}
+
+/* Promote to GPU layer (use sparingly) */
+.gpu-layer {
+  transform: translateZ(0);
+  /* or */
+  will-change: transform;
+}
+```
+
+---
+
+## Vue Transition Patterns
+
+### 1. Dynamic Transition Name (Current Pattern — Keep)
+
+```vue
+<template>
+  <Transition
+    :name="slideDirection"
+    mode="out-in"
+  >
+    <img :key="imgInfo.id" :src="imgInfo.path">
+  </Transition>
+</template>
+
+<script setup>
+const slideDirection = ref('slide-left') // or 'slide-right'
+</script>
+```
+
+**Recommendation:** This pattern is correct. Keep it.
+
+### 2. JavaScript Hooks for Complex Animations (Optional)
+
+For cases where CSS isn't sufficient:
+
+```vue
+<template>
+  <Transition
+    :css="false"
+    @enter="onEnter"
+    @leave="onLeave"
+  >
+    <img :key="imgInfo.id" :src="imgInfo.path">
+  </Transition>
+</template>
+
+<script setup>
+import { useImageTransition } from '@/composables'
+
+const { onEnter, onLeave } = useImageTransition()
+</script>
+```
+
+### 3. Transition Group for List Animations
+
+Not needed for ImagePreview (single image), but pattern for reference:
+
+```vue
+<TransitionGroup name="list" tag="div">
+  <div v-for="item in items" :key="item.id">
+    {{ item.text }}
+  </div>
+</TransitionGroup>
+```
+
+---
+
+## Composable Animation Logic
+
+### New Composable: `useImageTransition`
+
+**File:** `src/composables/animation/useImageTransition.ts`
+
+```typescript
+/**
+ * Image transition animation composable
+ *
+ * Manages animation state for image preview transitions
+ */
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
+
+export type TransitionDirection = 'slide-left' | 'slide-right' | 'none'
+
+export interface UseImageTransitionOptions {
+  /** Enable reduced motion detection */
+  respectReducedMotion?: boolean
+  /** Animation duration in ms */
+  duration?: number
+}
+
+export interface UseImageTransitionReturn {
+  /** Current transition name for Vue Transition */
+  transitionName: ComputedRef<string>
+  /** Whether initial open animation should play */
+  isInitialOpen: Ref<boolean>
+  /** Set transition direction for next animation */
+  setDirection: (direction: 'prev' | 'next') => void
+  /** Reset to initial state */
+  reset: () => void
+  /** Mark initial animation as complete */
+  markInitialComplete: () => void
+  /** Whether user prefers reduced motion */
+  prefersReducedMotion: ComputedRef<boolean>
+}
+
+/**
+ * Manages image transition animations
+ */
+export function useImageTransition(
+  options: UseImageTransitionOptions = {}
+): UseImageTransitionReturn {
+  const {
+    respectReducedMotion = true,
+    duration = 300,
+  } = options
+
+  // State
+  const direction = ref<TransitionDirection>('slide-left')
+  const isInitialOpen = ref(true)
+  const reducedMotion = ref(false)
+
+  // Check for reduced motion preference
+  if (respectReducedMotion && typeof window !== 'undefined') {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    reducedMotion.value = mediaQuery.matches
+
+    mediaQuery.addEventListener('change', (e) => {
+      reducedMotion.value = e.matches
+    })
+  }
+
+  // Computed transition name
+  const transitionName = computed(() => {
+    if (reducedMotion.value || direction.value === 'none') {
+      return 'fade'
+    }
+    return direction.value
+  })
+
+  const prefersReducedMotion = computed(() => reducedMotion.value)
+
+  // Methods
+  const setDirection = (dir: 'prev' | 'next') => {
+    direction.value = dir === 'prev' ? 'slide-left' : 'slide-right'
+  }
+
+  const reset = () => {
+    direction.value = 'slide-left'
+    isInitialOpen.value = true
+  }
+
+  const markInitialComplete = () => {
+    isInitialOpen.value = false
+  }
+
+  return {
+    transitionName,
+    isInitialOpen,
+    setDirection,
+    reset,
+    markInitialComplete,
+    prefersReducedMotion,
+  }
+}
+```
+
+### Integration with Existing Composables
+
+```typescript
+// src/composables/index.ts
+export { useImageTransition, type TransitionDirection } from './animation/useImageTransition'
+```
+
+---
+
+## Separation of Animation Definitions
+
+### Before (Current State)
+
+```
+ImagePreview.vue (586 lines total)
+├── Template: ~50 lines
+├── Script: ~150 lines
+└── Style: ~386 lines (including ~200 lines of @keyframes)
+```
+
+### After (Proposed)
+
+```
+src/
+├── static/css/
+│   └── animations.css          # Shared animation definitions (~150 lines)
+├── composables/
+│   └── animation/
+│       └── useImageTransition.ts # Animation state logic (~80 lines)
+└── components/
+    └── ImagePreview.vue         # Reduced to ~250 lines
+```
 
 ---
 
 ## Integration Points
 
-### 1. Client Layer — Minimal Changes
+### 1. ImagePreview.vue — Main Integration
 
-| Component | Status | Change Required |
-|-----------|--------|-----------------|
-| `electronClient` | Existing | No change (uses generic `storeGet`/`storeSet`) |
-| `apiClient` | Existing | No change |
-| `STORAGE_KEYS` | Existing | **Add**: `FAVORITES_LIST` |
+| Area | Current | Change |
+|------|---------|--------|
+| Transition direction | `slideDirection` ref | Use `useImageTransition().transitionName` |
+| Initial animation | `isInitialOpen` ref | Use `useImageTransition().isInitialOpen` |
+| Animation CSS | Inline `<style scoped>` | Import from `animations.css` |
+| Keyframes | 200+ lines inline | Move to `animations.css` |
 
-**New Storage Key:**
-```typescript
-// src/clients/constants.ts
-export const STORAGE_KEYS = {
-  APP_SETTINGS: 'appSettings',
-  DOWNLOAD_FINISHED_LIST: 'downloadFinishedList',
-  WALLPAPER_QUERY_PARAMS: 'wallpaperQueryParams',
-  FAVORITES_LIST: 'favoritesList',  // NEW
-} as const
-```
+### 2. Other Animated Components
 
-### 2. Repository Layer — New Component
-
-| Component | Status | Change Required |
-|-----------|--------|-----------------|
-| `wallpaperRepository` | Existing | No change |
-| `downloadRepository` | Existing | No change |
-| `settingsRepository` | Existing | No change |
-| `windowRepository` | Existing | No change |
-| `favoritesRepository` | **NEW** | Create |
-
-**New Repository Pattern (follow `downloadRepository`):**
-```typescript
-// src/repositories/favorites.repository.ts
-import type { IpcResponse } from '@/shared/types/ipc'
-import type { FavoriteItem } from '@/types'
-import { electronClient, STORAGE_KEYS } from '@/clients'
-
-const MAX_FAVORITES = 200  // Reasonable limit
-
-export const favoritesRepository = {
-  async get(): Promise<IpcResponse<FavoriteItem[]>> { ... },
-  async set(items: FavoriteItem[]): Promise<IpcResponse<void>> { ... },
-  async add(item: FavoriteItem): Promise<IpcResponse<void>> { ... },
-  async remove(id: string): Promise<IpcResponse<void>> { ... },
-  async clear(): Promise<IpcResponse<void>> { ... },
-  async exists(wallpaperId: string): Promise<boolean> { ... },
-}
-```
-
-**Exports Update:**
-```typescript
-// src/repositories/index.ts
-export { favoritesRepository } from './favorites.repository'
-```
-
-### 3. Service Layer — New Component
-
-| Component | Status | Change Required |
-|-----------|--------|-----------------|
-| `wallpaperService` | Existing | No change |
-| `downloadService` | Existing | No change |
-| `settingsService` | Existing | No change |
-| `windowService` | Existing | No change |
-| `favoritesService` | **NEW** | Create |
-
-**New Service Pattern (follow `downloadService`):**
-```typescript
-// src/services/favorites.service.ts
-import type { IpcResponse } from '@/shared/types/ipc'
-import type { FavoriteItem, WallpaperItem } from '@/types'
-import { favoritesRepository } from '@/repositories'
-
-class FavoritesServiceImpl {
-  async getAll(): Promise<IpcResponse<FavoriteItem[]>> { ... }
-  async add(wallpaper: WallpaperItem): Promise<IpcResponse<void>> { ... }
-  async remove(wallpaperId: string): Promise<IpcResponse<void>> { ... }
-  async toggle(wallpaper: WallpaperItem): Promise<IpcResponse<{ added: boolean }>> { ... }
-  async isFavorite(wallpaperId: string): Promise<boolean> { ... }
-  async clear(): Promise<IpcResponse<void>> { ... }
-}
-
-export const favoritesService = new FavoritesServiceImpl()
-```
-
-**Exports Update:**
-```typescript
-// src/services/index.ts
-export { favoritesService, type FavoritesListResult } from './favorites.service'
-```
-
-### 4. Composable Layer — New Component
-
-| Component | Status | Change Required |
-|-----------|--------|-----------------|
-| `useWallpaperList` | Existing | No change |
-| `useDownload` | Existing | No change |
-| `useSettings` | Existing | No change |
-| `useAlert` | Existing | No change |
-| `useWallpaperSetter` | Existing | No change |
-| `useLocalFiles` | Existing | No change |
-| `useFavorites` | **NEW** | Create |
-
-**New Composable Pattern (follow `useDownload`):**
-```typescript
-// src/composables/favorites/useFavorites.ts
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
-import { favoritesService } from '@/services'
-import { useAlert } from '@/composables'
-import type { FavoriteItem, WallpaperItem } from '@/types'
-
-export interface UseFavoritesReturn {
-  // State
-  favorites: ComputedRef<FavoriteItem[]>
-  loading: ComputedRef<boolean>
-  favoriteIds: ComputedRef<Set<string>>  // For O(1) lookup
-  
-  // Methods
-  load: () => Promise<boolean>
-  add: (wallpaper: WallpaperItem) => Promise<boolean>
-  remove: (wallpaperId: string) => Promise<boolean>
-  toggle: (wallpaper: WallpaperItem) => Promise<{ added: boolean }>
-  isFavorite: (wallpaperId: string) => boolean
-  clear: () => Promise<boolean>
-}
-
-export function useFavorites(): UseFavoritesReturn { ... }
-```
-
-**Exports Update:**
-```typescript
-// src/composables/index.ts
-export { useFavorites, type UseFavoritesReturn } from './favorites/useFavorites'
-```
-
-### 5. View Layer — Modified + New
-
-| Component | Status | Change Required |
-|-----------|--------|-----------------|
-| `OnlineWallpaper.vue` | Existing | **Modify**: Add favorite button integration |
-| `LocalWallpaper.vue` | Existing | No change |
-| `DownloadWallpaper.vue` | Existing | No change |
-| `SettingPage.vue` | Existing | No change |
-| `ImagePreview.vue` | Existing | **Modify**: Add favorite button to preview |
-| `WallpaperList.vue` | Existing | **Modify**: Add favorite indicator to cards |
-| `FavoritesWallpaper.vue` | **NEW** | Create favorites browsing page |
-| `Main.vue` | Existing | **Modify**: Add navigation item for favorites |
-
-### 6. Router — Modified
-
-**Add New Route:**
-```typescript
-// src/router/index.ts
-const routes: RouteRecordRaw[] = [
-  // ...existing routes...
-  {
-    path: '/favorites',
-    name: 'FavoritesWallpaper',
-    component: () => import('@/views/FavoritesWallpaper.vue'),
-    meta: {
-      title: '我的收藏',
-      icon: 'fas fa-star',
-    },
-  },
-]
-```
-
-### 7. Types — New Definitions
-
-**Add to `src/types/index.ts`:**
-```typescript
-/**
- * 收藏项
- */
-export interface FavoriteItem {
-  id: string              // Unique ID (same as wallpaper ID for dedup)
-  wallpaperId: string     // Wallhaven wallpaper ID
-  url: string             // Full resolution URL
-  thumbs: WallpaperThumb  // Thumbnails
-  resolution: string      // e.g. "1920x1080"
-  fileSize: number        // File size in bytes
-  addedAt: string         // ISO timestamp when favorited
-}
-```
-
-### 8. IPC Channels — No New Channels
-
-The favorites feature uses existing generic store channels:
-- `store-get` — Read favorites list
-- `store-set` — Save favorites list
-- `store-delete` — Clear favorites
-
-**No new IPC handler required.** This follows the pattern used by `downloadRepository` for finished downloads.
-
----
-
-## Data Flow Diagram
-
-### Add to Favorites Flow
-
-```
-User clicks ★ on wallpaper card
-    │
-    ▼
-WallpaperList.vue / ImagePreview.vue
-    │ @toggle-favorite
-    ▼
-OnlineWallpaper.vue
-    │ useFavorites().add(wallpaper)
-    ▼
-useFavorites (composable)
-    │ favoritesService.add(wallpaper)
-    ▼
-favoritesService
-    │ favoritesRepository.add(item)
-    ▼
-favoritesRepository
-    │ electronClient.storeSet(STORAGE_KEYS.FAVORITES_LIST, items)
-    ▼
-electronClient
-    │ window.electronAPI.storeSet({ key, value })
-    ▼
-IPC: 'store-set'
-    │
-    ▼
-Main Process: electron-store writes to disk
-```
-
-### Load Favorites Flow
-
-```
-App startup / Favorites page mounted
-    │
-    ▼
-useFavorites().load()
-    │
-    ▼
-favoritesService.getAll()
-    │
-    ▼
-favoritesRepository.get()
-    │
-    ▼
-electronClient.storeGet(STORAGE_KEYS.FAVORITES_LIST)
-    │
-    ▼
-IPC: 'store-get'
-    │
-    ▼
-Main Process: electron-store reads from disk
-    │
-    ▼
-Returns: FavoriteItem[] → Service → Composable → View
-```
-
----
-
-## Component Summary
-
-### New Components (7 files)
-
-| Layer | File | Purpose |
-|-------|------|---------|
-| Client | `constants.ts` (modify) | Add `FAVORITES_LIST` storage key |
-| Types | `index.ts` (modify) | Add `FavoriteItem` interface |
-| Repository | `favorites.repository.ts` | Data persistence |
-| Service | `favorites.service.ts` | Business logic |
-| Composable | `favorites/useFavorites.ts` | View interface |
-| View | `FavoritesWallpaper.vue` | Favorites browsing page |
-| Router | `index.ts` (modify) | Add `/favorites` route |
-
-### Modified Components (5 files)
-
-| Layer | File | Change |
-|-------|------|--------|
-| View | `OnlineWallpaper.vue` | Import useFavorites, add toggle logic |
-| View | `ImagePreview.vue` | Add favorite button |
-| View | `WallpaperList.vue` | Add favorite indicator + event emission |
-| View | `Main.vue` | Add navigation item for favorites |
-| Exports | `repositories/index.ts` | Export favoritesRepository |
-| Exports | `services/index.ts` | Export favoritesService |
-| Exports | `composables/index.ts` | Export useFavorites |
+| Component | Animations | Can Use Shared CSS |
+|-----------|------------|-------------------|
+| Alert.vue | fade, slide-in | ✅ Use shared fade |
+| CollectionDropdown.vue | scale + translate | ✅ Use shared dropdown animation |
+| LoadingOverlay.vue | fade | ✅ Use shared fade |
+| WallpaperList.vue | check pop, spin | ✅ Use shared animations |
 
 ---
 
 ## Build Order
 
-### Phase 1: Foundation (Data Layer)
-1. `src/types/index.ts` — Add `FavoriteItem` type
-2. `src/clients/constants.ts` — Add `FAVORITES_LIST` storage key
-3. `src/repositories/favorites.repository.ts` — Create repository
-4. `src/repositories/index.ts` — Export repository
+### Phase 1: Create Animation Infrastructure
+1. Create `src/static/css/animations.css` with optimized keyframes
+2. Create `src/composables/animation/useImageTransition.ts`
 
-### Phase 2: Business Logic
-5. `src/services/favorites.service.ts` — Create service
-6. `src/services/index.ts` — Export service
+### Phase 2: Refactor ImagePreview.vue
+3. Import animation CSS module
+4. Replace inline @keyframes with imported classes
+5. Integrate `useImageTransition` composable
+6. Remove blur filter from animations
+7. Add `will-change` hints
 
-### Phase 3: View Interface
-7. `src/composables/favorites/useFavorites.ts` — Create composable
-8. `src/composables/index.ts` — Export composable
-
-### Phase 4: UI Integration
-9. `src/views/FavoritesWallpaper.vue` — Create favorites page
-10. `src/router/index.ts` — Add route
-11. `src/Main.vue` — Add navigation item
-
-### Phase 5: Feature Integration
-12. `src/components/WallpaperList.vue` — Add favorite indicator
-13. `src/components/ImagePreview.vue` — Add favorite button
-14. `src/views/OnlineWallpaper.vue` — Wire up favorite logic
+### Phase 3: Optimize Other Components
+8. Update Alert.vue to use shared fade animation
+9. Update CollectionDropdown.vue to use shared animation
+10. Update LoadingOverlay.vue to use shared fade
 
 ---
 
-## Architecture Decisions
+## New vs Modified Components
 
-### Decision 1: No New IPC Channels
-**Rationale:** Favorites use simple CRUD operations on a JSON list. The existing `store-get/set/delete` channels are sufficient. This minimizes IPC surface area and follows the pattern of `downloadRepository`.
+### New Files (2)
 
-**Alternative Considered:** Dedicated IPC channels (`favorites-get`, `favorites-add`, etc.) would add complexity without benefit for this use case.
+| File | Purpose |
+|------|---------|
+| `src/static/css/animations.css` | Centralized GPU-optimized animation definitions |
+| `src/composables/animation/useImageTransition.ts` | Animation state management composable |
 
-### Decision 2: In-Memory Favorite IDs Set
-**Rationale:** For O(1) `isFavorite()` checks, the composable maintains a `Set<string>` of favorite IDs alongside the full list. This is kept in sync by the composable's internal logic.
+### Modified Files (4)
 
-### Decision 3: WallpaperItem → FavoriteItem Transformation
-**Rationale:** Store minimal data needed for display (thumbnail, resolution, URL) rather than the full `WallpaperItem`. This reduces storage size and the favorite remains valid even if the original API data changes.
+| File | Change |
+|------|--------|
+| `src/components/ImagePreview.vue` | Use animation composable, remove inline CSS |
+| `src/components/Alert.vue` | Use shared fade animation |
+| `src/components/favorites/CollectionDropdown.vue` | Use shared dropdown animation |
+| `src/components/LoadingOverlay.vue` | Use shared fade animation |
+| `src/composables/index.ts` | Export new composable |
 
-### Decision 4: ID as Wallpaper ID
-**Rationale:** Use the Wallhaven wallpaper ID as the unique identifier. This enables deduplication and allows `isFavorite()` checks without iterating the list.
+---
+
+## Performance Benchmarks
+
+### Before Optimization
+- `slide-in-blurred-left`: Uses `filter: blur(40px)` → CPU paint, ~15-30fps on low-end
+- Large transform values → Janky animation
+
+### After Optimization
+- Slide animations: `transform` + `opacity` only → GPU accelerated, 60fps
+- Smaller transform values → Smoother interpolation
+- `will-change` hints → Browser pre-optimization
 
 ---
 
@@ -403,44 +517,57 @@ Returns: FavoriteItem[] → Service → Composable → View
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Storage overflow | Low | Medium | Implement 200-item limit with LRU eviction |
-| Data migration | None | N/A | New feature, no existing data to migrate |
-| Performance on large lists | Low | Low | Set for O(1) lookups, limit on stored items |
-| Sync issues | Low | Medium | Single source of truth in repository layer |
+| Visual regression | Low | Medium | Test all animations match original timing |
+| Reduced motion not respected | Low | Medium | Composable handles media query |
+| Missing animation file | None | N/A | CSS imported, build-time check |
+| Performance not improved | Low | Low | Benchmark before/after |
 
 ---
 
 ## Validation Checklist
 
-- [x] All integration points identified
-- [x] New components explicitly listed
-- [x] Modified components explicitly listed
-- [x] Build order considers dependencies
-- [x] Follows existing patterns (repository, service, composable)
-- [x] No breaking changes to existing functionality
-- [x] No new IPC channels required
-- [x] Types defined before implementation
+- [x] Integration point identified (ImagePreview.vue)
+- [x] New components explicitly listed (animations.css, useImageTransition.ts)
+- [x] Modified components explicitly listed (4 components)
+- [x] Build order considers dependencies (infrastructure first)
+- [x] Vue Transition usage preserved (dynamic name pattern)
+- [x] GPU-accelerated properties only (transform, opacity)
+- [x] Reduced motion support included
 
 ---
 
 ## Downstream Consumer Notes
 
 ### For Requirements Phase
-- Define `FavoriteItem` structure precisely
-- Specify max storage limit behavior
-- Define toggle behavior (add/remove)
+- Define animation timing values (300ms default)
+- Specify reduced motion behavior
+- Define which animations need optimization
 
 ### For Planning Phase
-- Follow build order strictly (dependencies)
+- Follow build order (infrastructure → ImagePreview → other components)
 - Each phase can be independently tested
-- No parallel work across phases (sequential deps)
+- CSS changes have no runtime dependencies
 
 ### For Implementation Phase
-- Use existing patterns as templates
-- `downloadRepository` is the best reference for `favoritesRepository`
-- `useDownload` is the best reference for `useFavorites`
+- Use Chrome DevTools Performance tab to benchmark
+- Test on low-end hardware
+- Verify reduced motion preference works
 
 ---
 
-*Research completed: 2026-04-28*
-*For: v2.5 Favorites Feature*
+## References
+
+### Current Animation Code
+- `src/components/ImagePreview.vue` lines 465-583 (@keyframes definitions)
+- `src/components/Alert.vue` lines 236-281 (fade animation)
+- `src/components/favorites/CollectionDropdown.vue` lines 194-223 (dropdown animation)
+
+### Best Practices
+- [Web.dev: CSS Animation Performance](https://web.dev/articles/css-animation-performance)
+- [Vue 3 Transition Documentation](https://vuejs.org/guide/built-ins/transition)
+- [MDN: will-change](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change)
+
+---
+
+*Research completed: 2026-04-30*
+*For: v2.8 Animation Performance Optimization*

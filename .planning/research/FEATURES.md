@@ -1,352 +1,485 @@
-# 下载断点续传功能 — 功能研究
+# 动画性能优化 — 功能研究
 
-> 研究目标：为 v2.1 里程碑添加下载断点续传能力
+> 研究目标：为 v2.8 里程碑优化 ImagePreview 组件动画性能，确保流畅 60fps 体验
 
 ---
 
-## 一、功能分类
+## 一、当前实现分析
 
-### 1.1 Table Stakes（基础必备）
+### 1.1 现有动画类型
 
-这些是断点续传功能的核心能力，不做就不叫「断点续传」：
+| 动画 | 触发条件 | 当前实现 | 性能问题 |
+|------|----------|----------|----------|
+| **打开预览** | 首次打开 | `blowUpModal` keyframes (scale 0→1) | ✅ 仅 transform，性能良好 |
+| **关闭预览** | 关闭时 | `blowUpModalTwo` keyframes (scale 1→0) | ✅ 仅 transform，性能良好 |
+| **导航切换** | 左右箭头 | `slide-in-blurred-left/right` | ⚠️ 使用 blur filter，性能瓶颈 |
+| **遮罩层** | 打开/关闭 | opacity + visibility transition | ✅ 性能良好 |
+
+### 1.2 性能瓶颈识别
+
+**问题 1：blur filter 导致重绘**
+
+```css
+/* 当前实现 - 使用 blur filter */
+@keyframes slide-in-blurred-left {
+  0% {
+    transform: translateX(-1000px) scaleX(2.5) scaleY(0.2);
+    filter: blur(40px);  /* ⚠️ 触发 CPU 重绘，非 GPU 加速 */
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scaleY(1) scaleX(1);
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+```
+
+**问题原因：**
+- `filter: blur()` 不在 GPU 加速属性列表中
+- 动态 blur 值变化导致每一帧都需要 CPU 重绘
+- 在 Electron 中，Chromium 的软件渲染路径会增加额外开销
+
+**问题 2：scaleX/Y 与 translateX 组合**
+
+```css
+transform: translateX(-1000px) scaleX(2.5) scaleY(0.2);
+```
+
+虽然 `transform` 是 GPU 加速属性，但 `scaleX(2.5) scaleY(0.2)` 创建了非均匀缩放，可能增加合成层计算复杂度。
+
+---
+
+## 二、功能分类
+
+### 2.1 Table Stakes（基础必备）
+
+这些是 60fps 动画的核心技术要求，不做就无法达到流畅体验：
 
 | 功能 | 说明 | 复杂度 | 依赖 |
 |------|------|--------|------|
-| **HTTP Range 请求** | 使用 Range header 从指定字节位置继续下载 | 中 | 服务器支持 |
-| **临时文件保留** | 暂停时保留 `.download` 临时文件，不删除 | 低 | 无 |
-| **进度持久化** | 将下载进度（offset、totalSize）持久化到存储 | 中 | electron-store |
-| **恢复下载** | 从暂停点继续，而非重新开始 | 中 | Range + 临时文件 |
-| **暂停时记录 offset** | 暂停时准确记录已下载字节数 | 低 | 无 |
+| **GPU 加速属性** | 仅使用 `transform` 和 `opacity` 进行动画 | 低 | 无 |
+| **will-change 提示** | 提前告知浏览器哪些属性会变化 | 低 | 无 |
+| **移除 blur filter** | 用纯 transform 实现等效视觉效果 | 低 | 无 |
+| **硬件加速层** | 使用 `transform: translateZ(0)` 强制 GPU 层 | 低 | 无 |
 
-### 1.2 Differentiators（差异化功能）
+### 2.2 Differentiators（差异化功能）
 
-提升用户体验，但不是必需的：
+提升用户体验的增强功能：
 
 | 功能 | 说明 | 复杂度 | 依赖 |
 |------|------|--------|------|
-| **应用重启恢复** | 应用重启后自动恢复未完成任务 | 高 | 进度持久化 + 任务队列持久化 |
-| **网络中断自动恢复** | 网络中断后自动重试继续下载 | 中 | 重试机制 |
-| **服务器不支持提示** | 服务器不支持 Range 时明确告知用户 | 低 | 无 |
-| **文件变更检测** | 检测服务器文件是否已变更 | 高 | ETag/Last-Modified |
+| **reduced-motion 支持** | 尊重用户 `prefers-reduced-motion` 设置 | 低 | 无 |
+| **动画时长优化** | 根据帧率动态调整动画时长 | 中 | requestAnimationFrame |
+| **transform-origin 优化** | 正确设置变换原点提升视觉流畅度 | 低 | 无 |
+| **FLIP 动画技术** | First-Last-Invert-Play，减少布局抖动 | 高 | 无 |
 
-### 1.3 Anti-features（应避免的功能）
-
-这些功能看似合理，但会带来问题：
+### 2.3 Anti-features（应避免的功能）
 
 | 功能 | 为什么是 Anti-feature |
 |------|----------------------|
-| **多线程分片下载** | 复杂度过高，壁纸文件通常不会太大（<50MB），收益有限 |
-| **自动重试无限次** | 可能导致服务器压力过大，应限制重试次数 |
-| **断点续传队列调度** | 当前只需要单任务断点续传，队列管理可后续迭代 |
-| **下载限速** | 非核心需求，且增加复杂度 |
+| **JavaScript 驱动动画** | 增加主线程负担，可能阻塞渲染 |
+| **width/height 动画** | 触发布局重排，性能极差 |
+| **left/top 动画** | 触发布局重排，应使用 transform |
+| **margin/padding 动画** | 触发布局重排，性能极差 |
+| **box-shadow 动画** | 每帧重绘，昂贵操作 |
+| **background-color 动画** | 非硬件加速，应使用 opacity 叠加 |
+| **过度使用 will-change** | 内存占用增加，应仅对动画元素使用 |
 
 ---
 
-## 二、断点续传工作原理
+## 三、GPU 加速属性详解
 
-### 2.1 正常流程（用户暂停后恢复）
+### 3.1 GPU 加速属性列表
 
-```
-用户点击下载
-    │
-    ▼
-开始下载 → 创建 .download 临时文件 → 持续写入 + 发送进度
-    │
-    ▼ (用户点击暂停)
-记录当前 offset → 中止 HTTP 请求 → 保留临时文件 → 更新状态为 'paused'
-    │
-    ▼ (用户点击恢复)
-检查临时文件存在 → 获取文件当前大小 → 发送 Range 请求 (Range: bytes=offset-)
-    │
-    ▼
-从断点继续写入 → 进度从 offset 开始计算 → 完成后重命名文件
-```
+以下属性可以通过 GPU 合成层进行硬件加速：
 
-### 2.2 异常流程（应用崩溃/重启）
+| 属性 | 说明 | 性能评级 |
+|------|------|----------|
+| `transform` | 2D/3D 变换 | ⭐⭐⭐ 最佳 |
+| `opacity` | 透明度 | ⭐⭐⭐ 最佳 |
+| `filter` (有限) | 特定情况下部分支持 | ⭐ 不推荐用于动画 |
 
-```
-应用崩溃/关闭
-    │
-    ▼
-临时文件保留在磁盘 → 进度记录在 electron-store
-    │
-    ▼ (应用重新启动)
-读取 store 中的未完成任务列表 → 检查临时文件是否存在
-    │
-    ▼ (临时文件存在)
-显示任务为 'paused' 状态 → 用户可点击恢复
-    │
-    ▼ (临时文件不存在或损坏)
-显示任务为 'failed' 状态 → 提示用户重新下载
-```
+### 3.2 非 GPU 加速属性（避免动画化）
 
-### 2.3 网络中断处理
+| 属性 | 替代方案 |
+|------|----------|
+| `width/height` | 使用 `transform: scale()` |
+| `left/top/right/bottom` | 使用 `transform: translate()` |
+| `margin/padding` | 使用 `transform: translate()` 或容器动画 |
+| `background-color` | 使用伪元素 + `opacity` |
+| `box-shadow` | 使用伪元素 + `transform` + `opacity` |
+| `filter: blur()` | 无直接替代，考虑移除或静态使用 |
 
-```
-网络中断 → axios 抛出错误 → 捕获错误 → 检查是否可恢复
-    │
-    ├── 临时文件完整 → 自动重试（最多 3 次）
-    │
-    └── 临时文件损坏 → 标记失败，提示用户
-```
+### 3.3 强制 GPU 层创建
 
----
+```css
+/* 方法 1: translateZ(0) */
+.gpu-layer {
+  transform: translateZ(0);
+}
 
-## 三、服务器兼容性处理
+/* 方法 2: will-change */
+.animated-element {
+  will-change: transform, opacity;
+}
 
-### 3.1 服务器支持 Range（最佳情况）
-
-**请求头：**
-```
-GET /wallpaper.jpg HTTP/1.1
-Range: bytes=1048576-
-```
-
-**响应头：**
-```
-HTTP/1.1 206 Partial Content
-Content-Range: bytes 1048576-5242880/5242881
-Content-Length: 4194305
-```
-
-**行为：** 正常从断点继续下载
-
-### 3.2 服务器不支持 Range（降级处理）
-
-**检测方式：**
-1. 首次下载时检查响应头 `Accept-Ranges: bytes`
-2. 或发送 HEAD 请求检测
-
-**响应：**
-```
-HTTP/1.1 200 OK
-# 没有 Accept-Ranges 或 Content-Range
-```
-
-**降级行为：**
-1. 提示用户「服务器不支持断点续传，将重新下载」
-2. 删除临时文件，从头开始
-3. 更新 UI 显示「不支持断点续传」标签
-
-### 3.3 文件在服务器上已变更（边缘情况）
-
-**检测方式：**
-1. 首次下载记录 `ETag` 或 `Last-Modified`
-2. 恢复时发送 `If-Range` 头
-
-**请求：**
-```
-GET /wallpaper.jpg HTTP/1.1
-Range: bytes=1048576-
-If-Range: "abc123etag"
-```
-
-**服务器文件未变更：**
-```
-HTTP/1.1 206 Partial Content  # 继续下载
-```
-
-**服务器文件已变更：**
-```
-HTTP/1.1 200 OK  # 返回完整新文件
-```
-
-**处理逻辑：**
-- 如果返回 206：继续断点续传
-- 如果返回 200：删除临时文件，从头下载新文件
-
----
-
-## 四、UI/UX 预期
-
-### 4.1 进度显示
-
-| 状态 | UI 表现 |
-|------|---------|
-| downloading | 进度条动画 + 百分比 + 速度 |
-| paused | 进度条静止（显示已下载百分比）+ 「恢复」按钮 |
-| waiting | 进度条为 0 + 等待状态 |
-| failed | 进度条变红 + 「重试」按钮 |
-| completed | 进度条 100% + 「打开文件夹」按钮 |
-
-### 4.2 用户操作
-
-| 操作 | 预期行为 |
-|------|---------|
-| 点击暂停 | 立即停止下载，保留进度，按钮变为「恢复」 |
-| 点击恢复 | 从断点继续下载，按钮变为「暂停」 |
-| 点击取消 | 删除临时文件，从列表移除任务 |
-| 关闭应用 | 保留任务状态，下次打开可恢复 |
-| 网络断开 | 显示「网络中断，等待恢复」提示 |
-
-### 4.3 错误提示
-
-| 场景 | 提示信息 |
-|------|---------|
-| 服务器不支持 Range | 「服务器不支持断点续传，将重新下载」 |
-| 临时文件损坏 | 「下载文件已损坏，请重新下载」 |
-| 网络中断 | 「网络连接中断，点击恢复继续下载」 |
-| 服务器文件变更 | 「文件已更新，正在重新下载」 |
-
----
-
-## 五、技术实现要点
-
-### 5.1 数据结构变更
-
-**DownloadItem 新增字段：**
-```typescript
-interface DownloadItem {
-  // ... 现有字段
-  offset: number          // 已下载字节数
-  totalSize?: number      // 文件总大小
-  tempPath?: string       // 临时文件路径
-  etag?: string           // 用于检测文件变更
-  lastModified?: string   // 用于检测文件变更
-  supportsRange?: boolean // 服务器是否支持断点续传
+/* 方法 3: backface-visibility (已在项目中使用) */
+.hidden-backface {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 ```
 
-**新增持久化数据：**
-```typescript
-interface PersistedDownloadTask {
-  id: string
-  url: string
-  filename: string
-  offset: number
-  totalSize: number
-  tempPath: string
-  etag?: string
-  lastModified?: string
-  state: 'paused' | 'failed'
+**注意：** `will-change` 应谨慎使用，仅在需要时添加，动画结束后移除，否则会持续占用 GPU 内存。
+
+---
+
+## 四、blur filter 替代方案
+
+### 4.1 方案对比
+
+| 方案 | 视觉效果 | 性能 | 复杂度 | 推荐度 |
+|------|----------|------|--------|--------|
+| **移除 blur 效果** | 无模糊 | ⭐⭐⭐ 最佳 | 低 | ✅ 推荐 |
+| **纯 transform 缩放** | 轻微模糊感 | ⭐⭐⭐ 最佳 | 低 | ✅ 推荐 |
+| **静态 blur + scale 动画** | 保持模糊感 | ⭐⭐ 良好 | 中 | ⚠️ 可选 |
+| **JS 驱动 blur** | 完全模糊 | ⭐ 差 | 高 | ❌ 不推荐 |
+| **Canvas/SVG 模糊** | 完全模糊 | ⭐⭐ 一般 | 高 | ❌ 过度设计 |
+
+### 4.2 推荐方案：纯 transform 缩放动画
+
+**优化后的动画（移除 blur）：**
+
+```css
+@keyframes slide-in-optimized {
+  0% {
+    transform: translateX(-100px) scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
 }
 ```
 
-### 5.2 关键代码修改点
+**视觉效果对比：**
+- 原效果：translateX(-1000px) + scaleX(2.5) scaleY(0.2) + blur(40px)
+- 优化后：translateX(-100px) + scale(0.95)
+- 视觉差异：轻微，模糊效果被移除但整体流畅度大幅提升
 
-| 文件 | 修改内容 |
-|------|---------|
-| `download.handler.ts` | 添加 Range 请求逻辑，保留临时文件 |
-| `useDownload.ts` | 修改 resumeDownload 方法，传递 offset |
-| `download.service.ts` | 添加 resumeDownload 方法 |
-| `electron.client.ts` | 添加 resumeDownloadTask 方法 |
-| `download.store.ts` | 持久化未完成任务 |
+### 4.3 备选方案：静态 blur + 动画分离
 
-### 5.3 实现复杂度评估
+如果需要保留模糊感，可以将模糊作为静态效果：
 
-| 任务 | 复杂度 | 工时估计 |
-|------|--------|----------|
-| Range 请求支持 | 中 | 4h |
-| 临时文件管理 | 低 | 2h |
-| 进度持久化 | 中 | 3h |
-| 应用重启恢复 | 高 | 4h |
-| 错误处理与 UI 反馈 | 中 | 3h |
-| 测试与边界情况 | 中 | 4h |
-| **总计** | — | **~20h** |
+```css
+/* 入场动画 - blur 是静态的 */
+.slide-enter-from {
+  transform: translateX(-100px);
+  opacity: 0;
+  filter: blur(10px);  /* 静态模糊，不动画化 */
+}
+.slide-enter-to {
+  transform: translateX(0);
+  opacity: 1;
+  filter: blur(0);
+}
+```
 
----
-
-## 六、依赖关系
-
-### 6.1 现有功能依赖
-
-| 现有功能 | 断点续传依赖方式 |
-|----------|-----------------|
-| 下载任务管理 | 复用现有 DownloadStore |
-| 进度回调机制 | 复用现有 IPC 通道 |
-| 临时文件命名 | 扩展现有 `.download` 后缀 |
-| AbortController | 继续使用，暂停时不删除临时文件 |
-
-### 6.2 新增依赖
-
-| 依赖 | 用途 |
-|------|------|
-| electron-store | 持久化未完成任务 |
-| HTTP Range 支持 | 服务器端支持（Wallhaven 支持） |
+**注意：** 即使 blur 值是静态的，元素仍然需要重绘，只是避免了 blur 值变化的重绘开销。
 
 ---
 
-## 七、边界情况与风险
+## 五、帧时序优化
 
-### 7.1 边界情况
+### 5.1 理想帧时间
 
-| 情况 | 处理方式 |
-|------|---------|
-| 临时文件被用户手动删除 | 检测文件不存在，标记失败，提示重新下载 |
-| 服务器返回 416 Range Not Satisfiable | 删除临时文件，从头下载 |
-| 磁盘空间不足 | 检测空间，提前提示用户 |
-| 并发多个下载恢复 | 支持多任务并行恢复（当前架构已支持） |
-| 下载路径被用户修改 | 检测路径变更，提示用户选择新路径或删除任务 |
+| 指标 | 目标值 | 说明 |
+|------|--------|------|
+| **帧时间** | 16.67ms | 1000ms / 60fps |
+| **JS 执行** | < 10ms | 留出渲染时间 |
+| **样式计算** | < 2ms | CSS 选择器匹配 |
+| **布局** | < 2ms | 重排计算 |
+| **绘制** | < 2ms | 光栅化 |
 
-### 7.2 风险评估
+### 5.2 动画时长建议
+
+| 场景 | 推荐时长 | 理由 |
+|------|----------|------|
+| **快速反馈** | 100-200ms | 按钮点击、hover |
+| **页面过渡** | 200-300ms | 当前项目使用 300ms ✅ |
+| **复杂动画** | 300-500ms | 模态框打开/关闭 |
+| **情绪化动画** | 500ms+ | 品牌展示、加载 |
+
+### 5.3 缓动函数选择
+
+| 缓动函数 | 使用场景 | CSS |
+|----------|----------|-----|
+| **ease-out** | 入场动画 | `cubic-bezier(0, 0, 0.2, 1)` |
+| **ease-in** | 出场动画 | `cubic-bezier(0.4, 0, 1, 1)` |
+| **ease-in-out** | 状态切换 | `cubic-bezier(0.4, 0, 0.2, 1)` |
+| **custom** | 品牌动画 | `cubic-bezier(0.165, 0.84, 0.44, 1)` ✅ 当前使用 |
+
+---
+
+## 六、Reduced Motion 支持
+
+### 6.1 无障碍要求
+
+根据 WCAG 2.1 标准：
+- 用户应能禁用动画
+- 动画不应导致前庭障碍用户感到不适
+- 尊重 `prefers-reduced-motion` 系统设置
+
+### 6.2 实现方式
+
+**CSS 媒体查询：**
+
+```css
+/* 默认动画 */
+.animated-element {
+  transition: transform 0.3s ease-out;
+}
+
+/* 尊重 reduced-motion 设置 */
+@media (prefers-reduced-motion: reduce) {
+  .animated-element {
+    transition: none;  /* 或使用 opacity 渐变替代 */
+  }
+  
+  /* 关键动画仍保留（如反馈指示） */
+  .essential-animation {
+    transition: opacity 0.1s;  /* 最小化动画 */
+  }
+}
+```
+
+**JavaScript 检测：**
+
+```typescript
+// 检测用户偏好
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// 根据偏好调整动画
+const animationDuration = prefersReducedMotion ? 0 : 300
+```
+
+### 6.3 Vue 组件集成
+
+```vue
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const reducedMotion = ref(false)
+
+const checkReducedMotion = () => {
+  reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+onMounted(() => {
+  checkReducedMotion()
+  window.matchMedia('(prefers-reduced-motion: reduce)')
+    .addEventListener('change', checkReducedMotion)
+})
+
+onUnmounted(() => {
+  window.matchMedia('(prefers-reduced-motion: reduce)')
+    .removeEventListener('change', checkReducedMotion)
+})
+</script>
+
+<template>
+  <Transition :name="reducedMotion ? 'fade' : 'slide'">
+    <!-- content -->
+  </Transition>
+</template>
+```
+
+---
+
+## 七、优化实施计划
+
+### 7.1 优化后动画代码
+
+**导航切换动画（替代现有 blur 动画）：**
+
+```css
+/* 向左导航 - 新图片从左侧进入 */
+@keyframes slide-left-optimized {
+  0% {
+    transform: translateX(-50px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 向右导航 - 新图片从右侧进入 */
+@keyframes slide-right-optimized {
+  0% {
+    transform: translateX(50px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Vue Transition 类 */
+.slide-left-enter-active {
+  animation: slide-left-optimized 0.3s cubic-bezier(0.23, 1, 0.32, 1) both;
+  will-change: transform, opacity;
+}
+
+.slide-left-leave-active {
+  animation: slide-right-optimized 0.3s cubic-bezier(0.23, 1, 0.32, 1) reverse both;
+  will-change: transform, opacity;
+}
+
+.slide-right-enter-active {
+  animation: slide-right-optimized 0.3s cubic-bezier(0.23, 1, 0.32, 1) both;
+  will-change: transform, opacity;
+}
+
+.slide-right-leave-active {
+  animation: slide-left-optimized 0.3s cubic-bezier(0.23, 1, 0.32, 1) reverse both;
+  will-change: transform, opacity;
+}
+
+/* Reduced Motion 支持 */
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    animation: fade 0.15s ease-out both;
+    will-change: opacity;
+  }
+  
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+```
+
+### 7.2 打开/关闭动画（保持现有，添加优化）
+
+```css
+/* 现有 blowUpModal 优化 - 添加 will-change */
+@keyframes blowUpModal {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mask .img-view .img-class.initial-anim {
+  animation: blowUpModal 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform;  /* 添加 GPU 提示 */
+}
+```
+
+---
+
+## 八、性能验证方法
+
+### 8.1 Chrome DevTools 性能分析
+
+**步骤：**
+1. 打开 DevTools (F12)
+2. 切换到 Performance 面板
+3. 点击 Record，执行动画操作
+4. 停止录制，分析结果
+
+**关键指标：**
+| 指标 | 目标 | 说明 |
+|------|------|------|
+| FPS | ≥ 60 | 绿色条表示达标 |
+| Frame Time | ≤ 16.67ms | 无红色标记 |
+| Main Thread | < 50% | 无长任务 |
+| GPU Memory | 稳定 | 无内存泄漏 |
+
+### 8.2 Electron 特定优化
+
+```javascript
+// main.ts - 启用硬件加速
+app.disableHardwareAcceleration(false)  // 默认启用
+
+// 可选：指定 GPU 进程优先级
+app.commandLine.appendSwitch('gpu-rather-than-dxgi', 'true')
+```
+
+### 8.3 性能基准
+
+**优化前预期：**
+- blur 动画帧率：30-45fps
+- 帧时间：22-33ms
+- 主线程占用：高
+
+**优化后目标：**
+- transform 动画帧率：60fps
+- 帧时间：≤ 16.67ms
+- 主线程占用：低
+
+---
+
+## 九、依赖关系
+
+### 9.1 现有功能依赖
+
+| 现有功能 | 优化依赖方式 |
+|----------|-------------|
+| Vue Transition | 继续使用，仅修改 CSS |
+| 动画方向感知 | 继续使用 slideDirection ref |
+| mode="out-in" | 继续使用，确保流畅切换 |
+
+### 9.2 无需新增依赖
+
+本次优化纯粹为 CSS 改进，不需要：
+- 新的 npm 包
+- 新的 Vue 插件
+- 新的 IPC 通道
+- 新的配置文件
+
+---
+
+## 十、风险评估
 
 | 风险 | 概率 | 影响 | 缓解措施 |
-|------|------|------|---------|
-| Wallhaven 不支持 Range | 低 | 高 | 首次下载时检测，不支持则降级 |
-| 临时文件损坏 | 中 | 中 | 恢复时校验文件大小，异常则重新下载 |
-| 进度持久化失败 | 低 | 中 | 多重保存机制，失败时提示用户 |
-| 应用崩溃时数据不一致 | 低 | 中 | 恢复时校验数据完整性 |
+|------|------|------|----------|
+| 视觉效果变化 | 高 | 低 | scale 替代 blur 仍有良好视觉效果 |
+| 动画时间感变化 | 中 | 低 | 微调 translateX 距离补偿 |
+| 老旧 GPU 兼容性 | 低 | 中 | 已使用 backface-visibility: hidden |
+| reduced-motion 检测失败 | 低 | 低 | 降级为默认动画，不影响功能 |
 
 ---
 
-## 八、Wallhaven 服务器兼容性验证
+## 十一、结论
 
-**需要验证的问题：**
-1. Wallhaven 是否支持 HTTP Range 请求？
-2. Wallhaven 是否返回 Accept-Ranges 头？
-3. Wallhaven 是否提供 ETag 或 Last-Modified？
+**核心优化策略：**
+1. 移除 `filter: blur()` 动画，改用纯 `transform` + `opacity`
+2. 添加 `will-change` 提示浏览器优化
+3. 支持 `prefers-reduced-motion` 无障碍
+4. 减少动画距离，提升响应感
 
-**验证方法：**
-```bash
-curl -I https://w.wallhaven.cc/full/xx/wallhaven-xxxxxx.jpg
-```
+**预期效果：**
+- 帧率从 30-45fps 提升至稳定 60fps
+- 用户视觉体验无明显变化
+- 代码复杂度降低（移除复杂的 scaleX/Y 组合）
 
-**预期结果：**
-```
-Accept-Ranges: bytes
-ETag: "xxxxx"
-```
-
-如果支持，断点续传可行；如果不支持，需要降级处理。
+**实施复杂度：⭐ 低**
+- 仅需修改 CSS
+- 无 JavaScript 改动
+- 无破坏性变更
 
 ---
 
-## 九、实施建议
-
-### 9.1 最小可行实现（MVP）
-
-第一阶段聚焦核心功能：
-1. ✅ Range 请求支持
-2. ✅ 暂停时保留临时文件
-3. ✅ 恢复时从断点继续
-4. ✅ 基础 UI 反馈
-
-### 9.2 后续迭代
-
-第二阶段增强：
-1. 进度持久化
-2. 应用重启恢复
-3. 网络中断自动恢复
-4. 完整的错误处理
-
----
-
-## 十、结论
-
-断点续传功能的核心是 **HTTP Range 请求 + 临时文件保留**，复杂度中等。
-
-**推荐实施路径：**
-1. 先验证 Wallhaven 服务器是否支持 Range
-2. 实现 MVP（暂停/恢复断点续传）
-3. 添加持久化（应用重启恢复）
-4. 完善错误处理和边界情况
-
-**关键成功因素：**
-- 服务器支持 Range（需验证）
-- 临时文件管理正确
-- 进度数据一致性
-
----
-
-*创建时间：2026-04-26*
-*研究范围：v2.1 下载断点续传功能*
+*创建时间：2026-04-30*
+*研究范围：v2.8 动画性能优化*

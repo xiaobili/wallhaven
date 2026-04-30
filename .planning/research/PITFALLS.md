@@ -1482,7 +1482,560 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 
 ---
 
-## 9. Store-to-Composable 迁移检查清单
+## 9. CSS/Vue 动画性能优化陷阱（v2.8 里程碑）
+
+> 研究：优化 ImagePreview 组件动画性能时可能遇到的问题
+
+### 研究背景
+
+**当前里程碑**: v2.8 优化动画性能
+**目标**: 优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验
+
+**当前实现状态**:
+- 使用 `blur(40px)` 滤镜实现模糊过渡效果
+- 复杂的 transform 组合：`translateX + scaleX + scaleY`
+- Vue Transition 组件用于图片切换动画
+- 所有尺寸图片都使用相同动画
+
+**已识别问题**:
+- 所有尺寸图片动画卡顿/延迟
+- 动画开始/结束有明显的延迟
+- GPU 内存可能存在问题
+
+---
+
+### 9.1 Blur 滤镜性能陷阱
+
+**陷阱描述**: CSS `filter: blur()` 是 GPU 密集型操作，模糊半径越大性能开销越高。
+
+**当前实现**（ImagePreview.vue:483-484, 503-504）:
+```css
+filter: blur(40px);  /* 40px 模糊半径非常大 */
+```
+
+**性能影响**:
+- 模糊滤镜需要对每个像素进行采样计算
+- 模糊半径每增加 1px，计算复杂度指数增长
+- 40px 模糊需要采样 81x81 像素区域（40*2+1）
+- 大图片（如 4K 壁纸）计算量极其巨大
+
+**警告信号**:
+- 动画帧率从 60fps 降至 30fps 或更低
+- 动画开始时有明显延迟（模糊计算初始化）
+- CPU/GPU 风扇噪音增加
+- 移动设备或低端 GPU 卡顿更严重
+
+**预防策略**:
+1. **降低模糊半径**: 使用 8-12px 代替 40px，视觉效果接近但性能提升 10x+
+2. **使用 opacity 代替 blur**: 渐变透明度同样能表达"过渡感"
+3. **预计算模糊**: 使用静态模糊图片而非实时滤镜
+4. **限制应用范围**: 只在小元素上使用模糊，避免全屏大图
+
+**替代方案**:
+```css
+/* 方案 1：降低模糊半径 */
+filter: blur(10px);  /* 性能提升约 16x */
+
+/* 方案 2：使用 opacity */
+opacity: 0.3;
+
+/* 方案 3：组合 scale + opacity */
+transform: scale(1.05);
+opacity: 0;
+```
+
+**应对阶段**: 阶段 1 - 动画性能分析
+
+---
+
+### 9.2 Transform 多属性组合陷阱
+
+**陷阱描述**: 同时动画多个 transform 属性可能导致合成层爆炸和 GPU 内存问题。
+
+**当前实现**（ImagePreview.vue:477-489）:
+```css
+transform: translateX(-1000px) scaleX(2.5) scaleY(0.2);
+/* 同时动画 translateX + scaleX + scaleY */
+```
+
+**性能影响**:
+- 每个 transform 属性变化都需要重新计算合成层
+- 组合 transform 会增加 GPU 合成复杂度
+- `scaleX/Y` 创建新的合成层，占用额外 GPU 内存
+- 动画过程中不断分配/释放 GPU 内存
+
+**警告信号**:
+- 动画开始时内存峰值
+- 长时间使用后 GPU 内存不足
+- Chrome DevTools Layers 面板显示大量临时层
+- 动画结束后页面轻微卡顿（GPU 内存回收）
+
+**预防策略**:
+1. **简化 transform**: 只使用单一 transform 属性
+2. **使用 will-change**: 提前告知浏览器优化
+3. **避免 scale 剧烈变化**: 保持 scale 在 0.9-1.1 范围内
+4. **使用 translate 替代 translateX/Y**: 减少属性数量
+
+**优化方案**:
+```css
+/* 当前（复杂） */
+transform: translateX(-1000px) scaleX(2.5) scaleY(0.2);
+
+/* 优化（简化） */
+transform: translateX(-100%);
+will-change: transform;
+```
+
+**应对阶段**: 阶段 1 - 动画性能分析
+
+---
+
+### 9.3 GPU 内存溢出陷阱
+
+**陷阱描述**: 大图片动画会占用大量 GPU 内存，可能导致内存溢出或性能下降。
+
+**当前实现问题**:
+- 壁纸图片通常很大（1920x1080 到 4K）
+- 动画过程中 GPU 需要存储源图 + 目标图 + 合成层
+- blur 滤镜需要额外的采样缓冲区
+- Electron 渲染进程 GPU 内存有限
+
+**内存估算**:
+```
+一张 4K 图片 (3840x2160):
+- 原始: 3840 * 2160 * 4 bytes (RGBA) = ~33MB
+- blur(40px) 额外缓冲: ~33MB * 3 = ~99MB
+- 合成层: ~33MB
+- 总计: ~165MB GPU 内存 / 张
+
+动画切换时（源图 + 目标图）: ~330MB
+```
+
+**警告信号**:
+- 动画时 Electron 内存占用飙升
+- 长时间使用后页面变慢
+- 控制台出现 GPU 进程崩溃警告
+- 黑屏或图片显示异常
+
+**预防策略**:
+1. **使用缩略图进行动画**: 动画时使用小图，动画结束后替换为大图
+2. **限制并发动画**: 避免同时动画多张大图
+3. **及时清理 GPU 资源**: 动画结束后强制垃圾回收
+4. **使用 CSS containment**: 限制渲染计算范围
+
+**实现示例**:
+```typescript
+// 动画时使用缩略图
+const animatedImage = computed(() => {
+  if (isAnimating.value) {
+    return thumbnailUrl.value  // 小图
+  }
+  return fullImageUrl.value    // 大图
+})
+```
+
+**应对阶段**: 阶段 2 - 动画方案优化
+
+---
+
+### 9.4 Vue Transition 关键帧陷阱
+
+**陷阱描述**: Vue Transition 的 `mode="out-in"` 会导致旧元素完全退出后才播放新元素动画，造成感知延迟。
+
+**当前实现**（ImagePreview.vue:29-32）:
+```vue
+<Transition :name="slideDirection" mode="out-in">
+  <img v-if="imgInfo" :key="imgInfo.id" ...>
+</Transition>
+```
+
+**问题分析**:
+- `mode="out-in"` 串行执行动画
+- 退出动画 300ms + 进入动画 300ms = 600ms 总时长
+- 用户实际等待时间比预期长一倍
+
+**警告信号**:
+- 切换图片感觉"慢"
+- 动画之间有明显停顿
+- 用户快速点击导航按钮时响应延迟
+
+**预防策略**:
+1. **移除 mode="out-in"**: 允许同时执行进出动画
+2. **使用绝对定位叠加**: 进出元素重叠，视觉上无缝衔接
+3. **调整动画时长**: 缩短到 150-200ms 感觉更流畅
+4. **使用 CSS animation 替代 Vue Transition**: 更精细控制
+
+**优化方案**:
+```vue
+<TransitionGroup :name="slideDirection" tag="div" class="img-container">
+  <img :key="imgInfo.id" class="img-class" ...>
+</TransitionGroup>
+
+<style>
+.img-container {
+  position: relative;
+}
+.img-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+</style>
+```
+
+**应对阶段**: 阶段 2 - 动画方案优化
+
+---
+
+### 9.5 关键帧动画与 Vue Transition 冲突陷阱
+
+**陷阱描述**: CSS `@keyframes` 动画与 Vue Transition 类可能产生冲突，导致动画异常或失效。
+
+**已解决问题**（记录于 imagepreview-transition-animation.md）:
+- `.img-class` 的 `blowUpModal` 动画覆盖了 Vue Transition 类
+- 原因：CSS 选择器优先级问题
+- 解决：使用条件类 `.initial-anim` 只在初始打开时应用
+
+**警告信号**:
+- Vue Transition 动画不播放
+- 动画行为不一致
+- DevTools 显示动画属性被覆盖
+
+**预防策略**:
+1. **隔离动画作用域**: 使用不同的 CSS 类名
+2. **明确优先级**: 使用更具体的选择器
+3. **条件应用动画**: 通过 Vue 控制何时应用哪个动画
+4. **动画命名空间**: 为不同类型的动画添加前缀
+
+**正确模式**:
+```css
+/* 初始打开动画 - 条件应用 */
+.mask .img-view .img-class.initial-anim {
+  animation: blowUpModal 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+/* Vue Transition 动画 - 自动应用 */
+.slide-left-enter-active {
+  animation: slideIn 0.3s ease-out;
+}
+```
+
+**应对阶段**: 阶段 1 - 问题诊断
+
+---
+
+### 9.6 帧率下降与卡顿陷阱
+
+**陷阱描述**: 动画帧率不稳定会导致视觉卡顿，用户体验下降。
+
+**常见原因**:
+1. **主线程阻塞**: JavaScript 执行阻塞渲染
+2. **样式重计算**: 复杂 CSS 选择器导致样式计算慢
+3. **布局抖动**: 频繁读取布局属性导致强制同步布局
+4. **合成层爆炸**: 过多元素提升为合成层
+
+**当前潜在问题**（ImagePreview.vue:299-303）:
+```css
+.img-class {
+  object-fit: cover;  /* 可能导致额外的布局计算 */
+  max-width: 95%;
+}
+```
+
+**警告信号**:
+- Chrome DevTools Performance 显示帧率波动
+- 部分帧超过 16.67ms（60fps 标准）
+- 出现"Layout Shift"警告
+- 动画过程中 CPU 占用高
+
+**预防策略**:
+1. **使用 transform 和 opacity**: 这两个属性不触发重排
+2. **避免动画过程中读取布局属性**: 使用 requestAnimationFrame
+3. **使用 content-visibility**: 延迟计算不可见内容
+4. **优化 CSS 选择器**: 减少选择器复杂度
+
+**性能优化**:
+```css
+/* 优化前 */
+.img-class {
+  object-fit: cover;
+  max-width: 95%;
+}
+
+/* 优化后 */
+.img-class {
+  object-fit: contain;  /* cover 需要额外计算 */
+  max-width: 95%;
+  will-change: transform, opacity;  /* 提示浏览器优化 */
+  contain: layout style paint;  /* 限制重计算范围 */
+}
+```
+
+**应对阶段**: 阶段 2 - 动画方案优化
+
+---
+
+### 9.7 Reduced Motion 无障碍陷阱
+
+**陷阱描述**: 忽略用户的 `prefers-reduced-motion` 设置会导致无障碍问题和用户体验问题。
+
+**问题描述**:
+- 部分用户因眩晕、癫痫等原因需要减少动画
+- 前庭功能障碍用户可能因复杂动画感到不适
+- 忽略此设置违反 WCAG 2.1 标准（标准 2.3.3）
+
+**当前缺失**: ImagePreview.vue 未检测 `prefers-reduced-motion`
+
+**警告信号**:
+- 无障碍测试失败
+- 用户投诉动画导致不适
+- 辅助技术用户无法正常使用
+
+**预防策略**:
+1. **检测媒体查询**: 使用 CSS `@media (prefers-reduced-motion: reduce)`
+2. **提供替代方案**: 关闭动画或使用简单的淡入淡出
+3. **Vue 响应式检测**: 使用 VueUse 的 `usePreferredReducedMotion`
+
+**实现方案**:
+```css
+/* CSS 方案 */
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-right-enter-active,
+  .slide-left-leave-active,
+  .slide-right-leave-active {
+    animation: none;
+    transition: opacity 0.15s ease;
+  }
+}
+```
+
+```typescript
+// Vue 方案
+import { usePreferredReducedMotion } from '@vueuse/core'
+
+const reducedMotion = usePreferredReducedMotion()
+
+const animationDuration = computed(() => {
+  return reducedMotion.value === 'reduce' ? 0 : 300
+})
+```
+
+**应对阶段**: 阶段 3 - 无障碍优化
+
+---
+
+### 9.8 Electron 渲染进程限制陷阱
+
+**陷阱描述**: Electron 渲染进程的 GPU 资源限制比浏览器更严格，可能导致动画性能下降。
+
+**Electron 特有问题**:
+- 默认 GPU 内存限制较低
+- 渲染进程与主进程共享资源
+- Chromium GPU 进程可能被终止
+- 硬件加速可能被禁用
+
+**当前潜在风险**:
+- 大图片动画可能触发 GPU 进程崩溃
+- 内存泄漏更容易显现
+- 多窗口场景下资源竞争
+
+**警告信号**:
+- 控制台出现 "GPU process crashed"
+- 图片显示为黑色或损坏
+- 动画后页面变得无响应
+- Electron 窗口闪烁
+
+**预防策略**:
+1. **监控 GPU 内存**: 使用 `app.getGPUFeatureStatus()` 检查 GPU 状态
+2. **降低动画复杂度**: Electron 中使用更简单的动画
+3. **启用 ANGLE 后端**: 改善 Windows 平台 GPU 兼容性
+4. **提供降级方案**: GPU 不可用时使用简单动画
+
+**Electron 配置**:
+```typescript
+// main/index.ts
+const mainWindow = new BrowserWindow({
+  webPreferences: {
+    // ...
+    enablePreferredSizeMode: true,
+  },
+})
+
+// 检查 GPU 状态
+app.whenReady().then(() => {
+  const gpuFeatureStatus = app.getGPUFeatureStatus()
+  console.log('GPU Feature Status:', gpuFeatureStatus)
+})
+```
+
+**应对阶段**: 阶段 2 - Electron 适配
+
+---
+
+### 9.9 动画时长感知陷阱
+
+**陷阱描述**: 动画时长设置不当会影响用户感知的流畅度。
+
+**当前实现**:
+- 初始打开动画: 500ms
+- 切换动画: 300ms
+- 关闭动画: 500ms
+
+**用户感知研究**:
+- **100ms**: 即时响应感
+- **200-300ms**: 流畅、自然
+- **400-500ms**: 开始感觉"慢"
+- **>1000ms**: 用户失去注意力
+
+**警告信号**:
+- 用户频繁点击导航按钮（动画太慢）
+- 用户感觉界面"卡顿"
+- 用户快速关闭预览（不愿等待动画）
+
+**预防策略**:
+1. **响应优先**: 交互响应 < 100ms
+2. **动画优化**: 视觉动画 200-300ms
+3. **复杂效果**: 分阶段执行，先响应后美化
+4. **可中断动画**: 允许用户跳过动画
+
+**时长建议**:
+```css
+/* 快速响应场景 */
+--duration-fast: 150ms;
+
+/* 标准过渡 */
+--duration-normal: 250ms;
+
+/* 复杂动画 */
+--duration-complex: 400ms;
+
+/* 用户操作后立即开始 */
+transition-delay: 0ms;
+```
+
+**应对阶段**: 阶段 2 - 动画方案优化
+
+---
+
+### 9.10 CSS will-change 滥用陷阱
+
+**陷阱描述**: 过度使用 `will-change` 属性反而会降低性能。
+
+**常见错误**:
+```css
+/* 错误：对所有元素使用 will-change */
+* {
+  will-change: transform, opacity;
+}
+
+/* 错误：永久保留 will-change */
+.animated-element {
+  will-change: transform;
+}
+```
+
+**性能影响**:
+- 每个声明 `will-change` 的元素都会创建新的合成层
+- 合成层占用额外 GPU 内存
+- 过多合成层导致合成性能下降
+- 永久 `will-change` 导致内存无法回收
+
+**警告信号**:
+- GPU 内存占用异常高
+- Chrome DevTools Layers 面板显示大量层
+- 动画性能反而下降
+
+**预防策略**:
+1. **仅在动画前设置**: 动画开始前添加，结束后移除
+2. **限制使用范围**: 只对真正需要的元素使用
+3. **避免通用选择器**: 不要对大量元素使用
+
+**正确使用**:
+```css
+/* 只在动画类中设置 */
+.slide-left-enter-active,
+.slide-right-enter-active {
+  will-change: transform, opacity;
+}
+
+/* 动画结束后移除 */
+.slide-left-enter-to,
+.slide-right-enter-to {
+  will-change: auto;
+}
+```
+
+**应对阶段**: 阶段 2 - 动画方案优化
+
+---
+
+### 动画性能风险矩阵
+
+| 陷阱 | 影响程度 | 发生概率 | 检测难度 | 应对阶段 |
+|------|---------|---------|---------|---------|
+| Blur 滤镜性能 | 高 | 高 | 低 | 阶段 1 |
+| Transform 组合 | 高 | 中 | 中 | 阶段 1 |
+| GPU 内存溢出 | 高 | 中 | 中 | 阶段 2 |
+| Transition 模式 | 中 | 高 | 低 | 阶段 2 |
+| 关键帧冲突 | 高 | 低 | 中 | 阶段 1 |
+| 帧率下降 | 高 | 高 | 中 | 阶段 2 |
+| Reduced Motion | 中 | 低 | 低 | 阶段 3 |
+| Electron 限制 | 高 | 中 | 高 | 阶段 2 |
+| 动画时长感知 | 中 | 高 | 低 | 阶段 2 |
+| will-change 滥用 | 中 | 中 | 中 | 阶段 2 |
+
+---
+
+### 动画优化检查清单
+
+#### 阶段 1: 性能分析
+
+- [ ] 使用 Chrome DevTools Performance 分析动画性能
+- [ ] 检查帧率是否稳定在 60fps
+- [ ] 识别导致帧率下降的具体 CSS 属性
+- [ ] 检查 GPU 内存使用情况
+- [ ] 验证关键帧动画与 Vue Transition 无冲突
+
+#### 阶段 2: 方案优化
+
+- [ ] 降低 blur 滤镜半径或替换为其他效果
+- [ ] 简化 transform 属性组合
+- [ ] 评估使用缩略图进行动画的可行性
+- [ ] 优化 Vue Transition 模式和时长
+- [ ] 正确使用 will-change 属性
+- [ ] 测试 Electron 特有的性能限制
+
+#### 阶段 3: 无障碍与体验
+
+- [ ] 实现 prefers-reduced-motion 支持
+- [ ] 优化动画时长至用户感知最佳
+- [ ] 添加键盘导航支持（已有）
+- [ ] 测试各种图片尺寸下的动画表现
+
+#### 测试验证
+
+- [ ] 使用 Chrome DevTools 录制动画性能
+- [ ] 测试低端设备/集成显卡性能
+- [ ] 测试 4K 大图片动画
+- [ ] 测试快速连续切换图片
+- [ ] 验证 GPU 进程稳定性
+- [ ] 无障碍测试（prefers-reduced-motion）
+
+---
+
+### 动画优化参考资料
+
+- [CSS Triggers - CSS 属性如何影响渲染](https://csstriggers.com/)
+- [High Performance Animations - HTML5 Rocks](https://www.html5rocks.com/en/tutorials/speed/high-performance-animations/)
+- [Vue Transition Documentation](https://vuejs.org/guide/built-ins/transition.html)
+- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)
+- [Electron Performance Guide](https://www.electronjs.org/docs/latest/tutorial/performance)
+- [Web Content Accessibility Guidelines (WCAG) 2.1](https://www.w3.org/WAI/WCAG21/quickref/#animation-from-interactions)
+
+---
+
+## 10. Store-to-Composable 迁移检查清单
 
 ### 迁移前（阶段 1）
 
@@ -1513,7 +2066,7 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 
 ---
 
-## 10. 迁移警告信号
+## 11. 迁移警告信号
 
 ### 运行时警告
 
@@ -1536,20 +2089,17 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 
 ---
 
-## 11. 阶段分配汇总
+## 12. 阶段分配汇总
 
-| 陷阱 | 主要阶段 | 预防类型 |
-|------|---------|---------|
-| 响应式破坏 | 阶段 2 | 代码审查 |
-| 状态访问不一致 | 阶段 3 | 原子迁移 |
-| 重复状态 | 阶段 2 | 架构强制 |
-| 生命周期钩子遗漏 | 阶段 3 | 审计 & 测试 |
-| KeepAlive 破坏 | 阶段 5 | 集成测试 |
-| IPC 绕过服务 | 阶段 3-4 | Linting |
-| Alert 状态重复 | 阶段 2 | 使用现有模式 |
-| 类型安全退化 | 阶段 1 | 接口优先 |
-| 测试 Mocking 复杂度 | 阶段 5 | 迁移测试 |
-| 循环依赖 | 阶段 1 | 导入审计 |
+| 陷阱类别 | 主要阶段 | 预防类型 |
+|---------|---------|---------|
+| IPC 通信问题 | 阶段 1 | 接口定义 |
+| Store 响应式 | 阶段 2 | 代码审查 |
+| 类型安全 | 阶段 3 | 接口优先 |
+| 向后兼容 | 所有阶段 | 迁移逻辑 |
+| 断点续传 | v2.1 | 功能测试 |
+| Store 迁移 | v2.2 | 原子迁移 |
+| 动画性能 | v2.8 | 性能分析 |
 
 ---
 
@@ -1557,15 +2107,19 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 
 在重构的每个阶段，使用以下清单检查是否触发了陷阱：
 
-### 阶段 1：IPC 模块化拆分 / 类型安全
+### 阶段 1：IPC 模块化拆分 / 类型安全 / 性能分析
+
 - [ ] 所有 IPC 通道名称是否保持不变
 - [ ] 新增的消息字段是否为可选属性
 - [ ] 错误返回格式是否统一
 - [ ] 类型定义是否在 preload 和 env.d.ts 同步更新
 - [ ] 存储键名是否变更
 - [ ] 导入结构是否单向（无循环）
+- [ ] 使用 Chrome DevTools 分析动画性能
+- [ ] 识别高开销 CSS 属性
 
-### 阶段 2：Store 重构 / Composables 抽象 / 数据层
+### 阶段 2：Store 重构 / Composables 抽象 / 数据层 / 方案优化
+
 - [ ] shallowRef 更新是否使用对象替换
 - [ ] Store 中的 Electron API 调用是否通过服务层
 - [ ] Alert composable 是否在所有视图统一使用
@@ -1573,27 +2127,34 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 - [ ] finishedList 数量限制是否保留
 - [ ] Composables 是否返回 `ComputedRef`
 - [ ] Composables 是否有重复本地状态
+- [ ] 动画方案是否经过性能测试
+- [ ] GPU 内存使用是否合理
 
-### 阶段 3：类型安全强化 / 业务层
+### 阶段 3：类型安全强化 / 业务层 / 无障碍优化
+
 - [ ] any 替换后是否添加运行时类型检查
 - [ ] 类型定义是否集中管理避免重复
 - [ ] Props 类型定义是否正确
 - [ ] 是否有新增类型测试
 - [ ] 每个 store 的迁移是否完整
 - [ ] 生命周期钩子是否正确移动
+- [ ] prefers-reduced-motion 是否支持
 
 ### 阶段 4：IPC 模块化重构
+
 - [ ] IPC 处理器是否按领域拆分
 - [ ] 错误处理是否统一
 - [ ] 通道白名单是否完整
 
 ### 阶段 5：表现层重构与清理
+
 - [ ] 视图中无直接 store 导入
 - [ ] 视图中无直接 IPC 调用
 - [ ] KeepAlive 行为验证
 - [ ] 测试更新完成
 
 ### 所有阶段
+
 - [ ] 升级后用户数据是否保留
 - [ ] 缩略图缓存路径是否变更
 - [ ] 自定义协议格式是否变更
@@ -1606,14 +2167,20 @@ import { useWallpaperStore } from '@/stores'  // Composable 导入 store
 - [Electron IPC 文档](https://www.electronjs.org/docs/latest/tutorial/ipc)
 - [Vue 3 响应式 API](https://vuejs.org/api/reactivity-api.html)
 - [Vue 3 Composables 最佳实践](https://vuejs.org/guide/reusability/composables.html)
+- [Vue Transition 文档](https://vuejs.org/guide/built-ins/transition.html)
 - [TypeScript 类型守卫](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
 - [Pinia 最佳实践](https://pinia.vuejs.org/core-concepts/)
 - [HTTP Range Requests - MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests)
 - [Node.js Stream Best Practices](https://nodejs.org/api/stream.html)
 - [Handling Aborted Requests in Axios](https://axios-http.com/docs/cancellation)
+- [CSS Triggers - 渲染性能参考](https://csstriggers.com/)
+- [High Performance Animations](https://www.html5rocks.com/en/tutorials/speed/high-performance-animations/)
+- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion)
+- [Electron Performance Guide](https://www.electronjs.org/docs/latest/tutorial/performance)
+- [WCAG 2.1 Animation Guidelines](https://www.w3.org/WAI/WCAG21/quickref/#animation-from-interactions)
 
 ---
 
 *创建时间：2025-04-25*
 *基于项目代码库分析生成*
-*更新时间：2026-04-27 - 新增 Store-to-Composable 迁移陷阱（v2.2 里程碑）*
+*更新时间：2026-04-30 - 新增 CSS/Vue 动画性能优化陷阱（v2.8 里程碑）*
