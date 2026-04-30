@@ -111,6 +111,26 @@
   will-change: transform, opacity;
 }
 
+/* ===== Modal Animation Classes ===== */
+
+/**
+ * Modal Open Animation
+ * Applied via .initial-anim class in ImagePreview.vue
+ */
+.modal-open {
+  animation: modal-open 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform;
+}
+
+/**
+ * Modal Close Animation
+ * Applied via .mask.out .img-view .img-class selector
+ */
+.modal-close {
+  animation: modal-close 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform, opacity;
+}
+
 /* ===== Reduced Motion Support ===== */
 
 @media (prefers-reduced-motion: reduce) {
