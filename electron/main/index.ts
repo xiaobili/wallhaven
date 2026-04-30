@@ -118,20 +118,34 @@ function createWindow(): void {
     // Wait for BOTH minimum time AND window readiness
     await splashMinTimePromise
 
-    // Start simultaneous fade: splash out, main in
-    splashWindow?.setOpacity(0)
-    mainWindow.setOpacity(1)
-
-    // Close splash after fade animation completes
-    setTimeout(() => {
-      splashWindow?.close()
-      splashWindow = null
-      // Cleanup timer reference
-      splashTimeoutId = null
-      splashMinTimePromise = null
-    }, 200)
-
+    // Show main window first (with opacity 0, invisible)
     mainWindow.show()
+
+    // Animate fade: splash out, main in
+    // Use interval-based opacity animation for smooth transition
+    const fadeSteps = 20
+    const fadeInterval = 10 // 10ms per step = 200ms total
+    let step = 0
+
+    const fadeAnimation = setInterval(() => {
+      step++
+      const progress = step / fadeSteps
+
+      // Fade out splash (1 -> 0)
+      splashWindow?.setOpacity(1 - progress)
+      // Fade in main (0 -> 1)
+      mainWindow.setOpacity(progress)
+
+      if (step >= fadeSteps) {
+        clearInterval(fadeAnimation)
+        // Close splash after fade completes
+        splashWindow?.close()
+        splashWindow = null
+        // Cleanup timer reference
+        splashTimeoutId = null
+        splashMinTimePromise = null
+      }
+    }, fadeInterval)
 
     // 在开发模式下打开开发者工具
     if (is.dev) {
@@ -191,7 +205,7 @@ app.whenReady().then(() => {
   })
 
   // Minimum 1 second splash display timer
-  splashMinTimePromise = new Promise(resolve => {
+  splashMinTimePromise = new Promise((resolve) => {
     splashTimeoutId = setTimeout(resolve, 1000)
   })
 
