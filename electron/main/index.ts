@@ -25,6 +25,11 @@ const store = new Store({
 // 将 store 实例导出供其他模块使用
 export { store }
 
+// Splash 窗口实例
+let splashWindow: BrowserWindow | null = null
+let splashMinTimePromise: Promise<void> | null = null
+let splashTimeoutId: NodeJS.Timeout | null = null
+
 // 导入IPC handlers (modular)
 import { registerAllHandlers, verifyHandlers } from './ipc/handlers/index'
 
@@ -106,7 +111,26 @@ function createWindow(): void {
     },
   })
 
-  mainWindow.on('ready-to-show', () => {
+  // Set initial opacity to 0 for fade-in transition
+  mainWindow.setOpacity(0)
+
+  mainWindow.on('ready-to-show', async () => {
+    // Wait for BOTH minimum time AND window readiness
+    await splashMinTimePromise
+
+    // Start simultaneous fade: splash out, main in
+    splashWindow?.setOpacity(0)
+    mainWindow.setOpacity(1)
+
+    // Close splash after fade animation completes
+    setTimeout(() => {
+      splashWindow?.close()
+      splashWindow = null
+      // Cleanup timer reference
+      splashTimeoutId = null
+      splashMinTimePromise = null
+    }, 200)
+
     mainWindow.show()
 
     // 在开发模式下打开开发者工具
@@ -146,6 +170,31 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // 创建 Splash 窗口
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    resizable: false,
+    center: true,
+    show: false,
+    backgroundColor: '#1a1a1a',
+    webPreferences: {
+      sandbox: false,
+    },
+  })
+
+  splashWindow.loadFile(join(__dirname, '..', 'renderer', 'splash.html'))
+
+  splashWindow.on('ready-to-show', () => {
+    splashWindow?.show()
+  })
+
+  // Minimum 1 second splash display timer
+  splashMinTimePromise = new Promise(resolve => {
+    splashTimeoutId = setTimeout(resolve, 1000)
+  })
+
   createWindow()
 
   // Register and verify all IPC handlers
@@ -163,6 +212,11 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  // Cleanup splash timer if still pending
+  if (splashTimeoutId) {
+    clearTimeout(splashTimeoutId)
+    splashTimeoutId = null
+  }
   if (process.platform !== 'darwin') {
     app.quit()
   }
