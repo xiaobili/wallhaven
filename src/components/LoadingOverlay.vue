@@ -25,6 +25,8 @@ defineProps<{
 </script>
 
 <style scoped>
+@import url("@/static/css/animations.css");
+
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -36,7 +38,6 @@ defineProps<{
   justify-content: center;
   align-items: center;
   z-index: 9998;
-  backdrop-filter: blur(2px);
 }
 
 .loading-content {
@@ -57,14 +58,10 @@ defineProps<{
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* 淡入淡出动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+/* Reduced motion: disable fa-spin animation */
+@media (prefers-reduced-motion: reduce) {
+  .loading-icon.fa-spin {
+    animation: none;
+  }
 }
 </style>

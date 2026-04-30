@@ -157,3 +157,28 @@
 .animation-container {
   contain: layout paint;
 }
+
+/* ===== Fade Transition (Vue Transition) ===== */
+
+/**
+ * Fade Transition Classes
+ * Used by LoadingOverlay.vue and other components
+ */
+.fade-enter-active,
+.fade-leave-active {
+  animation: fade 0.2s ease-out both;
+  will-change: opacity;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Reduced motion support for fade */
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
+    animation: fade 0.15s ease-out both;
+  }
+}
