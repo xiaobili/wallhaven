@@ -30,11 +30,8 @@
       font-weight: 700;
       font-size: 42px;
       color: #fff;
-      opacity: 0;
-      transform: scale(0.3);
       animation: logoBounce 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
       will-change: transform, opacity;
-      contain: layout paint;
     }
 
     @keyframes logoBounce {
@@ -47,6 +44,7 @@
         transform: scale(1.05);
       }
       70% {
+        opacity: 1;
         transform: scale(0.9);
       }
       100% {

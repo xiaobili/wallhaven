@@ -2,6 +2,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { resolve } from 'path'
+import { copyFileSync, mkdirSync, existsSync } from 'fs'
 
 export default defineConfig({
   main: {
@@ -90,6 +91,17 @@ export default defineConfig({
       reportCompressedSize: true,
       // chunk大小警告阈值
       chunkSizeWarningLimit: 1000
+    }
+  },
+  // Copy splash.html to output after build
+  hooks: {
+    'build:done': () => {
+      const splashSrc = resolve(__dirname, 'electron/renderer/splash.html')
+      const splashDest = resolve(__dirname, 'out/renderer/splash.html')
+      if (existsSync(splashSrc)) {
+        copyFileSync(splashSrc, splashDest)
+        console.log('✓ Copied splash.html to out/renderer/')
+      }
     }
   }
 })
