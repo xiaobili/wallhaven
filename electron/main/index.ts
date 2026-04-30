@@ -81,6 +81,9 @@ function registerLocalFileProtocol() {
   })
 }
 
+const windowWidth = 1900
+const windowHeight = 800
+
 function createWindow(): void {
   // 解析 preload 脚本路径（注意：electron-vite 输出 .mjs 文件）
   const preloadPath = join(__dirname, '..', 'preload', 'index.mjs')
@@ -97,8 +100,8 @@ function createWindow(): void {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1900,
-    height: 800,
+    width: windowWidth,
+    height: windowHeight,
     show: false,
     frame: false, // 移除默认标题栏，使用自定义UI
     autoHideMenuBar: true,
@@ -186,8 +189,8 @@ app.whenReady().then(() => {
 
   // 创建 Splash 窗口
   splashWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: windowWidth,
+    height: windowHeight,
     frame: false,
     resizable: false,
     center: true,
@@ -206,7 +209,7 @@ app.whenReady().then(() => {
 
   // Minimum 1 second splash display timer
   splashMinTimePromise = new Promise((resolve) => {
-    splashTimeoutId = setTimeout(resolve, 1000)
+    splashTimeoutId = setTimeout(resolve, 2500)
   })
 
   createWindow()
