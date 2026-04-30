@@ -1,93 +1,69 @@
-# Requirements: Wallhaven 壁纸浏览器 — v2.8 动画性能优化
-
-**Defined:** 2026-04-30
-**Core Value:** 收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
+# Milestone v3.0 Requirements: 首屏动画
 
 ---
 
-## v1 Requirements
+## Active Requirements (This Milestone)
 
-此里程碑专注于优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验。
+### Splash Window Infrastructure
 
-### 核心优化 (Core)
+- [ ] **SPLASH-01**: User sees a dedicated splash window when launching the app
+- [ ] **SPLASH-02**: Splash window is frameless (no title bar, no window controls)
+- [ ] **SPLASH-03**: Splash window is centered on screen when shown
+- [ ] **SPLASH-04**: Splash window uses same dark theme as the app
 
-- [ ] **CORE-01**: 移除 slide-in-blurred-left/right 动画中的 `filter: blur(40px)` 滤镜
-- [ ] **CORE-02**: 简化 transform 组合，将 `translateX(-1000px) scaleX(2.5) scaleY(0.2)` 简化为 `translateX(±50px) scale(0.98)`
-- [ ] **CORE-03**: 仅使用 GPU 加速属性 (`transform` 和 `opacity`) 进行动画
-- [ ] **CORE-04**: 添加 `will-change: transform, opacity` 到动画类，动画结束后移除
-- [ ] **CORE-05**: 在 `.img-view` 容器添加 `contain: layout paint` 隔离渲染边界
+### Bounce Logo Animation
 
-### 预览窗口动画 (Preview)
+- [ ] **ANIM-01**: Splash screen displays "Wallhaven" text as the logo
+- [ ] **ANIM-02**: Logo animates with bounce + elastic effect (scale in)
+- [ ] **ANIM-03**: Animation uses GPU-accelerated properties only (transform, opacity)
+- [ ] **ANIM-04**: Animation plays smoothly at 60fps
 
-- [ ] **PREV-01**: 优化 blowUpModal 打开动画，移除或简化可能导致性能问题的效果
-- [ ] **PREV-02**: 优化 blowUpModalTwo 关闭动画，确保与打开动画性能一致
+### Timing & Coordination
 
-### 架构改进 (Architecture)
+- [ ] **TIME-01**: Splash screen displays for minimum 1 second (no flash)
+- [ ] **TIME-02**: Splash screen stays visible until main window is fully ready
+- [ ] **TIME-03**: Main window shows only after minimum time AND window ready
+- [ ] **TIME-04**: On macOS reactivation (dock click), splash is NOT shown
 
-- [ ] **ARCH-01**: 创建 `src/static/css/animations.css` 集中管理 GPU 优化的动画关键帧
-- [ ] **ARCH-02**: 创建 `src/composables/animation/useImageTransition.ts` 管理动画状态
-- [ ] **ARCH-03**: 重构 ImagePreview.vue 使用共享动画 CSS 和 composable
+### Smooth Transition
 
-### 可访问性 (A11y)
-
-- [ ] **A11Y-01**: 添加 `@media (prefers-reduced-motion: reduce)` 支持，为需要减少动画的用户提供替代方案
-- [ ] **A11Y-02**: 在 reduced-motion 模式下使用简单的 opacity 过渡替代复杂动画
+- [ ] **TRANS-01**: Splash window fades out smoothly when closing
+- [ ] **TRANS-02**: Main window fades in smoothly when showing
+- [ ] **TRANS-03**: No visible gap between splash close and main window show
 
 ---
 
-## v2 Requirements
+## Future Requirements (Deferred)
 
-以下需求推迟到后续版本：
-
-### 性能监控
-
-- **MON-01**: 添加 FPS 监控功能（仅开发模式）
-- **MON-02**: 添加动画性能日志（可选开关）
-
-### 其他组件优化
-
-- **COMP-01**: 优化 Alert.vue 动画使用共享动画 CSS
-- **COMP-02**: 优化 CollectionDropdown.vue 动画
-- **COMP-03**: 优化 LoadingOverlay.vue 动画
+- Loading progress bar or spinner below logo
+- Staggered letter-by-letter animation
+- Gradient or wallpaper background
+- Skip splash on fast subsequent launches (cache)
+- Custom animation timing configuration
 
 ---
 
 ## Out of Scope
 
-| 功能 | 原因 |
-|------|------|
-| JavaScript 驱动动画 | 阻塞主线程，性能更差 |
-| 新增动画库 (GSAP/anime.js) | CSS 原生能力足够，无需引入依赖 |
-| 图片加载优化 | 超出动画性能优化范围 |
-| 虚拟滚动 | 与动画优化无关，属于列表性能优化 |
+| Feature | Reason |
+|---------|--------|
+| Interactive splash screen | Splash is display-only, no user interaction |
+| Dynamic loading state updates | MVP doesn't track load progress |
+| Platform-specific variations | Same experience on all platforms |
+| Multi-monitor position logic | Center on primary monitor is sufficient |
 
 ---
 
 ## Traceability
 
-哪些阶段覆盖哪些需求。
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARCH-01 | Phase 25 | Pending |
-| ARCH-02 | Phase 25 | Pending |
-| CORE-01 | Phase 26 | Pending |
-| CORE-02 | Phase 26 | Pending |
-| CORE-03 | Phase 26 | Pending |
-| CORE-04 | Phase 26 | Pending |
-| CORE-05 | Phase 26 | Pending |
-| PREV-01 | Phase 27 | Pending |
-| PREV-02 | Phase 27 | Pending |
-| A11Y-01 | Phase 28 | Pending |
-| A11Y-02 | Phase 28 | Pending |
-| ARCH-03 | Phase 28 | Pending |
-
-**Coverage:**
-- v1 requirements: 12 total
-- Mapped to phases: 12
-- Unmapped: 0 ✓
+| SPLASH-01 to SPLASH-04 | TBD | Pending |
+| ANIM-01 to ANIM-04 | TBD | Pending |
+| TIME-01 to TIME-04 | TBD | Pending |
+| TRANS-01 to TRANS-03 | TBD | Pending |
 
 ---
 
-*Requirements defined: 2026-04-30*
-*Last updated: 2026-04-30 after initial definition*
+*Created: 2026-04-30*
+*v3.0 首屏动画 - MVP Scope*
