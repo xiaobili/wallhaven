@@ -8,9 +8,15 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **收藏管理，分类随心** — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Current Milestone: None (Planning Next)
+## Current Milestone: v2.8 优化动画性能
 
-**Last Shipped:** v2.5 壁纸收藏功能 (2026-04-29)
+**Goal:** 优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验
+
+**Target features:**
+- 图片切换动画优化（消除卡顿和延迟）
+- 预览窗口打开/关闭动画优化
+
+**Last Shipped:** v2.7 图片切换动画 (2026-04-29)
 
 **Shipped Milestones:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
@@ -19,6 +25,8 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 - v2.3 ElectronAPI 分层重构 (2026-04-27) — 2 requirements, 1 phase
 - v2.4 ImagePreview 导航功能 (2026-04-27) — 1 requirement, 1 phase
 - v2.5 壁纸收藏功能 (2026-04-29) — 22 requirements, 7 phases
+- v2.6 设置页缓存优化 (2026-04-29) — 2 requirements, 1 phase
+- v2.7 图片切换动画 (2026-04-29) — 2 requirements, 1 phase
 
 ## Requirements
 
@@ -179,7 +187,7 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 ## Context
 
-**Shipped**: v2.0 架构重构 (2026-04-26), v2.1 下载断点续传 (2026-04-27), v2.2 Store 分层迁移 (2026-04-27), v2.3 ElectronAPI 分层重构 (2026-04-27), v2.4 ImagePreview 导航功能 (2026-04-27), v2.5 壁纸收藏功能 (2026-04-29)
+**Shipped**: v2.0 架构重构 (2026-04-26), v2.1 下载断点续传 (2026-04-27), v2.2 Store 分层迁移 (2026-04-27), v2.3 ElectronAPI 分层重构 (2026-04-27), v2.4 ImagePreview 导航功能 (2026-04-27), v2.5 壁纸收藏功能 (2026-04-29), v2.6 设置页缓存优化 (2026-04-29), v2.7 图片切换动画 (2026-04-29)
 
 **Statistics**:
 - v2.0 Timeline: 7 days (2026-04-19 → 2026-04-26)
@@ -217,4 +225,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-29 v2.5 里程碑归档*
+*最后更新：2026-04-30 v2.8 里程碑启动*

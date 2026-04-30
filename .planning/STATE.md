@@ -1,80 +1,55 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.7
-milestone_name: 图片切换动画
-status: Complete
-last_updated: "2026-04-29T17:00:00.000Z"
-last_activity: 2026-04-29 — Phase 24 complete (2 plans)
+milestone: v2.8
+milestone_name: 优化动画性能
+status: planning
+last_updated: "2026-04-30T00:00:00.000Z"
+last_activity: 2026-04-30 — Milestone v2.8 started
 progress:
-  total_phases: 24
-  completed_phases: 24
-  total_plans: 54
-  completed_plans: 50
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # 项目状态
 
-> 更新时间：2026-04-29
-> 当前阶段：v2.7 图片切换动画
-> 项目状态：✅ Complete
+> 更新时间：2026-04-30
+> 当前阶段：v2.8 优化动画性能
+> 项目状态：📋 Planning
 
 ---
 
 ## Project Reference
 
-参见：.planning/PROJECT.md (更新于 2026-04-29)
+参见：.planning/PROJECT.md (更新于 2026-04-30)
 
 **Core value**：收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
-**Last milestone**：v2.7 图片切换动画 (shipped 2026-04-29)
+**Current focus**：v2.8 优化动画性能
 
 ---
 
-## Current Milestone: v2.7 图片切换动画
+## Current Position
 
-### Summary
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-30 — Milestone v2.8 started
 
-**Status:** Complete
+---
+
+## Completed Milestone: v2.7 图片切换动画
+
+**Shipped:** 2026-04-29
 **Phases:** 1 (Phase 24)
-**Plans:** 2/2 complete
+**Plans:** 2
 
 ### Key Features Delivered
 
 1. **图片切换动画** — ImagePreview 组件图片切换时使用 slide-in-left/slide-in-right 动画
 2. **方向感知** — 左右导航使用不同动画方向
 3. **双向动画** — 旧图片滑出 + 新图片滑入同时进行
-
----
-
-## Completed Milestone: v2.6 设置页缓存优化
-
-**Shipped:** 2026-04-29
-**Phases:** 1 (Phase 23)
-**Plans:** 2
-
----
-
-## Completed Milestone: v2.5 壁纸收藏功能
-
-**Shipped:** 2026-04-29
-**Phases:** 7 (Phase 16-22)
-**Plans:** 23
-**Requirements:** 22/22 satisfied
-
-### Key Features Delivered
-
-1. **完整收藏夹架构** — Repository → Service → Composable → View 分层
-2. **O(1) 高效查询** — favoriteIds Set 实现
-3. **快捷收藏** — 左键快速收藏，右键选择收藏夹
-4. **默认收藏夹** — 可设置、持久化
-5. **收藏浏览** — 网格展示、预览、下载、设为壁纸
-6. **多收藏夹支持** — 单个壁纸可属于多个收藏夹
-
-### Archive
-
-- `.planning/milestones/v2.5-ROADMAP.md`
-- `.planning/milestones/v2.5-REQUIREMENTS.md`
-- `.planning/milestones/v2.5-MILESTONE-AUDIT.md`
 
 ---
 
@@ -87,35 +62,9 @@ progress:
 - v2.4 ImagePreview 导航功能 (2026-04-27)
 - v2.5 壁纸收藏功能 (2026-04-29)
 - v2.6 设置页缓存优化 (2026-04-29)
-
----
-
-## Roadmap Evolution
-
-- Phase 24 added: ImagePreview 图片切换功能添加动画
-- Phase 23 added: 修改设置页面清空缓存功能，点击清空缓存只删除缩略图和临时文件，其他设置项不变
-
----
-
-## Current Phase
-
-**Phase 24: ImagePreview Switch Animation** — Complete
-
-- Research: ✅ Completed (24-RESEARCH.md)
-- Context: ✅ Gathered (24-CONTEXT.md)
-- Plans: ✅ 2 plans created
-- Execution: ✅ Complete
-- Verification: ✅ Passed
-
----
-
-## Quick Tasks Completed
-
-| Date | Slug | Description | Status |
-|------|------|-------------|--------|
-| 2026-04-29 | readme-regenerate | 重新生成项目 README 文档 | ✅ Complete |
+- v2.7 图片切换动画 (2026-04-29)
 
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-29 Phase 24 added*
+*最后更新：2026-04-30 Milestone v2.8 started*
