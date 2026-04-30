@@ -27,8 +27,9 @@
     </div>
     <div class="img-view">
       <Transition
-        :name="slideDirection"
+        :name="transitionName"
         mode="out-in"
+        @after-enter="endAnimation"
       >
         <img
           v-if="imgInfo"
@@ -94,6 +95,7 @@
 <script setup lang="ts">
 import type { WallpaperItem } from '@/types';
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useImageTransition } from '@/composables';
 
 // 定义 props
 interface Props {
@@ -126,7 +128,16 @@ const emit = defineEmits<{
 // 响应式数据
 const clientHeight = ref<number>(1080);
 const imgBgSrc = ref<string>("");
-const slideDirection = ref<string>('slide-left');
+// Animation state from composable
+const {
+  slideDirection,
+  isAnimating,
+  transitionName,
+  setDirection,
+  startAnimation,
+  endAnimation
+} = useImageTransition();
+// Keep isInitialOpen separate - controls modal-open animation
 const isInitialOpen = ref<boolean>(true);
 
 // 计算属性
@@ -185,17 +196,19 @@ const downloadImg = (imgItem: WallpaperItem | null) => {
 
 // 导航方法
 const navigatePrev = () => {
-  if (canNavigatePrev.value) {
-    isInitialOpen.value = false;  // 导航时禁用初始动画
-    slideDirection.value = 'slide-left'  // New image enters from left
+  if (canNavigatePrev.value && !isAnimating.value) {
+    isInitialOpen.value = false  // 导航时禁用初始动画
+    setDirection('prev')  // Uses composable: sets slideDirection to 'slide-left'
+    startAnimation()
     emit('navigate', 'prev')
   }
 }
 
 const navigateNext = () => {
-  if (canNavigateNext.value) {
-    isInitialOpen.value = false;  // 导航时禁用初始动画
-    slideDirection.value = 'slide-right'  // New image enters from right
+  if (canNavigateNext.value && !isAnimating.value) {
+    isInitialOpen.value = false  // 导航时禁用初始动画
+    setDirection('next')  // Uses composable: sets slideDirection to 'slide-right'
+    startAnimation()
     emit('navigate', 'next')
   }
 }
