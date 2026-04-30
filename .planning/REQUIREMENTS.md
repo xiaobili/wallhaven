@@ -58,10 +58,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPLASH-01 to SPLASH-04 | TBD | Pending |
-| ANIM-01 to ANIM-04 | TBD | Pending |
-| TIME-01 to TIME-04 | TBD | Pending |
-| TRANS-01 to TRANS-03 | TBD | Pending |
+| SPLASH-01 to SPLASH-04 | 30 | Pending |
+| ANIM-01 to ANIM-04 | 31 | Pending |
+| TIME-01 to TIME-04 | 32 | Pending |
+| TRANS-01 to TRANS-03 | 32 | Pending |
 
 ---
 
