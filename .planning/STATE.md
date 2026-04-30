@@ -32,9 +32,21 @@ progress:
 
 ## Current Position
 
-Phase: 32 (planned)
-Status: Phase 32 planned — Coordination & Transition (1 plan)
-Last activity: 2026-04-30 — Phase 32: Coordination & Transition planned
+Phase: 32 (complete)
+Status: Phase 32 complete — Coordination & Transition (1 plan completed)
+Last activity: 2026-04-30 — Phase 32: Coordination & Transition complete
+
+## Phase 32: Coordination & Transition — Completed
+
+| Wave | Plans | Status |
+|------|-------|--------|
+| 1    | 01    | ✓ Complete |
+
+**Delivered:**
+- Promise-based timing: 1s minimum + main window ready
+- Simultaneous fade transitions (splash out, main in)
+- Timer cleanup on app quit
+- macOS activate only creates main window (no splash on dock click)
 
 ## Phase 31: Bounce Logo Animation — Completed
 
