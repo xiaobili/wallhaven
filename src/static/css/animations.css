@@ -161,6 +161,16 @@
 /* ===== Fade Transition (Vue Transition) ===== */
 
 /**
+ * No-op Transition
+ * Used when we want to disable Vue Transition animation
+ * (e.g., during initial open where modal-open animation is used instead)
+ */
+.noop-enter-active,
+.noop-leave-active {
+  animation: none;
+}
+
+/**
  * Fade Transition Classes
  * Used by LoadingOverlay.vue and other components
  */

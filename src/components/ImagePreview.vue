@@ -27,7 +27,7 @@
     </div>
     <div class="img-view">
       <Transition
-        :name="transitionName"
+        :name="effectiveTransitionName"
         mode="out-in"
         @after-enter="endAnimation"
       >
@@ -130,7 +130,6 @@ const clientHeight = ref<number>(1080);
 const imgBgSrc = ref<string>("");
 // Animation state from composable
 const {
-  slideDirection,
   isAnimating,
   transitionName,
   setDirection,
@@ -139,6 +138,13 @@ const {
 } = useImageTransition();
 // Keep isInitialOpen separate - controls modal-open animation
 const isInitialOpen = ref<boolean>(true);
+
+// Computed transition name that uses 'noop' during initial open
+// This prevents conflict between modal-open (initial-anim) and slide enter animation
+// The noop transition has no animation, allowing modal-open to run independently
+const effectiveTransitionName = computed<string>(() => {
+  return isInitialOpen.value ? 'noop' : transitionName.value;
+});
 
 // 计算属性
 const calHeight = computed(() => {
