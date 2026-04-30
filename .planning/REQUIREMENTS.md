@@ -65,27 +65,27 @@
 
 ## Traceability
 
-哪些阶段覆盖哪些需求。在 roadmap 创建时更新。
+哪些阶段覆盖哪些需求。
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | TBD | Pending |
-| CORE-02 | TBD | Pending |
-| CORE-03 | TBD | Pending |
-| CORE-04 | TBD | Pending |
-| CORE-05 | TBD | Pending |
-| PREV-01 | TBD | Pending |
-| PREV-02 | TBD | Pending |
-| ARCH-01 | TBD | Pending |
-| ARCH-02 | TBD | Pending |
-| ARCH-03 | TBD | Pending |
-| A11Y-01 | TBD | Pending |
-| A11Y-02 | TBD | Pending |
+| ARCH-01 | Phase 25 | Pending |
+| ARCH-02 | Phase 25 | Pending |
+| CORE-01 | Phase 26 | Pending |
+| CORE-02 | Phase 26 | Pending |
+| CORE-03 | Phase 26 | Pending |
+| CORE-04 | Phase 26 | Pending |
+| CORE-05 | Phase 26 | Pending |
+| PREV-01 | Phase 27 | Pending |
+| PREV-02 | Phase 27 | Pending |
+| A11Y-01 | Phase 28 | Pending |
+| A11Y-02 | Phase 28 | Pending |
+| ARCH-03 | Phase 28 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 

@@ -4,9 +4,9 @@ milestone: v2.8
 milestone_name: 优化动画性能
 status: planning
 last_updated: "2026-04-30T00:00:00.000Z"
-last_activity: 2026-04-30 — Milestone v2.8 started
+last_activity: 2026-04-30 — Roadmap created (4 phases)
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 25 (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-30 — Milestone v2.8 started
+Status: Ready to plan
+Last activity: 2026-04-30 — Roadmap created (4 phases)
 
 ---
 
