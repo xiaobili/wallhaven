@@ -31,7 +31,7 @@
 
 ## Phases
 
-### Phase 29: LoadingOverlay Animation Optimization
+### Phase 29: LoadingOverlay Animation Optimization ✓
 
 **Goal:** 优化 LoadingOverlay 组件动画，消除卡顿和延迟
 
@@ -41,7 +41,7 @@
 
 **Success Criteria:** (待规划)
 
-**Plans:** 1/1
+**Plans:** 1/1 ✓ Complete (2026-04-30)
 
 ---
 
@@ -125,7 +125,7 @@
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
 |-------|------|-----------|----------------|--------|-----------|
-| 29 | LoadingOverlay Animation Optimization | v2.9 | 1/1 | Planned | — |
+| 29 | LoadingOverlay Animation Optimization | v2.9 | 1/1 | Complete | 2026-04-30 |
 | 25 | Animation Infrastructure | v2.8 | 0/0 | Pending | — |
 | 26 | Core Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
 | 27 | Preview Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
