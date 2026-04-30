@@ -1,4 +1,4 @@
-# Roadmap: Wallhaven 壁纸浏览器 — v2.8 动画性能优化
+# Roadmap: Wallhaven 壁纸浏览器 — v2.9 LoadingOverlay 动画优化
 
 > 创建时间：2026-04-30
 > 最后更新：2026-04-30
@@ -21,15 +21,29 @@
 
 ## Current Milestone
 
-✅ **v2.8 动画性能优化** — Phases 25-28
+**v2.9 LoadingOverlay 动画优化** — Phase 29
 
-**Goal:** 优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验
+**Goal:** 优化 LoadingOverlay 组件的动画性能，消除卡顿和延迟
 
-**Status:** Complete (2026-04-30)
+**Status:** Not started
 
 ---
 
 ## Phases
+
+### Phase 29: LoadingOverlay Animation Optimization
+
+**Goal:** 优化 LoadingOverlay 组件动画，消除卡顿和延迟
+
+**Depends on:** Phase 28 (Accessibility & Integration)
+
+**Requirements:** (待规划)
+
+**Success Criteria:** (待规划)
+
+**Plans:** 1/1
+
+---
 
 ### Phase 25: Animation Infrastructure
 
@@ -111,6 +125,7 @@
 
 | Phase | Name | Milestone | Plans Complete | Status | Completed |
 |-------|------|-----------|----------------|--------|-----------|
+| 29 | LoadingOverlay Animation Optimization | v2.9 | 1/1 | Planned | — |
 | 25 | Animation Infrastructure | v2.8 | 0/0 | Pending | — |
 | 26 | Core Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
 | 27 | Preview Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
@@ -143,4 +158,4 @@
 ---
 
 *创建时间：2026-04-30*
-*最后更新：2026-04-30 v2.8 roadmap created*
+*最后更新：2026-04-30 v2.9 roadmap created*
