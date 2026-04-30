@@ -15,15 +15,17 @@
 - ✅ **v2.5 壁纸收藏功能** — Phases 16-22 (shipped 2026-04-29)
 - ✅ **v2.6 设置页缓存优化** — Phase 23 (shipped 2026-04-29)
 - ✅ **v2.7 图片切换动画** — Phase 24 (shipped 2026-04-29)
-- 🔄 **v2.8 动画性能优化** — Phases 25-28 (current)
+- ✅ **v2.8 动画性能优化** — Phases 25-28 (shipped 2026-04-30)
 
 ---
 
 ## Current Milestone
 
-🔄 **v2.8 动画性能优化** — Phases 25-28
+✅ **v2.8 动画性能优化** — Phases 25-28
 
 **Goal:** 优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验
+
+**Status:** Complete (2026-04-30)
 
 ---
 
@@ -85,7 +87,7 @@
 
 ---
 
-### Phase 28: Accessibility & Integration
+### Phase 28: Accessibility & Integration ✓
 
 **Goal:** 添加可访问性支持，完成 ImagePreview 重构
 
@@ -101,7 +103,7 @@
 5. 所有动画在 reduced-motion 模式下正常工作
 6. 功能回归测试通过（导航、收藏、下载等）
 
-**Plans:** 0/0
+**Plans:** 1/1 ✓ Complete (2026-04-30)
 
 ---
 
@@ -112,7 +114,7 @@
 | 25 | Animation Infrastructure | v2.8 | 0/0 | Pending | — |
 | 26 | Core Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
 | 27 | Preview Animation Optimization | v2.8 | 1/1 | Complete | 2026-04-30 |
-| 28 | Accessibility & Integration | v2.8 | 0/0 | Pending | — |
+| 28 | Accessibility & Integration | v2.8 | 1/1 | Complete | 2026-04-30 |
 
 ---
 
@@ -129,9 +131,9 @@
 | CORE-05 | Phase 26 | Complete |
 | PREV-01 | Phase 27 | Complete |
 | PREV-02 | Phase 27 | Complete |
-| A11Y-01 | Phase 28 | Pending |
-| A11Y-02 | Phase 28 | Pending |
-| ARCH-03 | Phase 28 | Pending |
+| A11Y-01 | Phase 28 | Complete |
+| A11Y-02 | Phase 28 | Complete |
+| ARCH-03 | Phase 28 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
