@@ -141,6 +141,11 @@
     animation: fade 0.15s ease-out both;
     will-change: opacity;
   }
+  .modal-open,
+  .modal-close {
+    animation: fade 0.15s ease-out both;
+    will-change: opacity;
+  }
 }
 
 /* ===== Utility Classes ===== */

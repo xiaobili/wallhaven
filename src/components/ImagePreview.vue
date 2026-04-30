@@ -374,37 +374,18 @@ onUnmounted(() => {
   transform: scale(1);
 }
 
-/* Initial open animation - only applied when isInitialOpen is true */
+/* Initial open animation - uses shared modal-open from animations.css */
 .mask .img-view .img-class.initial-anim {
-  animation: blowUpModal 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  animation: modal-open 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform;
 }
 
+/* Close animation - uses shared modal-close from animations.css */
 .mask.out .img-view .img-class {
-  animation: blowUpModalTwo 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  animation: modal-close 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  will-change: transform, opacity;
 }
 
-
-@keyframes blowUpModal {
-  0% {
-    transform: scale(0);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes blowUpModalTwo {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
-}
 
 /* 导航按钮样式 */
 .nav-btn {
