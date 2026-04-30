@@ -51,6 +51,36 @@
   }
 }
 
+/* ===== Modal Animations ===== */
+
+/**
+ * Modal Open Animation
+ * Preview window opening - scale from 0 to 1
+ */
+@keyframes modal-open {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/**
+ * Modal Close Animation
+ * Preview window closing - scale from 1 to 0 with fade
+ */
+@keyframes modal-close {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
 /* ===== Vue Transition Classes ===== */
 
 /**
