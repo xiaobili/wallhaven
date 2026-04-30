@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: 首屏动画
 status: planning
-last_updated: "2026-04-30T07:25:00.000Z"
-last_activity: 2026-04-30 — Milestone v3.0 started
+last_updated: "2026-04-30T07:35:00.000Z"
+last_activity: 2026-04-30 — Phase 30 context gathered
 progress:
   total_phases: 3
   completed_phases: 0
@@ -32,9 +32,25 @@ progress:
 
 ## Current Position
 
-Phase: 30 (pending)
-Status: Roadmap created, ready to plan
-Last activity: 2026-04-30 — Roadmap v3.0 created
+Phase: 31 (in progress)
+Status: Phase 31 context gathered — Bounce Logo Animation
+Last activity: 2026-04-30 — Phase 31: Bounce Logo Animation context gathered
+
+## Phase 30: Splash Window Foundation — Completed
+
+| Wave | Plans | Status |
+|------|-------|--------|
+| 1    | 01    | ✓ Complete |
+
+**Delivered:**
+- Created `electron/renderer/splash.html` with #1a1a1a dark theme background
+- Added splash window creation logic in `electron/main/index.ts`
+- Window config: 400x300, frameless, centered, non-resizable, #1a1a1a background
+- All requirements covered: SPLASH-01, SPLASH-02, SPLASH-03, SPLASH-04
+
+## Next Phase
+
+**Phase 31: Bounce Logo Animation** — Implement elastic bounce logo animation in splash window
 
 ---
 
