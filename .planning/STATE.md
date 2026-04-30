@@ -32,9 +32,22 @@ progress:
 
 ## Current Position
 
-Phase: 31 (planned)
-Status: Phase 31 planned — Bounce Logo Animation (1 plan)
-Last activity: 2026-04-30 — Phase 31: Bounce Logo Animation planned
+Phase: 31 (complete)
+Status: Phase 31 complete — Bounce Logo Animation (1 plan completed)
+Last activity: 2026-04-30 — Phase 31: Bounce Logo Animation complete
+
+## Phase 31: Bounce Logo Animation — Completed
+
+| Wave | Plans | Status |
+|------|-------|--------|
+| 1    | 01    | ✓ Complete |
+
+**Delivered:**
+- "Wallhaven" text logo with system-ui font, bold 700 weight, 42px white
+- Elastic bounce animation: scale 0.3 → 1.05 → 0.9 → 1.0 over 1 second
+- GPU-accelerated CSS properties only (transform, opacity)
+- Performance hints: will-change + containment
+- prefers-reduced-motion accessibility fallback
 
 ## Phase 30: Splash Window Foundation — Completed
 
