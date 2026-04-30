@@ -209,7 +209,7 @@ app.whenReady().then(() => {
 
   // Minimum 1 second splash display timer
   splashMinTimePromise = new Promise((resolve) => {
-    splashTimeoutId = setTimeout(resolve, 2500)
+    splashTimeoutId = setTimeout(resolve, 3000)
   })
 
   createWindow()
