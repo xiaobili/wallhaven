@@ -8,15 +8,17 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **收藏管理，分类随心** — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Current Milestone: v2.8 优化动画性能
+## Current Milestone: v3.0 首屏动画
 
-**Goal:** 优化 ImagePreview 组件的动画性能，确保流畅 60fps 体验
+**Goal:** 为 Electron 应用添加品牌首屏动画，提升启动体验
 
 **Target features:**
-- 图片切换动画优化（消除卡顿和延迟）
-- 预览窗口打开/关闭动画优化
+- 独立 Splash 窗口：启动时先显示独立的无框首屏窗口
+- 文字 Logo 动画："Wallhaven" 文字以弹跳+弹性效果呈现
+- 时长控制：至少显示 1 秒，最长等待主应用加载完成
+- 平滑过渡：首屏窗口关闭后主窗口无缝显示
 
-**Last Shipped:** v2.7 图片切换动画 (2026-04-29)
+**Last Shipped:** v2.9 LoadingOverlay 动画优化 (2026-04-30)
 
 **Shipped Milestones:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
@@ -27,6 +29,8 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 - v2.5 壁纸收藏功能 (2026-04-29) — 22 requirements, 7 phases
 - v2.6 设置页缓存优化 (2026-04-29) — 2 requirements, 1 phase
 - v2.7 图片切换动画 (2026-04-29) — 2 requirements, 1 phase
+- v2.8 动画性能优化 (2026-04-30) — 2 requirements, 1 phase
+- v2.9 LoadingOverlay 动画优化 (2026-04-30) — 1 requirement, 1 phase
 
 ## Requirements
 
@@ -225,4 +229,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-30 v2.8 里程碑启动*
+*最后更新：2026-04-30 v3.0 里程碑启动*
