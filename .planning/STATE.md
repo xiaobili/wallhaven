@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.8
 milestone_name: 优化动画性能
-status: planning
-last_updated: "2026-04-30T00:00:00.000Z"
-last_activity: 2026-04-30 — Roadmap created (4 phases)
+status: ready_to_execute
+last_updated: "2026-04-30T12:00:00.000Z"
+last_activity: 2026-04-30 — Phase 25 planned (1 plan)
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 1
   completed_plans: 0
   percent: 0
 ---
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 25 (not started)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-04-30 — Roadmap created (4 phases)
+Phase: 25 (ready to execute)
+Plan: 25-01-PLAN.md
+Status: Ready to execute
+Last activity: 2026-04-30 — Phase 25 planned (1 plan)
 
 ---
 
