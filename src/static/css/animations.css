@@ -1,0 +1,104 @@
+/**
+ * GPU-Optimized Animation Keyframes
+ *
+ * Shared animation definitions for image transitions.
+ * Uses only transform and opacity for 60fps performance.
+ *
+ * Usage: Import in component <style scoped> block:
+ *   @import url("@/static/css/animations.css");
+ */
+
+/* ===== GPU-Optimized Slide Animations ===== */
+
+/**
+ * Slide Left Animation
+ * New image enters from left side
+ */
+@keyframes slide-left {
+  0% {
+    transform: translateX(-50px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/**
+ * Slide Right Animation
+ * New image enters from right side
+ */
+@keyframes slide-right {
+  0% {
+    transform: translateX(50px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===== Fade Animation (for reduced-motion fallback) ===== */
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ===== Vue Transition Classes ===== */
+
+/**
+ * Slide Left Transition (prev navigation)
+ * New image enters from left, old image exits to right
+ */
+.slide-left-enter-active {
+  animation: slide-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+.slide-left-leave-active {
+  animation: slide-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) reverse both;
+  will-change: transform, opacity;
+}
+
+/**
+ * Slide Right Transition (next navigation)
+ * New image enters from right, old image exits to left
+ */
+.slide-right-enter-active {
+  animation: slide-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+.slide-right-leave-active {
+  animation: slide-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) reverse both;
+  will-change: transform, opacity;
+}
+
+/* ===== Reduced Motion Support ===== */
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active,
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    animation: fade 0.15s ease-out both;
+    will-change: opacity;
+  }
+}
+
+/* ===== Utility Classes ===== */
+
+/**
+ * Animation container with CSS containment
+ * Isolates rendering boundary for better performance
+ */
+.animation-container {
+  contain: layout paint;
+}
