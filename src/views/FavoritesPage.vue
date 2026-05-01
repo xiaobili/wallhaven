@@ -34,26 +34,14 @@
             <span class="wallpaper-count">{{ filteredFavorites.length }} 张壁纸</span>
           </div>
 
-          <div
-            v-if="filteredFavorites.length === 0"
-            class="empty-collection"
-          >
+          <div v-if="filteredFavorites.length === 0" class="empty-collection">
             <i class="fas fa-images" />
-            <p v-if="!selectedCollectionId">
-              还没有收藏任何壁纸
-            </p>
-            <p v-else>
-              这个收藏夹还没有壁纸
-            </p>
-            <p class="hint">
-              去在线壁纸页面发现喜欢的壁纸吧
-            </p>
+            <p v-if="!selectedCollectionId">还没有收藏任何壁纸</p>
+            <p v-else>这个收藏夹还没有壁纸</p>
+            <p class="hint">去在线壁纸页面发现喜欢的壁纸吧</p>
           </div>
 
-          <div
-            v-else
-            class="favorites-grid"
-          >
+          <div v-else class="favorites-grid">
             <FavoriteWallpaperCard
               v-for="favorite in filteredFavorites"
               :key="`${favorite.wallpaperId}-${favorite.collectionId}`"
@@ -76,7 +64,13 @@ import CollectionSidebar from '@/components/favorites/CollectionSidebar.vue'
 import FavoriteWallpaperCard from '@/components/favorites/FavoriteWallpaperCard.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
-import { useCollections, useFavorites, useAlert, useDownload, useWallpaperSetter } from '@/composables'
+import {
+  useCollections,
+  useFavorites,
+  useAlert,
+  useDownload,
+  useWallpaperSetter,
+} from '@/composables'
 import type { WallpaperItem } from '@/types'
 
 defineOptions({ name: 'FavoritesPage' })
@@ -96,7 +90,7 @@ const imgShow = ref<boolean>(false)
 // Computed
 const selectedCollection = computed(() => {
   if (!selectedCollectionId.value) return null
-  return collections.value.find(c => c.id === selectedCollectionId.value)
+  return collections.value.find((c) => c.id === selectedCollectionId.value)
 })
 
 const filteredFavorites = computed(() => {
@@ -106,26 +100,26 @@ const filteredFavorites = computed(() => {
     return favorites.value
       .slice()
       .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
-      .filter(f => {
+      .filter((f) => {
         if (seen.has(f.wallpaperId)) return false
         seen.add(f.wallpaperId)
         return true
       })
   }
   return favorites.value
-    .filter(f => f.collectionId === selectedCollectionId.value)
+    .filter((f) => f.collectionId === selectedCollectionId.value)
     .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
 })
 
 // Extract WallpaperItem[] for ImagePreview navigation
 const favoriteWallpaperList = computed<WallpaperItem[]>(() =>
-  filteredFavorites.value.map(f => f.wallpaperData)
+  filteredFavorites.value.map((f) => f.wallpaperData),
 )
 
 // Current preview index for navigation
 const previewIndex = computed(() => {
   if (!imgInfo.value) return -1
-  return favoriteWallpaperList.value.findIndex(wp => wp.id === imgInfo.value?.id)
+  return favoriteWallpaperList.value.findIndex((wp) => wp.id === imgInfo.value?.id)
 })
 
 // Helper for card badge data
@@ -149,9 +143,7 @@ const closePreview = (): void => {
 }
 
 const handleNavigate = (direction: 'prev' | 'next'): void => {
-  const newIndex = direction === 'prev'
-    ? previewIndex.value - 1
-    : previewIndex.value + 1
+  const newIndex = direction === 'prev' ? previewIndex.value - 1 : previewIndex.value + 1
 
   if (newIndex >= 0 && newIndex < favoriteWallpaperList.value.length) {
     const wallpaper = favoriteWallpaperList.value[newIndex]
@@ -185,7 +177,7 @@ const handleDownload = async (wallpaperData: WallpaperItem): Promise<void> => {
     small: wallpaperData.thumbs?.small || '',
     resolution: wallpaperData.resolution,
     size: Number(wallpaperData.file_size) || 0,
-    wallpaperId: wallpaperData.id
+    wallpaperId: wallpaperData.id,
   })
 
   await startDownload(taskId)

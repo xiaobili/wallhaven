@@ -1,62 +1,42 @@
 <template>
-  <main
-    id="main"
-    @click="emit('close-search-modal')"
-  >
-    <div
-      id="thumbs"
-      class="thumbs-container"
-    >
-      <section
-        v-for="(sectionItem, i) in pageData.sections"
-        :key="i"
-        class="thumb-listing-page"
-      >
-        <header
-          class="thumb-listing-page-header"
-        >
-          <h2>Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}</h2>
-          <span
-            class="select-all-trigger"
-            @click.stop="toggleSelectAll(sectionItem.data, i)"
-          >
+  <main id="main" @click="emit('close-search-modal')">
+    <div id="thumbs" class="thumbs-container">
+      <section v-for="(sectionItem, i) in pageData.sections" :key="i" class="thumb-listing-page">
+        <header class="thumb-listing-page-header">
+          <h2>
+            Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}
+          </h2>
+          <span class="select-all-trigger" @click.stop="toggleSelectAll(sectionItem.data, i)">
             <span
               class="select-all-box"
               :class="{
                 checked: getSelectState(sectionItem.data) === 'all',
-                indeterminate: getSelectState(sectionItem.data) === 'some'
+                indeterminate: getSelectState(sectionItem.data) === 'some',
               }"
             >
-              <i
-                v-if="getSelectState(sectionItem.data) === 'all'"
-                class="fas fa-check"
-              />
-              <i
-                v-else-if="getSelectState(sectionItem.data) === 'some'"
-                class="fas fa-minus"
-              />
+              <i v-if="getSelectState(sectionItem.data) === 'all'" class="fas fa-check" />
+              <i v-else-if="getSelectState(sectionItem.data) === 'some'" class="fas fa-minus" />
             </span>
-            <span class="select-all-label">{{ getSelectState(sectionItem.data) === 'all' ? '取消全选' : '全选' }}</span>
+            <span class="select-all-label">{{
+              getSelectState(sectionItem.data) === 'all' ? '取消全选' : '全选'
+            }}</span>
           </span>
-          <a
-            class="icon to-top"
-            href="#top"
-            title="Back to top"
-            @click.prevent="scrollToTop"
-          >
+          <a class="icon to-top" href="#top" title="Back to top" @click.prevent="scrollToTop">
             <i class="far fa-lg fa-chevron-up" />
           </a>
         </header>
         <ul>
-          <li
-            v-for="(liItem) in sectionItem.data"
-            :key="liItem.id"
-          >
+          <li v-for="liItem in sectionItem.data" :key="liItem.id">
             <figure
               class="thumb"
-              :class="['thumb-' + (liItem.id), 'thumb-' + (liItem.purity), 'thumb-' + (liItem.category), { 'selected': isSelected(liItem.id) }]"
+              :class="[
+                'thumb-' + liItem.id,
+                'thumb-' + liItem.purity,
+                'thumb-' + liItem.category,
+                { selected: isSelected(liItem.id) },
+              ]"
               :data-wallpaper-id="liItem.id"
-              style="width:300px;height:200px"
+              style="width: 300px; height: 200px"
               @click.ctrl.exact.prevent="toggleSelect(liItem.id)"
               @click.meta.exact.prevent="toggleSelect(liItem.id)"
             >
@@ -70,21 +50,17 @@
               </div> -->
 
               <!-- 选择框 -->
-              <div
-                class="thumb-checkbox"
-                @click.stop.prevent="toggleSelect(liItem.id)"
-              >
-                <i
-                  v-if="isSelected(liItem.id)"
-                  class="fas fa-check check-icon"
-                />
+              <div class="thumb-checkbox" @click.stop.prevent="toggleSelect(liItem.id)">
+                <i v-if="isSelected(liItem.id)" class="fas fa-check check-icon" />
               </div>
 
               <!-- 收藏按钮 -->
               <div
                 class="thumb-favorite-btn"
                 :class="{ 'is-favorite': isFavorite(liItem.id) }"
-                :title="isFavorite(liItem.id) ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'"
+                :title="
+                  isFavorite(liItem.id) ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'
+                "
                 @click.stop="handleFavoriteLeftClick(liItem, $event)"
                 @contextmenu.prevent="handleFavoriteRightClick(liItem, $event)"
               >
@@ -100,25 +76,21 @@
               </a>
               <!-- 使用 IntersectionObserver 优化的懒加载 -->
               <img
-                alt="loading" 
-                loading="lazy" 
+                alt="loading"
+                loading="lazy"
                 class="lazyload loaded"
-                :data-src="liItem.thumbs.small" 
+                :data-src="liItem.thumbs.small"
                 :src="liItem.thumbs.small"
                 decoding="async"
                 fetchpriority="low"
-              >
-              <a
-                class="preview"
-                @click.stop="emit('preview', liItem)"
               />
+              <a class="preview" @click.stop="emit('preview', liItem)" />
               <div class="thumb-info">
                 <span class="wall-res">{{ formatResolution(liItem.resolution) }}</span>
-                <a class="jsAnchor overlay-anchor wall-favs">{{ formatFileSize(liItem.file_size) }}</a>
-                <span
-                  v-if="liItem.file_type === 'image/png'"
-                  class="png"
-                ><span>PNG</span></span>
+                <a class="jsAnchor overlay-anchor wall-favs">{{
+                  formatFileSize(liItem.file_size)
+                }}</a>
+                <span v-if="liItem.file_type === 'image/png'" class="png"><span>PNG</span></span>
                 <a
                   class="jsAnchor thumb-tags-toggle tagged"
                   title="下载"
@@ -133,17 +105,11 @@
       </section>
     </div>
     <div class="main-bottom">
-      <div
-        v-show="loading"
-        class="loading-span"
-      >
+      <div v-show="loading" class="loading-span">
         <i class="fas fa-spinner" />
       </div>
-      <div
-        v-show="error"
-        class="error-span"
-      >
-        <i class="fas fa-times"> <br>网络异常，请点击右上角刷新按钮重试。</i>
+      <div v-show="error" class="error-span">
+        <i class="fas fa-times"> <br />网络异常，请点击右上角刷新按钮重试。</i>
       </div>
     </div>
   </main>
@@ -155,23 +121,23 @@ import { formatResolution, formatFileSize } from '@/utils/helpers'
 import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
-  pageData: TotalPageData;
-  loading: boolean;
-  error: boolean;
-  selectedIds?: string[];  // 选中的壁纸ID列表
-  favoriteIds?: Set<string>;  // 收藏的壁纸ID集合
-}>();
+  pageData: TotalPageData
+  loading: boolean
+  error: boolean
+  selectedIds?: string[] // 选中的壁纸ID列表
+  favoriteIds?: Set<string> // 收藏的壁纸ID集合
+}>()
 
 const emit = defineEmits<{
-  'set-bg': [item: WallpaperItem];
-  'preview': [item: WallpaperItem];
-  'download-img': [item: WallpaperItem];
-  'close-search-modal': [];
-  'select-wallpaper': [id: string];  // 切换选择状态
-  'select-all': [payload: { sectionIndex: number; ids: string[]; selected: boolean }];
-  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // left click - quick add
-  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent];  // right click - show dropdown
-}>();
+  'set-bg': [item: WallpaperItem]
+  preview: [item: WallpaperItem]
+  'download-img': [item: WallpaperItem]
+  'close-search-modal': []
+  'select-wallpaper': [id: string] // 切换选择状态
+  'select-all': [payload: { sectionIndex: number; ids: string[]; selected: boolean }]
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent] // left click - quick add
+  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent] // right click - show dropdown
+}>()
 
 /**
  * 检查是否已选中
@@ -217,7 +183,7 @@ type SelectState = 'none' | 'some' | 'all'
  */
 const getSelectState = (sectionData: WallpaperItem[]): SelectState => {
   if (!props.selectedIds || props.selectedIds.length === 0) return 'none'
-  const selectedCount = sectionData.filter(item => props.selectedIds!.includes(item.id)).length
+  const selectedCount = sectionData.filter((item) => props.selectedIds!.includes(item.id)).length
   if (selectedCount === 0) return 'none'
   if (selectedCount === sectionData.length) return 'all'
   return 'some'
@@ -229,8 +195,8 @@ const getSelectState = (sectionData: WallpaperItem[]): SelectState => {
  */
 const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): void => {
   const state = getSelectState(sectionData)
-  const selectAll = state !== 'all'  // toggle: if all selected → deselect; otherwise → select
-  const ids = sectionData.map(item => item.id)
+  const selectAll = state !== 'all' // toggle: if all selected → deselect; otherwise → select
+  const ids = sectionData.map((item) => item.id)
   emit('select-all', { sectionIndex, ids, selected: selectAll })
 }
 
@@ -240,7 +206,7 @@ const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): vo
 const scrollToTop = (): void => {
   window.scrollTo({
     top: 0,
-    behavior: 'smooth' // 平滑滚动效果
+    behavior: 'smooth', // 平滑滚动效果
   })
 }
 
@@ -264,8 +230,8 @@ onMounted(() => {
       },
       {
         rootMargin: '200px', // 提前200px开始加载
-        threshold: 0.01
-      }
+        threshold: 0.01,
+      },
     )
 
     // 观察所有懒加载图片
@@ -281,11 +247,10 @@ onUnmounted(() => {
     observer = null
   }
 })
-
 </script>
 
 <style scoped>
-@import url("@/static/css/list.css");
+@import url('@/static/css/list.css');
 
 /* 选中状态样式 */
 .thumb.selected {

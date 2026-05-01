@@ -1,56 +1,33 @@
 <template>
-  <div
-    class="mask"
-    :class="showing === true ? '' : 'out'"
-  >
-    <a
-      class="close_btn"
-      @click="close"
-    />
+  <div class="mask" :class="showing === true ? '' : 'out'">
+    <a class="close_btn" @click="close" />
     <!-- 左侧导航按钮 - 上一张 -->
-    <div
-      v-if="canNavigatePrev"
-      class="nav-btn nav-btn-prev"
-      title="上一张"
-      @click="navigatePrev"
-    >
+    <div v-if="canNavigatePrev" class="nav-btn nav-btn-prev" title="上一张" @click="navigatePrev">
       <i class="fas fa-chevron-left" />
     </div>
     <!-- 右侧导航按钮 - 下一张 -->
-    <div
-      v-if="canNavigateNext"
-      class="nav-btn nav-btn-next"
-      title="下一张"
-      @click="navigateNext"
-    >
+    <div v-if="canNavigateNext" class="nav-btn nav-btn-next" title="下一张" @click="navigateNext">
       <i class="fas fa-chevron-right" />
     </div>
     <div class="img-view">
-      <Transition
-        :name="effectiveTransitionName"
-        mode="out-in"
-        @after-enter="endAnimation"
-      >
+      <Transition :name="effectiveTransitionName" mode="out-in" @after-enter="endAnimation">
         <img
           v-if="imgInfo"
           :key="imgInfo.id"
           class="img-class"
           :class="{ 'initial-anim': isInitialOpen }"
           :src="imgInfo.path"
-          :style="{'max-height':calHeight}"
-        >
+          :style="{ 'max-height': calHeight }"
+        />
       </Transition>
       <img
         v-show="!showing"
         class="img-class close-bg"
         :src="imgBgSrc"
-        :style="{'max-height':calHeight}"
-      >
+        :style="{ 'max-height': calHeight }"
+      />
     </div>
-    <div
-      class="sidebar-fixed-wrapper"
-      style="bottom: 40px;"
-    >
+    <div class="sidebar-fixed-wrapper" style="bottom: 40px">
       <div class="details-sidebar-fixed-box hi-de">
         <div
           class="sidebar-fixed_box comments-middle-icon"
@@ -83,28 +60,24 @@
           </div>
         </div>
       </div>
-      <div
-        class="back-to-top sidebar-fixed_box"
-        z-st="shortcut_totop"
-        style="display: block;"
-      />
+      <div class="back-to-top sidebar-fixed_box" z-st="shortcut_totop" style="display: block" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { WallpaperItem } from '@/types';
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { useImageTransition } from '@/composables';
+import type { WallpaperItem } from '@/types'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useImageTransition } from '@/composables'
 
 // 定义 props
 interface Props {
-  showing: boolean;
-  imgInfo: WallpaperItem | null;
-  isLocal: boolean;
-  wallpaperList?: WallpaperItem[];
-  currentIndex?: number;
-  favoriteIds?: Set<string>;
+  showing: boolean
+  imgInfo: WallpaperItem | null
+  isLocal: boolean
+  wallpaperList?: WallpaperItem[]
+  currentIndex?: number
+  favoriteIds?: Set<string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -113,43 +86,38 @@ const props = withDefaults(defineProps<Props>(), {
   wallpaperList: () => [],
   currentIndex: -1,
   favoriteIds: () => new Set(),
-});
+})
 
 // 定义 emits
 const emit = defineEmits<{
-  close: [value: boolean];
-  'set-bg': [item: WallpaperItem];
-  'download-img': [item: WallpaperItem];
-  navigate: [direction: 'prev' | 'next'];
-  'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // left click
-  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent];  // right click
-}>();
+  close: [value: boolean]
+  'set-bg': [item: WallpaperItem]
+  'download-img': [item: WallpaperItem]
+  navigate: [direction: 'prev' | 'next']
+  'toggle-favorite': [item: WallpaperItem, event: MouseEvent] // left click
+  'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent] // right click
+}>()
 
 // 响应式数据
-const clientHeight = ref<number>(1080);
-const imgBgSrc = ref<string>("");
+const clientHeight = ref<number>(1080)
+const imgBgSrc = ref<string>('')
 // Animation state from composable
-const {
-  isAnimating,
-  transitionName,
-  setDirection,
-  startAnimation,
-  endAnimation
-} = useImageTransition();
+const { isAnimating, transitionName, setDirection, startAnimation, endAnimation } =
+  useImageTransition()
 // Keep isInitialOpen separate - controls modal-open animation
-const isInitialOpen = ref<boolean>(true);
+const isInitialOpen = ref<boolean>(true)
 
 // Computed transition name that uses 'noop' during initial open
 // This prevents conflict between modal-open (initial-anim) and slide enter animation
 // The noop transition has no animation, allowing modal-open to run independently
 const effectiveTransitionName = computed<string>(() => {
-  return isInitialOpen.value ? 'noop' : transitionName.value;
-});
+  return isInitialOpen.value ? 'noop' : transitionName.value
+})
 
 // 计算属性
 const calHeight = computed(() => {
-  return parseInt((clientHeight.value * 0.9).toString()) + "px";
-});
+  return parseInt((clientHeight.value * 0.9).toString()) + 'px'
+})
 
 // 导航计算属性
 const canNavigatePrev = computed(() => {
@@ -166,45 +134,48 @@ const isFavorite = computed(() => {
 })
 
 // 监听 showing 变化，重置初始动画状态
-watch(() => props.showing, (newVal) => {
-  if (newVal) {
-    // 每次打开预览时，启用初始动画
-    isInitialOpen.value = true;
-  }
-})
+watch(
+  () => props.showing,
+  (newVal) => {
+    if (newVal) {
+      // 每次打开预览时，启用初始动画
+      isInitialOpen.value = true
+    }
+  },
+)
 
 // 监听窗口大小变化
 const onresize = () => {
   if (document.documentElement.clientHeight !== undefined) {
-    clientHeight.value = document.documentElement.clientHeight;
+    clientHeight.value = document.documentElement.clientHeight
   }
-};
+}
 
 // 关闭预览
 const close = () => {
   if (props.imgInfo) {
-    imgBgSrc.value = props.imgInfo.path;
+    imgBgSrc.value = props.imgInfo.path
   }
-  emit('close', false);
-};
+  emit('close', false)
+}
 
 // 设置壁纸
 const setBg = (imgItem: WallpaperItem | null) => {
-  if (!imgItem) return;
-  emit('set-bg', imgItem);
-};
+  if (!imgItem) return
+  emit('set-bg', imgItem)
+}
 
 // 下载图片
 const downloadImg = (imgItem: WallpaperItem | null) => {
-  if (!imgItem) return;
-  emit('download-img', imgItem);
-};
+  if (!imgItem) return
+  emit('download-img', imgItem)
+}
 
 // 导航方法
 const navigatePrev = () => {
   if (canNavigatePrev.value && !isAnimating.value) {
-    isInitialOpen.value = false  // 导航时禁用初始动画
-    setDirection('prev')  // Uses composable: sets slideDirection to 'slide-left'
+    isInitialOpen.value = false // 导航时禁用初始动画
+    setDirection('prev') // Uses composable: sets slideDirection to 'slide-left'
     startAnimation()
     emit('navigate', 'prev')
   }
@@ -212,8 +183,8 @@ const navigatePrev = () => {
 
 const navigateNext = () => {
   if (canNavigateNext.value && !isAnimating.value) {
-    isInitialOpen.value = false  // 导航时禁用初始动画
-    setDirection('next')  // Uses composable: sets slideDirection to 'slide-right'
+    isInitialOpen.value = false // 导航时禁用初始动画
+    setDirection('next') // Uses composable: sets slideDirection to 'slide-right'
     startAnimation()
     emit('navigate', 'next')
   }
@@ -246,20 +217,20 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 // 组件挂载时执行
 onMounted(() => {
-  clientHeight.value = document.documentElement.clientHeight;
-  window.addEventListener('resize', onresize);
-  window.addEventListener('keydown', handleKeydown);
-});
+  clientHeight.value = document.documentElement.clientHeight
+  window.addEventListener('resize', onresize)
+  window.addEventListener('keydown', handleKeydown)
+})
 
 // 组件卸载时移除事件监听
 onUnmounted(() => {
-  window.removeEventListener('resize', onresize);
-  window.removeEventListener('keydown', handleKeydown);
-});
+  window.removeEventListener('resize', onresize)
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <style scoped>
-@import url("@/static/css/animations.css");
+@import url('@/static/css/animations.css');
 
 .close_btn {
   z-index: 999;
@@ -274,7 +245,6 @@ onUnmounted(() => {
   background: url(@/static/icons/icon-s-close-hover.svg) center no-repeat #222;
 }
 
-
 .sidebar-fixed-wrapper {
   color: #000000;
   position: fixed;
@@ -286,10 +256,10 @@ onUnmounted(() => {
 
 .comments-middle-icon,
 .share-middle-icon {
-  border: 1px solid #E9E9E9;
+  border: 1px solid #e9e9e9;
   background-color: #222;
-  -webkit-transition: background .3s;
-  transition: background .3s;
+  -webkit-transition: background 0.3s;
+  transition: background 0.3s;
 }
 
 .icon-wrap {
@@ -314,7 +284,6 @@ onUnmounted(() => {
   font-size: 20px;
 }
 
-
 .img-class {
   object-fit: cover;
   max-width: 95%;
@@ -324,7 +293,6 @@ onUnmounted(() => {
   object-fit: cover;
   max-width: 95%;
 }
-
 
 .mask {
   z-index: 999;
@@ -348,7 +316,7 @@ onUnmounted(() => {
 
 .mask.out {
   opacity: 0;
-  visibility: hidden
+  visibility: hidden;
 }
 
 .mask:hover .close_btn {
@@ -375,9 +343,10 @@ onUnmounted(() => {
 
 .img-view > img {
   border-radius: 3px;
-  box-shadow: 0 1px 1px 1px #222, 5px 5px 5px rgb(84 84 84 / 50%);
+  box-shadow:
+    0 1px 1px 1px #222,
+    5px 5px 5px rgb(84 84 84 / 50%);
 }
-
 
 /*弹层动画（放大）*/
 .mask {
@@ -405,7 +374,6 @@ onUnmounted(() => {
   will-change: transform, opacity;
 }
 
-
 /* 导航按钮样式 */
 .nav-btn {
   position: fixed;
@@ -420,7 +388,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 999;
-  transition: background-color 0.3s, opacity 0.3s;
+  transition:
+    background-color 0.3s,
+    opacity 0.3s;
   font-size: 20px;
   color: #d7ce82;
 }
@@ -444,7 +414,7 @@ onUnmounted(() => {
 
 /* 收藏按钮样式 */
 .favorite-btn {
-  border: 1px solid #E9E9E9;
+  border: 1px solid #e9e9e9;
   background-color: #222;
   transition: background 0.3s;
 }

@@ -1,36 +1,24 @@
 <template>
-  <form
-    id="searchbar"
-    class="expanded"
-    @click.stop="closeModal"
-  >
+  <form id="searchbar" class="expanded" @click.stop="closeModal">
     <!-- 关键词搜索 -->
-    <div
-      id="search-keyword"
-      class="framed searchbar-dropdown"
-      @click.stop=""
-    >
+    <div id="search-keyword" class="framed searchbar-dropdown" @click.stop="">
       <input
         v-model="localParams.keyword"
         type="text"
         name="keyword"
         placeholder="搜索关键词（英文）"
-      >
+      />
     </div>
 
     <!-- 分类选择 -->
-    <div
-      id="search-category-checks"
-      class="framed"
-      @click.stop=""
-    >
+    <div id="search-category-checks" class="framed" @click.stop="">
       <input
         id="search-general"
         v-model="localParams.categories"
         type="checkbox"
         name="general"
         value="general"
-      >
+      />
       <label for="search-general">普通</label>
 
       <input
@@ -39,7 +27,7 @@
         type="checkbox"
         name="anime"
         value="anime"
-      >
+      />
       <label for="search-anime">动漫</label>
 
       <input
@@ -48,44 +36,26 @@
         type="checkbox"
         name="people"
         value="people"
-      >
+      />
       <label for="search-people">人物</label>
     </div>
 
     <!-- AI画作过滤 -->
-    <div
-      id="search-aiart-checks"
-      class="framed"
-      @click.stop=""
-    >
+    <div id="search-aiart-checks" class="framed" @click.stop="">
       <input
         id="search-ai"
         v-model="localParams.aiArt"
         type="checkbox"
         value="true"
         name="ai_art_filter"
-      >
+      />
       <label for="search-ai">AI画作</label>
     </div>
 
     <!-- 纯度筛选 -->
-    <div
-      id="search-purity-checks"
-      class="framed"
-      @click.stop=""
-    >
-      <input
-        id="search-sfw"
-        v-model="localParams.purity"
-        type="checkbox"
-        name="sfw"
-        value="sfw"
-      >
-      <label
-        class="purity sfw"
-        for="search-sfw"
-        title="正经图"
-      >SFW</label>
+    <div id="search-purity-checks" class="framed" @click.stop="">
+      <input id="search-sfw" v-model="localParams.purity" type="checkbox" name="sfw" value="sfw" />
+      <label class="purity sfw" for="search-sfw" title="正经图">SFW</label>
 
       <input
         id="search-sketchy"
@@ -93,12 +63,8 @@
         type="checkbox"
         name="sketchy"
         value="sketchy"
-      >
-      <label
-        class="purity sketchy"
-        for="search-sketchy"
-        title="带点颜色"
-      >Sketchy</label>
+      />
+      <label class="purity sketchy" for="search-sketchy" title="带点颜色">Sketchy</label>
 
       <input
         v-show="apiKey !== ''"
@@ -107,30 +73,21 @@
         type="checkbox"
         name="nsfw"
         value="nsfw"
+      />
+      <label v-show="apiKey !== ''" class="purity nsfw" for="search-nsfw" title="开车图"
+        >NSFW</label
       >
-      <label
-        v-show="apiKey !== ''"
-        class="purity nsfw"
-        for="search-nsfw"
-        title="开车图"
-      >NSFW</label>
     </div>
 
     <!-- 分辨率选择 -->
-    <div
-      id="search-resolutions"
-      class="framed searchbar-dropdown"
-      @click.stop=""
-    >
+    <div id="search-resolutions" class="framed searchbar-dropdown" @click.stop="">
       <a
         class="jsAnchor dropdown-toggle"
         :class="localParams.selector === 1 ? 'extended' : 'collapsed'"
         @click="changeSelector(1)"
-      >{{ localParams.resolution == '' ? '分辨率' : localParams.resolution }}</a>
-      <div
-        class="dropdown"
-        :class="localParams.selector === 1 ? 'extended' : 'collapsed'"
+        >{{ localParams.resolution == '' ? '分辨率' : localParams.resolution }}</a
       >
+      <div class="dropdown" :class="localParams.selector === 1 ? 'extended' : 'collapsed'">
         <div>
           <div class="framed">
             <input
@@ -139,7 +96,7 @@
               type="radio"
               name="searchbar-respicker-limitation"
               value="atleast"
-            >
+            />
             <label for="searchbar-respicker-atleast"> <i class="far fa-plus" /> 至少 </label>
 
             <input
@@ -148,18 +105,17 @@
               type="radio"
               name="searchbar-respicker-limitation"
               value="exactly"
-            >
+            />
             <label for="searchbar-respicker-exactly">
               <i class="far fa-dot-circle" /> 精确的
             </label>
           </div>
 
           <div class="respicker">
-            <p
-              v-show="desktopInfo !== ''"
-              class="respicker-native-info"
-            >
-              你的屏幕分辨率：<strong><em>{{ desktopInfo }}</em></strong>.
+            <p v-show="desktopInfo !== ''" class="respicker-native-info">
+              你的屏幕分辨率：<strong
+                ><em>{{ desktopInfo }}</em></strong
+              >.
             </p>
 
             <table class="label-table">
@@ -173,14 +129,8 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="(line, i) in resolutionsArray"
-                  :key="i"
-                >
-                  <td
-                    v-for="(rln, x) in line.item"
-                    :key="x"
-                  >
+                <tr v-for="(line, i) in resolutionsArray" :key="i">
+                  <td v-for="(rln, x) in line.item" :key="x">
                     <input
                       v-if="localParams.respickerLimitation !== 'atleast'"
                       :id="'searchbar-respicker-' + rln"
@@ -188,7 +138,7 @@
                       type="checkbox"
                       name="respicker-resolution"
                       :value="rln"
-                    >
+                    />
                     <input
                       v-if="localParams.respickerLimitation === 'atleast'"
                       :id="'searchbar-respicker-' + rln"
@@ -197,11 +147,8 @@
                       name="respicker-resolution"
                       :value="rln"
                       @click="handleCancleSelect(rln)"
-                    >
-                    <label
-                      :for="'searchbar-respicker-' + rln"
-                      original-title="Dual 1080p"
-                    >{{
+                    />
+                    <label :for="'searchbar-respicker-' + rln" original-title="Dual 1080p">{{
                       formatMulti(rln)
                     }}</label>
                   </td>
@@ -209,7 +156,7 @@
               </tbody>
             </table>
 
-            <hr>
+            <hr />
 
             <div class="respicker-custom oneline framed">
               <label for="searchbar-respicker-custom-width">自定义分辨率</label>
@@ -221,7 +168,7 @@
                 name="respicker-custom-width"
                 placeholder="Width"
                 maxlength="5"
-              >
+              />
               <label class="respicker-custom-separator">
                 <i class="far fa-times" />
               </label>
@@ -233,7 +180,7 @@
                 name="respicker-custom-height"
                 placeholder="Height"
                 maxlength="5"
-              >
+              />
             </div>
           </div>
         </div>
@@ -241,21 +188,15 @@
     </div>
 
     <!-- 比例选择 -->
-    <div
-      id="search-ratios"
-      class="framed searchbar-dropdown"
-      @click.stop=""
-    >
+    <div id="search-ratios" class="framed searchbar-dropdown" @click.stop="">
       <a
         class="jsAnchor dropdown-toggle"
         :class="localParams.selector === 2 ? 'extended' : 'collapsed'"
         style="min-width: 5em"
         @click="changeSelector(2)"
-      >比例</a>
-      <div
-        class="dropdown"
-        :class="localParams.selector === 2 ? 'extended' : 'collapsed'"
+        >比例</a
       >
+      <div class="dropdown" :class="localParams.selector === 2 ? 'extended' : 'collapsed'">
         <div style="padding: 0.5em 1em">
           <div class="respicker">
             <table class="label-table">
@@ -277,7 +218,7 @@
                       name="ratio"
                       value="landscape"
                       class="ratio"
-                    >
+                    />
                     <label for="searchbar-ratio-landscape"> 全部横屏 </label>
                   </td>
                   <td>
@@ -288,18 +229,12 @@
                       name="ratio"
                       value="portrait"
                       class="ratio"
-                    >
+                    />
                     <label for="searchbar-ratio-portrait">全部竖屏</label>
                   </td>
                 </tr>
-                <tr
-                  v-for="(line, i) in ratiosArray"
-                  :key="i"
-                >
-                  <td
-                    v-for="(ra, x) in line.item"
-                    :key="x"
-                  >
+                <tr v-for="(line, i) in ratiosArray" :key="i">
+                  <td v-for="(ra, x) in line.item" :key="x">
                     <input
                       v-if="ra !== ''"
                       :id="'searchbar-ratio-' + ra"
@@ -308,7 +243,7 @@
                       name="ratio"
                       :value="ra"
                       class="ratio"
-                    >
+                    />
                     <label :for="'searchbar-ratio-' + ra">{{ formatMulti(ra) }}</label>
                   </td>
                 </tr>
@@ -320,41 +255,29 @@
     </div>
 
     <!-- 颜色选择 -->
-    <div
-      id="search-colors"
-      class="framed searchbar-dropdown"
-      @click.stop=""
-    >
+    <div id="search-colors" class="framed searchbar-dropdown" @click.stop="">
       <a
         class="jsAnchor dropdown-toggle"
         :class="localParams.selector === 3 ? 'extended' : 'collapsed'"
         style="border-radius: 3px"
         :style="localParams.color !== 'none' ? 'background-color: #' + localParams.color + ';' : ''"
         @click="changeSelector(3)"
-      >颜色</a>
-      <div
-        class="dropdown"
-        :class="localParams.selector === 3 ? 'extended' : 'collapsed'"
+        >颜色</a
       >
+      <div class="dropdown" :class="localParams.selector === 3 ? 'extended' : 'collapsed'">
         <div style="padding: 0.5em 1em">
           <div class="colorpicker">
             <table class="label-table">
               <tbody>
-                <tr
-                  v-for="(line, i) in colorsArray"
-                  :key="i"
-                >
-                  <td
-                    v-for="(colorItem, ci) in line.item"
-                    :key="ci"
-                  >
+                <tr v-for="(line, i) in colorsArray" :key="i">
+                  <td v-for="(colorItem, ci) in line.item" :key="ci">
                     <input
                       :id="'search-colors-' + colorItem"
                       v-model="localParams.color"
                       type="radio"
                       name="search-colors"
                       :value="colorItem"
-                    >
+                    />
                     <label
                       :for="'search-colors-' + colorItem"
                       :style="
@@ -373,34 +296,25 @@
     </div>
 
     <!-- 排序方式 -->
-    <div
-      id="search-sorting"
-      class="framed searchbar-dropdown"
-      @click.stop=""
-    >
+    <div id="search-sorting" class="framed searchbar-dropdown" @click.stop="">
       <input
         id="search-order"
         v-model="localParams.desc"
         type="checkbox"
         name="order"
         value="desc"
-      >
-      <label
-        for="search-order"
-        original-title="Ascending/Descending"
       />
+      <label for="search-order" original-title="Ascending/Descending" />
 
       <a
         class="jsAnchor dropdown-toggle"
         :class="localParams.selector === 4 ? 'extended' : 'collapsed'"
         style="width: 7em"
         @click="changeSelector(4)"
-      >{{ sortingFormat(localParams.sorting) }}</a>
-
-      <div
-        class="dropdown"
-        :class="localParams.selector === 4 ? 'extended' : 'collapsed'"
+        >{{ sortingFormat(localParams.sorting) }}</a
       >
+
+      <div class="dropdown" :class="localParams.selector === 4 ? 'extended' : 'collapsed'">
         <div>
           <input
             id="search-sorting-relevance"
@@ -408,7 +322,7 @@
             type="radio"
             name="sorting"
             value="relevance"
-          >
+          />
           <label for="search-sorting-relevance">相关性</label>
 
           <input
@@ -417,7 +331,7 @@
             type="radio"
             name="sorting"
             value="random"
-          >
+          />
           <label for="search-sorting-random">随机</label>
 
           <input
@@ -426,7 +340,7 @@
             type="radio"
             name="sorting"
             value="date_added"
-          >
+          />
           <label for="search-sorting-date">日期</label>
 
           <input
@@ -435,7 +349,7 @@
             type="radio"
             name="sorting"
             value="views"
-          >
+          />
           <label for="search-sorting-views">浏览量</label>
 
           <input
@@ -444,7 +358,7 @@
             type="radio"
             name="sorting"
             value="favorites"
-          >
+          />
           <label for="search-sorting-favorites">收藏数</label>
 
           <input
@@ -453,7 +367,7 @@
             type="radio"
             name="sorting"
             value="toplist"
-          >
+          />
           <label for="search-sorting-toplist">排行榜</label>
 
           <input
@@ -462,7 +376,7 @@
             type="radio"
             name="sorting"
             value="hot"
-          >
+          />
           <label for="search-sorting-hot">热度</label>
         </div>
       </div>
@@ -480,12 +394,10 @@
         :class="localParams.selector === 5 ? 'extended' : 'collapsed'"
         style="width: 8.5em"
         @click="changeSelector(5)"
-      >{{ topRangeFormat(localParams.topRange) }}</a>
-
-      <div
-        class="dropdown"
-        :class="localParams.selector === 5 ? 'extended' : 'collapsed'"
+        >{{ topRangeFormat(localParams.topRange) }}</a
       >
+
+      <div class="dropdown" :class="localParams.selector === 5 ? 'extended' : 'collapsed'">
         <div>
           <input
             id="searchbar-toplist-range-1d"
@@ -493,7 +405,7 @@
             type="radio"
             name="top"
             value="1d"
-          >
+          />
           <label for="searchbar-toplist-range-1d">1 天</label>
 
           <input
@@ -502,7 +414,7 @@
             type="radio"
             name="top"
             value="3d"
-          >
+          />
           <label for="searchbar-toplist-range-3d">3 天</label>
 
           <input
@@ -511,7 +423,7 @@
             type="radio"
             name="top"
             value="1w"
-          >
+          />
           <label for="searchbar-toplist-range-1w">上周</label>
 
           <input
@@ -520,7 +432,7 @@
             type="radio"
             name="top"
             value="1M"
-          >
+          />
 
           <input
             id="searchbar-toplist-range-3M"
@@ -528,7 +440,7 @@
             type="radio"
             name="top"
             value="3M"
-          >
+          />
           <label for="searchbar-toplist-range-3M">3 个月</label>
 
           <input
@@ -537,7 +449,7 @@
             type="radio"
             name="top"
             value="6M"
-          >
+          />
           <label for="searchbar-toplist-range-6M">6 个月</label>
 
           <input
@@ -546,7 +458,7 @@
             type="radio"
             name="top"
             value="1y"
-          >
+          />
           <label for="searchbar-toplist-range-1y">去年</label>
         </div>
       </div>
@@ -563,41 +475,21 @@
     </button>
 
     <div title="设置为在线切换模式参数">
-      <button
-        id="search-save"
-        type="button"
-        class="button"
-        @click="saveParams"
-      >
-        <i
-          class="fas"
-          :class="saving ? 'fa-spinner' : 'fa-save'"
-        />
+      <button id="search-save" type="button" class="button" @click="saveParams">
+        <i class="fas" :class="saving ? 'fa-spinner' : 'fa-save'" />
       </button>
     </div>
-    <button
-      id="search-reset"
-      type="button"
-      class="button"
-      @click="resetSelect"
-    >
+    <button id="search-reset" type="button" class="button" @click="resetSelect">
       <i class="fas fa-undo" />
     </button>
 
     <!-- 多选工具栏 -->
     <div v-if="(selectedCount || 0) > 0">
       <div>
-        <button
-          class="button"
-          :disabled="downloading || false"
-          @click="handleDownloadSelected"
-        >
+        <button class="button" :disabled="downloading || false" @click="handleDownloadSelected">
           <i class="fas fa-download" /> 下载选中
         </button>
-        <button
-          class="button red"
-          @click="handleClearSelection"
-        >
+        <button class="button red" @click="handleClearSelection">
           <i class="fas fa-times" /> 取消选择
         </button>
       </div>
@@ -608,9 +500,8 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import type { CustomParams, ResolutionLine, RatioLine, ColorLine, GetParams } from '@/types'
-import { arrayToBinaryString, formatResolution,generateRandomString } from '@/utils/helpers'
-import {useWallpaperList} from '@/composables'
-
+import { arrayToBinaryString, formatResolution, generateRandomString } from '@/utils/helpers'
+import { useWallpaperList } from '@/composables'
 
 const DEFAULT_PARAMS: CustomParams = {
   keyword: '',
@@ -659,7 +550,6 @@ const emit = defineEmits<{
   (e: 'saveParams', params: CustomParams): void
 }>()
 
-
 // 将 watch 转换为 computed,自动追踪 localParams 的变化
 const computedQueryParams = computed<GetParams>(() => {
   // 使用工具函数转换分类和纯度为二进制字符串
@@ -670,9 +560,14 @@ const computedQueryParams = computed<GetParams>(() => {
   const tempPurity = arrayToBinaryString(localParams.purity, ALL_PURITIES)
 
   // 根据 respickerLimitation 决定使用哪个分辨率参数
-  const resolutionsStr = localParams.respickerLimitation === 'atleast'
-    ? (localParams.resolution ? localParams.resolution : undefined)
-    : (localParams.resolutions.length > 0 ? localParams.resolutions.join(',') : undefined)
+  const resolutionsStr =
+    localParams.respickerLimitation === 'atleast'
+      ? localParams.resolution
+        ? localParams.resolution
+        : undefined
+      : localParams.resolutions.length > 0
+        ? localParams.resolutions.join(',')
+        : undefined
 
   // 处理空数组,返回 undefined 而非空字符串
   const ratiosStr = localParams.ratios.length > 0 ? localParams.ratios.join(',') : undefined
@@ -692,7 +587,7 @@ const computedQueryParams = computed<GetParams>(() => {
     atleast: localParams.respickerLimitation === 'atleast' ? localParams.resolution : undefined,
     resolutions: localParams.respickerLimitation === 'atleast' ? undefined : resolutionsStr,
     page: 1,
-    seed: seed
+    seed: seed,
   }
 })
 
@@ -819,7 +714,7 @@ defineExpose({
   margin-top: 0.5em;
   background: rgba(49, 49, 49, 0.8);
   border-radius: 3px;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, .33);
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
   animation: slideDown 0.25s ease-out;
 }
 

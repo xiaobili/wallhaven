@@ -20,7 +20,7 @@ export const downloadRepository = {
    */
   async get(): Promise<IpcResponse<FinishedDownloadItem[]>> {
     const result = await electronClient.storeGet<FinishedDownloadItem[]>(
-      STORAGE_KEYS.DOWNLOAD_FINISHED_LIST
+      STORAGE_KEYS.DOWNLOAD_FINISHED_LIST,
     )
 
     if (result.success) {

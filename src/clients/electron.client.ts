@@ -40,10 +40,7 @@ class ElectronClientImpl {
    * 创建 Electron 不可用错误响应
    */
   private createUnavailableResponse<T>(): IpcResponse<T> {
-    return this.createErrorResponse<T>(
-      'ELECTRON_UNAVAILABLE',
-      'Electron API is not available'
-    )
+    return this.createErrorResponse<T>('ELECTRON_UNAVAILABLE', 'Electron API is not available')
   }
 
   // ==================== Store 操作 ====================

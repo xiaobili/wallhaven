@@ -73,11 +73,9 @@ export function useCollections(): UseCollectionsReturn {
     return false
   }
 
-  const getById = (id: string): Collection | undefined =>
-    store.collections.find(c => c.id === id)
+  const getById = (id: string): Collection | undefined => store.collections.find((c) => c.id === id)
 
-  const getDefault = (): Collection | undefined =>
-    store.collections.find(c => c.isDefault)
+  const getDefault = (): Collection | undefined => store.collections.find((c) => c.isDefault)
 
   const setDefault = async (id: string): Promise<boolean> => {
     const result = await collectionsService.setDefault(id)

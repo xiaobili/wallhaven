@@ -1,10 +1,7 @@
 <template>
   <div class="online-wallpaper-page">
     <!-- 加载遮罩层 -->
-    <LoadingOverlay
-      :show="showLoadingOverlay"
-      text="搜索中..."
-    />
+    <LoadingOverlay :show="showLoadingOverlay" text="搜索中..." />
 
     <!-- Alert 提示框 -->
     <Alert
@@ -45,10 +42,7 @@
     />
 
     <!-- 显示错误信息 -->
-    <div
-      v-if="error"
-      class="error-container"
-    >
+    <div v-if="error" class="error-container">
       <div class="error-content">
         <i class="fas fa-exclamation-triangle error-icon" />
         <h3>网络异常</h3>
@@ -58,12 +52,7 @@
           <li>API Key 是否正确（如果需要）</li>
           <li>防火墙或代理设置</li>
         </ul>
-        <button
-          class="button red"
-          @click="retryFetch"
-        >
-          <i class="fas fa-redo" /> 重试
-        </button>
+        <button class="button red" @click="retryFetch"><i class="fas fa-redo" /> 重试</button>
       </div>
     </div>
 
@@ -105,7 +94,15 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import Alert from '@/components/Alert.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue'
 import CollectionDropdown from '@/components/favorites/CollectionDropdown.vue'
-import { useWallpaperList, useDownload, useSettings, useAlert, useWallpaperSetter, useFavorites, useCollections } from '@/composables'
+import {
+  useWallpaperList,
+  useDownload,
+  useSettings,
+  useAlert,
+  useWallpaperSetter,
+  useFavorites,
+  useCollections,
+} from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 import { throttle } from '@/utils/helpers'
 
@@ -117,7 +114,7 @@ const {
   queryParams,
   fetch: fetchWallpapers,
   loadMore: loadMoreWallpapers,
-  saveCustomParams
+  saveCustomParams,
 } = useWallpaperList()
 const { addTask, startDownload, isDownloading } = useDownload()
 const { settings, selectFolder, update: updateSettings } = useSettings()
@@ -125,17 +122,10 @@ const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 const { setWallpaper } = useWallpaperSetter()
 
 // Favorites composable
-const {
-  favoriteIds,
-  add: addFavorite,
-  remove: removeFavorite,
-  isInCollection,
-} = useFavorites()
+const { favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()
 
 // Collections composable for getDefault
-const {
-  getDefault,
-} = useCollections()
+const { getDefault } = useCollections()
 
 // Refs - 使用 shallowRef 优化大型对象
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
@@ -158,7 +148,7 @@ const apiKey = computed(() => settings.value.apiKey)
 // 从 wallpapers 中提取扁平化的壁纸列表
 const wallpaperList = computed<WallpaperItem[]>(() => {
   const allWallpapers: WallpaperItem[] = []
-  wallpapers.value.sections.forEach(section => {
+  wallpapers.value.sections.forEach((section) => {
     allWallpapers.push(...section.data)
   })
   return allWallpapers
@@ -167,7 +157,7 @@ const wallpaperList = computed<WallpaperItem[]>(() => {
 // 当前预览索引
 const previewIndex = computed(() => {
   if (!imgInfo.value) return -1
-  return wallpaperList.value.findIndex(wp => wp.id === imgInfo.value?.id)
+  return wallpaperList.value.findIndex((wp) => wp.id === imgInfo.value?.id)
 })
 
 // Lifecycle hooks
@@ -227,7 +217,11 @@ const toggleSelection = (wallpaperId: string): void => {
  * - selected=true: add any IDs not already in selectedWallpapers
  * - selected=false: remove all IDs in the payload from selectedWallpapers
  */
-const handleSelectAll = (payload: { sectionIndex: number; ids: string[]; selected: boolean }): void => {
+const handleSelectAll = (payload: {
+  sectionIndex: number
+  ids: string[]
+  selected: boolean
+}): void => {
   if (payload.selected) {
     // Add all IDs not already selected
     for (const id of payload.ids) {
@@ -237,9 +231,7 @@ const handleSelectAll = (payload: { sectionIndex: number; ids: string[]; selecte
     }
   } else {
     // Remove all IDs in this section from selection
-    selectedWallpapers.value = selectedWallpapers.value.filter(
-      id => !payload.ids.includes(id)
-    )
+    selectedWallpapers.value = selectedWallpapers.value.filter((id) => !payload.ids.includes(id))
   }
 }
 
@@ -267,12 +259,12 @@ const downloadSelected = async (): Promise<void> => {
     const allWallpapers: WallpaperItem[] = []
 
     // 从所有section中收集壁纸
-    allSections.forEach(section => {
+    allSections.forEach((section) => {
       allWallpapers.push(...section.data)
     })
 
     const selectedItems = allWallpapers.filter((wp: WallpaperItem) =>
-      selectedWallpapers.value.includes(wp.id)
+      selectedWallpapers.value.includes(wp.id),
     )
 
     if (selectedItems.length === 0) {
@@ -288,7 +280,7 @@ const downloadSelected = async (): Promise<void> => {
         small: item.thumbs.small,
         resolution: item.resolution,
         size: item.file_size,
-        wallpaperId: item.id
+        wallpaperId: item.id,
       })
       await startDownload(taskId)
     }
@@ -349,7 +341,9 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
 /**
  * 下载壁纸文件
  */
-const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
+const downloadWallpaperFile = async (
+  imgItem: WallpaperItem,
+): Promise<{
   success: boolean
   filePath: string | null
   error: string | null
@@ -386,13 +380,13 @@ const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<{
   const result = await electronClient.downloadWallpaper({
     url: imgItem.path,
     filename,
-    saveDir
+    saveDir,
   })
 
   return {
     success: result.success,
     filePath: result.data || null,
-    error: result.error?.message || null
+    error: result.error?.message || null,
   }
 }
 
@@ -402,9 +396,7 @@ const closePreview = (): void => {
 }
 
 const handleNavigate = (direction: 'prev' | 'next'): void => {
-  const newIndex = direction === 'prev'
-    ? previewIndex.value - 1
-    : previewIndex.value + 1
+  const newIndex = direction === 'prev' ? previewIndex.value - 1 : previewIndex.value + 1
 
   if (newIndex >= 0 && newIndex < wallpaperList.value.length) {
     const wallpaper = wallpaperList.value[newIndex]
@@ -467,7 +459,7 @@ const addToDownloadQueue = async (imgItem: WallpaperItem): Promise<void> => {
     small: imgItem.thumbs.small,
     resolution: imgItem.resolution,
     size: Number(imgItem.file_size) || 0,
-    wallpaperId: imgItem.id
+    wallpaperId: imgItem.id,
   })
 
   // 自动开始下载
@@ -528,7 +520,7 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
       const rect = (event.target as HTMLElement).getBoundingClientRect()
       dropdownPosition.value = {
         x: rect.left,
-        y: rect.bottom + 4
+        y: rect.bottom + 4,
       }
       showFavoriteDropdown.value = true
     })
@@ -538,7 +530,7 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
     const rect = (event.target as HTMLElement).getBoundingClientRect()
     dropdownPosition.value = {
       x: rect.left,
-      y: rect.bottom + 4
+      y: rect.bottom + 4,
     }
     // 延迟设置 visible，让 Transition 检测到 false → true 的变化
     requestAnimationFrame(() => {
@@ -565,7 +557,6 @@ const handleClickOutside = (event: MouseEvent): void => {
     }
   }
 }
-
 </script>
 
 <style scoped>

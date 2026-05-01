@@ -72,7 +72,7 @@ class FavoritesServiceImpl {
   async add(
     wallpaperId: string,
     collectionId: string,
-    wallpaperData: WallpaperItem
+    wallpaperData: WallpaperItem,
   ): Promise<IpcResponse<FavoriteItem>> {
     const item: FavoriteItem = {
       wallpaperId,
@@ -118,9 +118,13 @@ class FavoritesServiceImpl {
   async move(
     wallpaperId: string,
     fromCollectionId: string,
-    toCollectionId: string
+    toCollectionId: string,
   ): Promise<IpcResponse<FavoriteItem>> {
-    const result = await favoritesRepository.moveFavorite(wallpaperId, fromCollectionId, toCollectionId)
+    const result = await favoritesRepository.moveFavorite(
+      wallpaperId,
+      fromCollectionId,
+      toCollectionId,
+    )
 
     // 成功时清除缓存
     if (result.success) {

@@ -44,7 +44,11 @@ export function useFavorites(): UseFavoritesReturn {
   const isInCollection = (wallpaperId: string, collectionId: string): boolean =>
     store.isInCollection(wallpaperId, collectionId)
 
-  const add = async (wallpaperId: string, collectionId: string, wallpaperData: WallpaperItem): Promise<boolean> => {
+  const add = async (
+    wallpaperId: string,
+    collectionId: string,
+    wallpaperData: WallpaperItem,
+  ): Promise<boolean> => {
     const result = await favoritesService.add(wallpaperId, collectionId, wallpaperData)
     if (result.success) {
       await load()
@@ -66,7 +70,11 @@ export function useFavorites(): UseFavoritesReturn {
     return false
   }
 
-  const move = async (wallpaperId: string, fromCollectionId: string, toCollectionId: string): Promise<boolean> => {
+  const move = async (
+    wallpaperId: string,
+    fromCollectionId: string,
+    toCollectionId: string,
+  ): Promise<boolean> => {
     const result = await favoritesService.move(wallpaperId, fromCollectionId, toCollectionId)
     if (result.success) {
       await load()

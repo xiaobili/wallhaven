@@ -59,7 +59,10 @@ export const favoritesRepository = {
     }
 
     if (!result.success) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     return { success: true, data: result.data ?? { collections: [], favorites: [], version: 1 } }
@@ -91,12 +94,15 @@ export const favoritesRepository = {
   async createCollection(name: string): Promise<IpcResponse<Collection>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
     // 检查名称是否已存在
-    if (data.collections.some(c => c.name === name)) {
+    if (data.collections.some((c) => c.name === name)) {
       return createError(FavoritesErrorCodes.COLLECTION_NAME_EXISTS, '收藏夹名称已存在')
     }
 
@@ -128,17 +134,20 @@ export const favoritesRepository = {
   async renameCollection(id: string, name: string): Promise<IpcResponse<Collection>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
-    const collection = data.collections.find(c => c.id === id)
+    const collection = data.collections.find((c) => c.id === id)
     if (!collection) {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
     }
 
     // 检查新名称是否与其他收藏夹冲突
-    if (data.collections.some(c => c.name === name && c.id !== id)) {
+    if (data.collections.some((c) => c.name === name && c.id !== id)) {
       return createError(FavoritesErrorCodes.COLLECTION_NAME_EXISTS, '收藏夹名称已存在')
     }
 
@@ -149,7 +158,7 @@ export const favoritesRepository = {
     }
 
     const updatedData: FavoritesData = {
-      collections: data.collections.map(c => (c.id === id ? updatedCollection : c)),
+      collections: data.collections.map((c) => (c.id === id ? updatedCollection : c)),
       favorites: data.favorites,
       version: data.version,
     }
@@ -168,11 +177,14 @@ export const favoritesRepository = {
   async deleteCollection(id: string): Promise<IpcResponse<void>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
-    const collection = data.collections.find(c => c.id === id)
+    const collection = data.collections.find((c) => c.id === id)
     if (!collection) {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
     }
@@ -184,8 +196,8 @@ export const favoritesRepository = {
 
     // 删除收藏夹及其所有收藏项
     const updatedData: FavoritesData = {
-      collections: data.collections.filter(c => c.id !== id),
-      favorites: data.favorites.filter(f => f.collectionId !== id),
+      collections: data.collections.filter((c) => c.id !== id),
+      favorites: data.favorites.filter((f) => f.collectionId !== id),
       version: data.version,
     }
 
@@ -204,17 +216,20 @@ export const favoritesRepository = {
   async setDefaultCollection(id: string): Promise<IpcResponse<Collection>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
-    const collection = data.collections.find(c => c.id === id)
+    const collection = data.collections.find((c) => c.id === id)
     if (!collection) {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
     }
 
     // 更新所有收藏夹的 isDefault 标志，并设置 defaultCollectionId
-    const updatedCollections = data.collections.map(c => ({
+    const updatedCollections = data.collections.map((c) => ({
       ...c,
       isDefault: c.id === id,
       updatedAt: c.id === id ? new Date().toISOString() : c.updatedAt,
@@ -232,7 +247,7 @@ export const favoritesRepository = {
       return createError(FavoritesErrorCodes.STORAGE_ERROR, '保存默认收藏夹设置失败')
     }
 
-    const updatedCollection = updatedCollections.find(c => c.id === id)
+    const updatedCollection = updatedCollections.find((c) => c.id === id)
     return { success: true, data: updatedCollection! }
   },
 
@@ -249,7 +264,7 @@ export const favoritesRepository = {
     }
 
     const favorites = collectionId
-      ? result.data.favorites.filter(f => f.collectionId === collectionId)
+      ? result.data.favorites.filter((f) => f.collectionId === collectionId)
       : result.data.favorites
 
     return { success: true, data: favorites }
@@ -261,17 +276,24 @@ export const favoritesRepository = {
   async addFavorite(item: FavoriteItem): Promise<IpcResponse<FavoriteItem>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
     // 检查收藏夹是否存在
-    if (!data.collections.some(c => c.id === item.collectionId)) {
+    if (!data.collections.some((c) => c.id === item.collectionId)) {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '收藏夹不存在')
     }
 
     // 检查是否已收藏
-    if (data.favorites.some(f => f.wallpaperId === item.wallpaperId && f.collectionId === item.collectionId)) {
+    if (
+      data.favorites.some(
+        (f) => f.wallpaperId === item.wallpaperId && f.collectionId === item.collectionId,
+      )
+    ) {
       return createError(FavoritesErrorCodes.FAVORITE_ALREADY_EXISTS, '该壁纸已在此收藏夹中')
     }
 
@@ -295,12 +317,15 @@ export const favoritesRepository = {
   async removeFavorite(wallpaperId: string, collectionId: string): Promise<IpcResponse<void>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
     const index = data.favorites.findIndex(
-      f => f.wallpaperId === wallpaperId && f.collectionId === collectionId
+      (f) => f.wallpaperId === wallpaperId && f.collectionId === collectionId,
     )
 
     if (index === -1) {
@@ -310,7 +335,7 @@ export const favoritesRepository = {
     const updatedData: FavoritesData = {
       collections: data.collections,
       favorites: data.favorites.filter(
-        f => !(f.wallpaperId === wallpaperId && f.collectionId === collectionId)
+        (f) => !(f.wallpaperId === wallpaperId && f.collectionId === collectionId),
       ),
       version: data.version,
     }
@@ -329,22 +354,25 @@ export const favoritesRepository = {
   async moveFavorite(
     wallpaperId: string,
     fromCollectionId: string,
-    toCollectionId: string
+    toCollectionId: string,
   ): Promise<IpcResponse<FavoriteItem>> {
     const result = await this.getData()
     if (!result.success || !result.data) {
-      return createError(FavoritesErrorCodes.STORAGE_ERROR, result.error?.message || '读取收藏数据失败')
+      return createError(
+        FavoritesErrorCodes.STORAGE_ERROR,
+        result.error?.message || '读取收藏数据失败',
+      )
     }
 
     const data = result.data
     // 检查目标收藏夹是否存在
-    if (!data.collections.some(c => c.id === toCollectionId)) {
+    if (!data.collections.some((c) => c.id === toCollectionId)) {
       return createError(FavoritesErrorCodes.COLLECTION_NOT_FOUND, '目标收藏夹不存在')
     }
 
     // 查找原收藏项
     const favorite = data.favorites.find(
-      f => f.wallpaperId === wallpaperId && f.collectionId === fromCollectionId
+      (f) => f.wallpaperId === wallpaperId && f.collectionId === fromCollectionId,
     )
 
     if (!favorite) {
@@ -352,7 +380,9 @@ export const favoritesRepository = {
     }
 
     // 检查目标收藏夹是否已有该壁纸
-    if (data.favorites.some(f => f.wallpaperId === wallpaperId && f.collectionId === toCollectionId)) {
+    if (
+      data.favorites.some((f) => f.wallpaperId === wallpaperId && f.collectionId === toCollectionId)
+    ) {
       return createError(FavoritesErrorCodes.FAVORITE_ALREADY_EXISTS, '该壁纸已在目标收藏夹中')
     }
 
@@ -365,8 +395,8 @@ export const favoritesRepository = {
 
     const updatedData: FavoritesData = {
       collections: data.collections,
-      favorites: data.favorites.map(f =>
-        f.wallpaperId === wallpaperId && f.collectionId === fromCollectionId ? updatedFavorite : f
+      favorites: data.favorites.map((f) =>
+        f.wallpaperId === wallpaperId && f.collectionId === fromCollectionId ? updatedFavorite : f,
       ),
       version: data.version,
     }
@@ -390,7 +420,7 @@ export const favoritesRepository = {
       return { success: false, data: false, error: result.error }
     }
 
-    const isFav = result.data.favorites.some(f => f.wallpaperId === wallpaperId)
+    const isFav = result.data.favorites.some((f) => f.wallpaperId === wallpaperId)
     return { success: true, data: isFav }
   },
 
@@ -404,10 +434,10 @@ export const favoritesRepository = {
     }
 
     const collectionIds = result.data.favorites
-      .filter(f => f.wallpaperId === wallpaperId)
-      .map(f => f.collectionId)
+      .filter((f) => f.wallpaperId === wallpaperId)
+      .map((f) => f.collectionId)
 
-    const collections = result.data.collections.filter(c => collectionIds.includes(c.id))
+    const collections = result.data.collections.filter((c) => collectionIds.includes(c.id))
     return { success: true, data: collections }
   },
 }

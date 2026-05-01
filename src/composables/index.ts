@@ -22,4 +22,9 @@ export { useCollections, type UseCollectionsReturn } from './favorites/useCollec
 export { useFavorites, type UseFavoritesReturn } from './favorites/useFavorites'
 
 // Animation
-export { useImageTransition, type SlideDirection, type NavigationDirection, type UseImageTransitionReturn } from './animation/useImageTransition'
+export {
+  useImageTransition,
+  type SlideDirection,
+  type NavigationDirection,
+  type UseImageTransitionReturn,
+} from './animation/useImageTransition'

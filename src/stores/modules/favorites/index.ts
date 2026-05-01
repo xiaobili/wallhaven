@@ -27,7 +27,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
   // ==================== 计算属性 ====================
 
   /** 收藏的壁纸 ID 集合（O(1) 查询） */
-  const favoriteIds = computed(() => new Set(favorites.value.map(f => f.wallpaperId)))
+  const favoriteIds = computed(() => new Set(favorites.value.map((f) => f.wallpaperId)))
 
   /** 唯一壁纸数量（去重后） */
   const uniqueWallpaperCount = computed(() => favoriteIds.value.size)
@@ -77,36 +77,42 @@ export const useFavoritesStore = defineStore('favorites', () => {
    * 检查壁纸是否在指定收藏夹中
    */
   function isInCollection(wallpaperId: string, collectionId: string): boolean {
-    return favorites.value.some(f => f.wallpaperId === wallpaperId && f.collectionId === collectionId)
+    return favorites.value.some(
+      (f) => f.wallpaperId === wallpaperId && f.collectionId === collectionId,
+    )
   }
 
   /**
    * 获取收藏夹的壁纸数量
    */
   function getCollectionCount(collectionId: string): number {
-    return favorites.value.filter(f => f.collectionId === collectionId).length
+    return favorites.value.filter((f) => f.collectionId === collectionId).length
   }
 
   /**
    * 获取指定收藏夹的收藏项
    */
   function getByCollection(collectionId: string): FavoriteItem[] {
-    return favorites.value.filter(f => f.collectionId === collectionId)
+    return favorites.value.filter((f) => f.collectionId === collectionId)
   }
 
   /**
    * 获取壁纸所属的收藏夹名称列表
    */
   function getCollectionNamesForWallpaper(wallpaperId: string): string[] {
-    const items = favorites.value.filter(f => f.wallpaperId === wallpaperId)
-    const collectionIds = items.map(f => f.collectionId)
-    return collections.value.filter(c => collectionIds.includes(c.id)).map(c => c.name)
+    const items = favorites.value.filter((f) => f.wallpaperId === wallpaperId)
+    const collectionIds = items.map((f) => f.collectionId)
+    return collections.value.filter((c) => collectionIds.includes(c.id)).map((c) => c.name)
   }
 
   /**
    * 添加收藏项
    */
-  async function addFavorite(wallpaperId: string, collectionId: string, wallpaperData: any): Promise<boolean> {
+  async function addFavorite(
+    wallpaperId: string,
+    collectionId: string,
+    wallpaperData: any,
+  ): Promise<boolean> {
     const result = await favoritesService.add(wallpaperId, collectionId, wallpaperData)
     if (result.success) {
       await loadFavorites()
@@ -130,7 +136,11 @@ export const useFavoritesStore = defineStore('favorites', () => {
   /**
    * 移动收藏项
    */
-  async function moveFavorite(wallpaperId: string, fromCollectionId: string, toCollectionId: string): Promise<boolean> {
+  async function moveFavorite(
+    wallpaperId: string,
+    fromCollectionId: string,
+    toCollectionId: string,
+  ): Promise<boolean> {
     const result = await favoritesService.move(wallpaperId, fromCollectionId, toCollectionId)
     if (result.success) {
       await loadFavorites()

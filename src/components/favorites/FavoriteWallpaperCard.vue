@@ -1,40 +1,19 @@
 <template>
-  <figure
-    class="thumb"
-    style="width:300px;height:200px"
-  >
+  <figure class="thumb" style="width: 300px; height: 200px">
     <!-- Collection badge - top-left -->
-    <div
-      class="favorite-badge"
-      :title="collectionNames.join(', ')"
-    >
+    <div class="favorite-badge" :title="collectionNames.join(', ')">
       <i class="fas fa-heart" />
-      <span
-        v-if="collectionCount > 1"
-        class="badge-count"
-      >{{ collectionCount }}</span>
+      <span v-if="collectionCount > 1" class="badge-count">{{ collectionCount }}</span>
     </div>
 
     <!-- Thumbnail -->
-    <img
-      :src="thumbnailSrc"
-      :alt="favorite.wallpaperId"
-      loading="lazy"
-      decoding="async"
-    >
-    <a
-      class="preview"
-      @click.prevent="emit('preview', favorite.wallpaperData)"
-    />
+    <img :src="thumbnailSrc" :alt="favorite.wallpaperId" loading="lazy" decoding="async" />
+    <a class="preview" @click.prevent="emit('preview', favorite.wallpaperData)" />
 
     <!-- Bottom info bar -->
     <figcaption class="thumb-info">
       <span class="wall-res">{{ formatResolution(favorite.wallpaperData.resolution) }}</span>
-      <a
-        class="wall-favs"
-        title="设为壁纸"
-        @click="emit('set-bg', favorite.wallpaperData)"
-      >
+      <a class="wall-favs" title="设为壁纸" @click="emit('set-bg', favorite.wallpaperData)">
         <i class="fas fa-fw fa-repeat-alt" />
       </a>
       <a
@@ -61,8 +40,8 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  'preview': [wallpaperData: FavoriteItem['wallpaperData']]
-  'download': [wallpaperData: FavoriteItem['wallpaperData']]
+  preview: [wallpaperData: FavoriteItem['wallpaperData']]
+  download: [wallpaperData: FavoriteItem['wallpaperData']]
   'set-bg': [wallpaperData: FavoriteItem['wallpaperData']]
 }>()
 

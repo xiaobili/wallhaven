@@ -15,21 +15,18 @@
               type="text"
               placeholder="选择壁纸下载目录"
               readonly
-            >
-            <button
-              class="button"
-              @click="browseDownloadPath"
-            >
+            />
+            <button class="button" @click="browseDownloadPath">
               <i class="fas fa-folder-open" /> 浏览
             </button>
           </div>
-          <p class="setting-hint">
-            设置壁纸文件的默认保存位置
-          </p>
+          <p class="setting-hint">设置壁纸文件的默认保存位置</p>
         </div>
 
         <div class="setting-item">
-          <label for="max-concurrent">多线程下载数量: {{ formSettings.maxConcurrentDownloads }}</label>
+          <label for="max-concurrent"
+            >多线程下载数量: {{ formSettings.maxConcurrentDownloads }}</label
+          >
           <div class="framed">
             <input
               id="max-concurrent"
@@ -39,11 +36,9 @@
               max="10"
               step="1"
               class="slider-input"
-            >
+            />
           </div>
-          <p class="setting-hint">
-            同时下载的壁纸数量（1-10）
-          </p>
+          <p class="setting-hint">同时下载的壁纸数量（1-10）</p>
         </div>
       </section>
 
@@ -58,13 +53,10 @@
             v-model="formSettings.apiKey"
             type="password"
             placeholder="输入您的 Wallhaven API Key"
-          >
+          />
           <p class="setting-hint">
             API Key 用于访问 NSFW 内容。您可以在
-            <a
-              href="https://wallhaven.cc/settings/account"
-              target="_blank"
-            >Wallhaven 账户设置</a>
+            <a href="https://wallhaven.cc/settings/account" target="_blank">Wallhaven 账户设置</a>
             中获取。
           </p>
         </div>
@@ -77,43 +69,21 @@
         <div class="setting-item">
           <label for="wallpaper-fit">壁纸适配模式</label>
           <div class="framed">
-            <select
-              id="wallpaper-fit"
-              v-model="formSettings.wallpaperFit"
-            >
-              <option value="fill">
-                填充 (Fill)
-              </option>
-              <option value="fit">
-                适应 (Fit)
-              </option>
-              <option value="stretch">
-                拉伸 (Stretch)
-              </option>
-              <option value="tile">
-                平铺 (Tile)
-              </option>
-              <option value="center">
-                居中 (Center)
-              </option>
-              <option value="span">
-                跨屏 (Span)
-              </option>
+            <select id="wallpaper-fit" v-model="formSettings.wallpaperFit">
+              <option value="fill">填充 (Fill)</option>
+              <option value="fit">适应 (Fit)</option>
+              <option value="stretch">拉伸 (Stretch)</option>
+              <option value="tile">平铺 (Tile)</option>
+              <option value="center">居中 (Center)</option>
+              <option value="span">跨屏 (Span)</option>
             </select>
           </div>
-          <p class="setting-hint">
-            设置壁纸在桌面上的显示方式
-          </p>
+          <p class="setting-hint">设置壁纸在桌面上的显示方式</p>
         </div>
 
         <div class="setting-preview">
-          <p class="preview-label">
-            预览效果：
-          </p>
-          <div
-            class="fit-preview"
-            :class="'fit-' + formSettings.wallpaperFit"
-          >
+          <p class="preview-label">预览效果：</p>
+          <div class="fit-preview" :class="'fit-' + formSettings.wallpaperFit">
             <div class="preview-screen">
               <div class="preview-wallpaper" />
             </div>
@@ -128,18 +98,12 @@
 
         <div class="setting-item">
           <label>应用缓存</label>
-          <p
-            class="setting-hint"
-            style="margin-bottom: 1em;"
-          >
-            清理应用产生的缓存数据，包括缩略图和临时文件。<br>
+          <p class="setting-hint" style="margin-bottom: 1em">
+            清理应用产生的缓存数据，包括缩略图和临时文件。<br />
             注意：清理后缩略图会在下次访问时重新生成，不会影响已下载的壁纸文件和您的设置。
           </p>
 
-          <div
-            v-if="cacheInfo"
-            class="cache-info"
-          >
+          <div v-if="cacheInfo" class="cache-info">
             <div class="cache-stat">
               <span class="stat-label">缩略图数量:</span>
               <span class="stat-value">{{ cacheInfo.thumbnailsCount || 0 }}</span>
@@ -150,15 +114,8 @@
             </div>
           </div>
 
-          <button
-            class="button warning-button"
-            :disabled="isClearing"
-            @click="clearCache"
-          >
-            <i
-              class="fas"
-              :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'"
-            />
+          <button class="button warning-button" :disabled="isClearing" @click="clearCache">
+            <i class="fas" :class="isClearing ? 'fa-spinner fa-spin' : 'fa-trash-alt'" />
             {{ isClearing ? '清理中...' : '清空缓存' }}
           </button>
         </div>
@@ -166,16 +123,10 @@
 
       <!-- 操作按钮 -->
       <div class="settings-actions">
-        <button
-          class="button restore-button"
-          @click="resetSettings"
-        >
+        <button class="button restore-button" @click="resetSettings">
           <i class="fas fa-undo" /> 恢复默认
         </button>
-        <button
-          class="button green"
-          @click="saveSettings"
-        >
+        <button class="button green" @click="saveSettings">
           <i class="fas fa-save" /> 保存设置
         </button>
       </div>
@@ -214,7 +165,7 @@ const formSettings = editableSettings
 // 缓存信息
 const cacheInfo = reactive({
   thumbnailsCount: 0,
-  tempFilesCount: 0
+  tempFilesCount: 0,
 })
 
 // 清理状态
@@ -247,7 +198,10 @@ const browseDownloadPath = async (): Promise<void> => {
 
 const saveSettings = async (): Promise<void> => {
   // 验证设置
-  if (formSettings.value.maxConcurrentDownloads < 1 || formSettings.value.maxConcurrentDownloads > 10) {
+  if (
+    formSettings.value.maxConcurrentDownloads < 1 ||
+    formSettings.value.maxConcurrentDownloads > 10
+  ) {
     showWarning('多线程下载数量必须在 1-10 之间')
     return
   }
@@ -295,10 +249,10 @@ const getFitDescription = (fit: WallpaperFit): string => {
 const clearCache = async (): Promise<void> => {
   const confirmed = window.confirm(
     '确定要清空应用缓存吗？\n\n' +
-    '这将删除：\n' +
-    '• 缩略图缓存（下次访问时会重新生成）\n' +
-    '• 下载临时文件\n\n' +
-    '注意：不会删除已下载的壁纸文件和您的设置。'
+      '这将删除：\n' +
+      '• 缩略图缓存（下次访问时会重新生成）\n' +
+      '• 下载临时文件\n\n' +
+      '注意：不会删除已下载的壁纸文件和您的设置。',
   )
 
   if (!confirmed) {
@@ -309,7 +263,9 @@ const clearCache = async (): Promise<void> => {
 
   try {
     // 1. 清空缩略图和临时文件缓存
-    const cacheResult = await settingsService.clearAppCache(settings.value.downloadPath || undefined)
+    const cacheResult = await settingsService.clearAppCache(
+      settings.value.downloadPath || undefined,
+    )
 
     if (!cacheResult.success) {
       throw new Error(cacheResult.error?.message || '清理缓存失败')
@@ -328,9 +284,7 @@ const clearCache = async (): Promise<void> => {
       details.push(`${cacheResult.data.tempFilesDeleted} 个临时文件`)
     }
 
-    const message = details.length > 0
-      ? `缓存已清空\n已删除：${details.join('、')}`
-      : '缓存已清空'
+    const message = details.length > 0 ? `缓存已清空\n已删除：${details.join('、')}` : '缓存已清空'
 
     showSuccess(message, 5000)
   } catch (error: any) {
@@ -358,11 +312,9 @@ const fetchCacheInfo = async (): Promise<void> => {
 // 初始化：获取缓存信息并启动表单编辑
 fetchCacheInfo()
 startEdit()
-
 </script>
 
 <style scoped>
-
 .settings-page {
   max-width: 900px;
   margin: 2em auto;
@@ -382,7 +334,7 @@ startEdit()
 
 .settings-section {
   background-color: #1a1a1a;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, .33);
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
   border-radius: 3px;
   margin: 1.5em auto;
   padding: 1.5em;
@@ -391,7 +343,7 @@ startEdit()
 .settings-section h3 {
   font-weight: 700;
   margin: 1.5em 0 1em;
-  padding: .25em;
+  padding: 0.25em;
   color: #8cc;
   border-style: dotted;
   border-color: #333;
@@ -421,19 +373,23 @@ startEdit()
   font-size: 1.05em;
 }
 
-.setting-item input[type="text"],
-.setting-item input[type="password"] {
-  padding: .5em;
+.setting-item input[type='text'],
+.setting-item input[type='password'] {
+  padding: 0.5em;
   width: 100%;
   background-color: #313131;
   border-radius: 2px;
-  box-shadow: inset 0 0 .75em rgba(255, 255, 255, .03), 0 2px 0 #222, 0 3px 4px -3px #000, 0 1px 2px rgba(0, 0, 0, .2);
+  box-shadow:
+    inset 0 0 0.75em rgba(255, 255, 255, 0.03),
+    0 2px 0 #222,
+    0 3px 4px -3px #000,
+    0 1px 2px rgba(0, 0, 0, 0.2);
   color: #ddd;
   cursor: text;
 }
 
-.setting-item input[type="text"]:focus,
-.setting-item input[type="password"]:focus {
+.setting-item input[type='text']:focus,
+.setting-item input[type='password']:focus {
   background-color: #4d4d4d;
 }
 
@@ -446,7 +402,7 @@ startEdit()
   display: flex;
   position: relative;
   min-height: 2.3em;
-  margin: .5em 0;
+  margin: 0.5em 0;
   white-space: nowrap;
   overflow: visible;
   align-items: center;
@@ -478,20 +434,26 @@ startEdit()
   position: relative;
   display: flex;
   padding: 3px;
-  margin: .33em 0;
+  margin: 0.33em 0;
   height: auto;
   white-space: nowrap;
   border-radius: 3px;
-  background-color: rgba(30, 30, 30, .5);
-  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .4), 1px 1px 0 rgba(127, 127, 127, .1);
+  background-color: rgba(30, 30, 30, 0.5);
+  box-shadow:
+    inset 1px 1px 1px rgba(0, 0, 0, 0.4),
+    1px 1px 0 rgba(127, 127, 127, 0.1);
 }
 
 .framed select {
-  padding: .5em 2.5em .5em .5em;
+  padding: 0.5em 2.5em 0.5em 0.5em;
   width: 100%;
   background-color: #313131;
   border-radius: 2px;
-  box-shadow: inset 0 0 .75em rgba(255, 255, 255, .03), 0 2px 0 #222, 0 3px 4px -3px #000, 0 1px 2px rgba(0, 0, 0, .2);
+  box-shadow:
+    inset 0 0 0.75em rgba(255, 255, 255, 0.03),
+    0 2px 0 #222,
+    0 3px 4px -3px #000,
+    0 1px 2px rgba(0, 0, 0, 0.2);
   color: #ddd;
   cursor: pointer;
   -webkit-appearance: none;
@@ -529,7 +491,9 @@ startEdit()
   background: #313131;
   border-radius: 3px;
   outline: none;
-  box-shadow: inset 0 0 .75em rgba(255, 255, 255, .03), 0 2px 0 #222;
+  box-shadow:
+    inset 0 0 0.75em rgba(255, 255, 255, 0.03),
+    0 2px 0 #222;
 }
 
 .slider-input::-webkit-slider-thumb {
@@ -539,9 +503,9 @@ startEdit()
   background: linear-gradient(to bottom, #275660 0, #183640 100%);
   border-radius: 3px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transition-property: color, background, text-shadow, box-shadow, border-color;
-  transition-duration: .25s;
+  transition-duration: 0.25s;
 }
 
 .slider-input::-webkit-slider-thumb:hover {
@@ -563,7 +527,7 @@ startEdit()
 .setting-hint a:active,
 .setting-hint a:focus,
 .setting-hint a:hover {
-  text-shadow: 0 0 2px rgba(220, 255, 255, .3);
+  text-shadow: 0 0 2px rgba(220, 255, 255, 0.3);
 }
 
 .setting-preview {
@@ -571,7 +535,9 @@ startEdit()
   padding: 1.5em;
   background-color: #222;
   border-radius: 3px;
-  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .4), 1px 1px 0 rgba(127, 127, 127, .1);
+  box-shadow:
+    inset 1px 1px 1px rgba(0, 0, 0, 0.4),
+    1px 1px 0 rgba(127, 127, 127, 0.1);
 }
 
 .preview-label {
@@ -594,7 +560,7 @@ startEdit()
   border-radius: 3px;
   overflow: hidden;
   position: relative;
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, .33);
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
 }
 
 .preview-wallpaper {
@@ -602,8 +568,20 @@ startEdit()
   height: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-image:
-    repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.1) 35px, rgba(255,255,255,.1) 70px),
-    repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 70px);
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 35px,
+      rgba(255, 255, 255, 0.1) 35px,
+      rgba(255, 255, 255, 0.1) 70px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 35px,
+      rgba(0, 0, 0, 0.1) 35px,
+      rgba(0, 0, 0, 0.1) 70px
+    );
 }
 
 /* 不同适配模式的预览效果 */
@@ -647,11 +625,13 @@ startEdit()
 
 /* 缓存信息样式 */
 .cache-info {
-  background-color: rgba(30, 30, 30, .5);
+  background-color: rgba(30, 30, 30, 0.5);
   border-radius: 3px;
   padding: 1em;
   margin-bottom: 1em;
-  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .4), 1px 1px 0 rgba(127, 127, 127, .1);
+  box-shadow:
+    inset 1px 1px 1px rgba(0, 0, 0, 0.4),
+    1px 1px 0 rgba(127, 127, 127, 0.1);
 }
 
 .cache-stat {
@@ -659,7 +639,7 @@ startEdit()
   justify-content: space-between;
   align-items: center;
   padding: 0.5em 0;
-  border-bottom: 1px solid rgba(127, 127, 127, .1);
+  border-bottom: 1px solid rgba(127, 127, 127, 0.1);
 }
 
 .cache-stat:last-child {
@@ -684,8 +664,11 @@ startEdit()
   border-radius: 3px;
   cursor: pointer;
   transition-property: color, background, text-shadow, box-shadow, border-color;
-  transition-duration: .25s;
-  box-shadow: 0 2px 0 #8b2a1f, 0 3px 4px -3px #000, 0 1px 2px rgba(0, 0, 0, .2);
+  transition-duration: 0.25s;
+  box-shadow:
+    0 2px 0 #8b2a1f,
+    0 3px 4px -3px #000,
+    0 1px 2px rgba(0, 0, 0, 0.2);
   padding: 0.5em 1.2em;
   font-size: 1em;
   font-weight: 600;
@@ -699,7 +682,9 @@ startEdit()
 }
 
 .warning-button:active:not(:disabled) {
-  box-shadow: 0 1px 0 #8b2a1f, 0 1px 2px rgba(0, 0, 0, .2);
+  box-shadow:
+    0 1px 0 #8b2a1f,
+    0 1px 2px rgba(0, 0, 0, 0.2);
   transform: translateY(1px);
 }
 

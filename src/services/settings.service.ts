@@ -72,9 +72,8 @@ class SettingsServiceImpl {
     const currentResult = await this.get()
 
     // 构建当前设置（如果没有则使用默认值）
-    const current: AppSettings = currentResult.success && currentResult.data
-      ? currentResult.data
-      : this.getDefaults()
+    const current: AppSettings =
+      currentResult.success && currentResult.data ? currentResult.data : this.getDefaults()
 
     // 合并设置
     const merged: AppSettings = { ...current, ...partial }

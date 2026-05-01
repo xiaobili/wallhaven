@@ -20,28 +20,34 @@ src/
 ## 类型分类
 
 ### 1. Wallhaven API 相关类型
+
 - `WallpaperThumb`: 壁纸缩略图信息
 - `WallpaperQuery`: 壁纸查询参数
 - `WallpaperMeta`: 壁纸元数据
 - `WallpaperItem`: 壁纸项目信息
 
 ### 2. 页面数据相关类型
+
 - `PageData`: 页面数据结构
 
 ### 3. 搜索参数相关类型
+
 - `CustomParams`: 自定义搜索参数
 - `GetParams`: API 获取参数
 
 ### 4. UI 辅助类型
+
 - `ResolutionLine`: 分辨率行数据
 - `RatioLine`: 比例行数据
 - `ColorLine`: 颜色行数据
 
 ### 5. 组件 Props 类型
+
 - `SearchBarProps`: SearchBar 组件 Props
 - `WallpaperListProps`: WallpaperList 组件 Props
 
 ### 6. 下载和壁纸信息类型
+
 - `WallpaperActionInfo`: 壁纸操作信息（用于设置背景、下载等）
 
 ## 使用规范
@@ -49,11 +55,13 @@ src/
 ### ✅ 正确做法
 
 1. **从统一类型文件导入**
+
 ```typescript
 import type { CustomParams, WallpaperItem } from '@/types'
 ```
 
 2. **在组件中使用类型**
+
 ```typescript
 const props = defineProps<{
   customParams: CustomParams
@@ -61,6 +69,7 @@ const props = defineProps<{
 ```
 
 3. **为变量添加类型注解**
+
 ```typescript
 const localParams = reactive<CustomParams>({ ... })
 ```
@@ -68,6 +77,7 @@ const localParams = reactive<CustomParams>({ ... })
 ### ❌ 错误做法
 
 1. **不要在组件中重复定义 interface**
+
 ```typescript
 // ❌ 错误：在组件中定义已存在的类型
 interface CustomParams {
@@ -77,6 +87,7 @@ interface CustomParams {
 ```
 
 2. **不要分散类型定义**
+
 ```typescript
 // ❌ 错误：在不同文件中定义相同或相似的类型
 ```

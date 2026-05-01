@@ -1,24 +1,16 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <transition name="alert-fade">
-    <div 
-      v-if="visible" 
-      :class="['alert', `alert-${type}`, `alert-position-${position}`]" 
+    <div
+      v-if="visible"
+      :class="['alert', `alert-${type}`, `alert-position-${position}`]"
       role="alert"
     >
       <div class="alert-content">
-        <i
-          v-if="showIcon"
-          :class="['alert-icon', iconClass]"
-        />
+        <i v-if="showIcon" :class="['alert-icon', iconClass]" />
         <span class="alert-message">{{ message }}</span>
       </div>
-      <button 
-        v-if="closable" 
-        class="alert-close" 
-        aria-label="关闭"
-        @click="handleClose"
-      >
+      <button v-if="closable" class="alert-close" aria-label="关闭" @click="handleClose">
         <i class="fas fa-times" />
       </button>
     </div>
@@ -34,7 +26,13 @@ interface Props {
   showIcon?: boolean
   closable?: boolean
   duration?: number
-  position?: 'top-center' | 'top-right' | 'top-left' | 'bottom-center' | 'bottom-right' | 'bottom-left'
+  position?:
+    | 'top-center'
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-center'
+    | 'bottom-right'
+    | 'bottom-left'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -42,7 +40,7 @@ const props = withDefaults(defineProps<Props>(), {
   showIcon: true,
   closable: true,
   duration: 0,
-  position: 'top-center'
+  position: 'top-center',
 })
 
 const emit = defineEmits<{
@@ -57,7 +55,7 @@ const iconClass = computed(() => {
     success: 'fas fa-check-circle',
     error: 'fas fa-times-circle',
     warning: 'fas fa-exclamation-triangle',
-    info: 'fas fa-info-circle'
+    info: 'fas fa-info-circle',
   }
   return iconMap[props.type]
 })
@@ -78,12 +76,12 @@ watch(
       }, newDuration)
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 // 暴露方法给父组件
 defineExpose({
-  close: handleClose
+  close: handleClose,
 })
 </script>
 
@@ -98,7 +96,7 @@ defineExpose({
   padding: 1em 2em;
   border-radius: 4px;
   text-shadow: 1px 1px 3px #000;
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   animation: alert-slide-in 0.3s ease;
@@ -134,7 +132,9 @@ defineExpose({
   padding: 0.25em;
   margin-left: 1em;
   opacity: 0.6;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
   font-size: 1.1em;
   flex-shrink: 0;
 }

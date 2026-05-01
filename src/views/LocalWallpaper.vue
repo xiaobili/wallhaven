@@ -46,7 +46,7 @@ import { useSettings, useAlert, useLocalFiles, useWallpaperSetter } from '@/comp
 import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 const { settings } = useSettings()
-const { alert, showSuccess, hideAlert,showError } = useAlert()
+const { alert, showSuccess, hideAlert, showError } = useAlert()
 const { readDirectory, openFolder: openFolderAction, deleteFile } = useLocalFiles()
 const { setWallpaper } = useWallpaperSetter()
 
@@ -91,7 +91,7 @@ const wallpaperList = computed<WallpaperItem[]>(() => {
 // 当前预览索引
 const previewIndex = computed(() => {
   if (!previewItem.value) return -1
-  return localWallpapers.value.findIndex(wp => wp.name === previewItem.value?.id)
+  return localWallpapers.value.findIndex((wp) => wp.name === previewItem.value?.id)
 })
 
 // 方法
@@ -112,14 +112,14 @@ const refreshList = async (): Promise<void> => {
       return
     }
 
-    localWallpapers.value = result.data.map(file => ({
+    localWallpapers.value = result.data.map((file) => ({
       name: file.name,
       path: file.path,
       thumbnailPath: file.thumbnailPath || '',
       size: file.size,
       modifiedTime: new Date(file.modifiedAt).toISOString(),
       width: file.width,
-      height: file.height
+      height: file.height,
     }))
 
     console.log(`已加载 ${localWallpapers.value.length} 张本地壁纸`)
@@ -130,7 +130,6 @@ const refreshList = async (): Promise<void> => {
     loading.value = false
   }
 }
-
 
 const openFolder = async (): Promise<void> => {
   if (!downloadPath.value) return
@@ -174,9 +173,7 @@ const closePreview = (): void => {
 }
 
 const handleNavigate = (direction: 'prev' | 'next'): void => {
-  const newIndex = direction === 'prev'
-    ? previewIndex.value - 1
-    : previewIndex.value + 1
+  const newIndex = direction === 'prev' ? previewIndex.value - 1 : previewIndex.value + 1
 
   if (newIndex >= 0 && newIndex < localWallpapers.value.length) {
     const wallpaper = localWallpapers.value[newIndex]
@@ -202,7 +199,8 @@ const setAsWallpaper = async (wallpaper: LocalWallpaper | WallpaperItem): Promis
   // 获取图片路径用于设置壁纸
   // 对于 LocalWallpaper（从列表直接点击），path 字段是原始文件路径
   // 对于 WallpaperItem（从 ImagePreview 传来），path 可能是 wallhaven:// 协议 URL，需要解码
-  const pathValue = 'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
+  const pathValue =
+    'path' in wallpaper ? (wallpaper as LocalWallpaper).path : (wallpaper as WallpaperItem).url
   const imagePath = decodeWallhavenUrl(pathValue)
   console.log('设置壁纸:', imagePath)
 

@@ -10,9 +10,9 @@ export async function storeGet<T = any>(key: string): Promise<T | null> {
       console.warn('[Store] electronAPI not available, returning null')
       return null
     }
-    
+
     const result = await window.electronAPI.storeGet(key)
-    
+
     if (result.success) {
       return result.value as T
     } else {
@@ -34,12 +34,12 @@ export async function storeSet(key: string, value: any): Promise<boolean> {
       console.warn('[Store] electronAPI not available')
       return false
     }
-    
+
     // 深度克隆对象，移除 Vue reactive proxy，避免 IPC 克隆错误
     const plainValue = JSON.parse(JSON.stringify(value))
-    
+
     const result = await window.electronAPI.storeSet({ key, value: plainValue })
-    
+
     if (result.success) {
       return true
     } else {
@@ -61,9 +61,9 @@ export async function storeDelete(key: string): Promise<boolean> {
       console.warn('[Store] electronAPI not available')
       return false
     }
-    
+
     const result = await window.electronAPI.storeDelete(key)
-    
+
     if (result.success) {
       return true
     } else {
@@ -85,9 +85,9 @@ export async function storeClear(): Promise<boolean> {
       console.warn('[Store] electronAPI not available')
       return false
     }
-    
+
     const result = await window.electronAPI.storeClear()
-    
+
     if (result.success) {
       return true
     } else {

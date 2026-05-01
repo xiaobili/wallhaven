@@ -23,10 +23,10 @@ describe('App', () => {
         plugins: [router],
       },
     })
-    
+
     // 等待路由初始化
     await router.isReady()
-    
+
     expect(wrapper.exists()).toBe(true)
   })
 })

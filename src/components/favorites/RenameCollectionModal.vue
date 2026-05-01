@@ -1,18 +1,11 @@
 <template>
   <Teleport to="body">
     <transition name="modal-fade">
-      <div
-        v-if="visible"
-        class="modal-overlay"
-        @click.self="handleCancel"
-      >
+      <div v-if="visible" class="modal-overlay" @click.self="handleCancel">
         <div class="modal-container">
           <div class="modal-header">
             <h3>重命名收藏夹</h3>
-            <button
-              class="modal-close"
-              @click="handleCancel"
-            >
+            <button class="modal-close" @click="handleCancel">
               <i class="fas fa-times" />
             </button>
           </div>
@@ -25,26 +18,14 @@
               placeholder="请输入收藏夹名称"
               maxlength="20"
               @keyup.enter="handleConfirm"
-            >
-            <p
-              v-if="errorMessage"
-              class="error-message"
-            >
+            />
+            <p v-if="errorMessage" class="error-message">
               {{ errorMessage }}
             </p>
           </div>
           <div class="modal-footer">
-            <button
-              class="btn btn-cancel"
-              @click="handleCancel"
-            >
-              取消
-            </button>
-            <button
-              class="btn btn-confirm"
-              :disabled="!isValid"
-              @click="handleConfirm"
-            >
+            <button class="btn btn-cancel" @click="handleCancel">取消</button>
+            <button class="btn btn-confirm" :disabled="!isValid" @click="handleConfirm">
               保存
             </button>
           </div>
@@ -68,7 +49,7 @@ const props = withDefaults(defineProps<Props>(), {
   visible: false,
   currentName: '',
   collectionId: '',
-  existingNames: () => []
+  existingNames: () => [],
 })
 
 const emit = defineEmits<{
@@ -80,12 +61,15 @@ const collectionName = ref('')
 const errorMessage = ref('')
 
 // Initialize with current name when modal opens
-watch(() => props.visible, (newVisible) => {
-  if (newVisible) {
-    collectionName.value = props.currentName
-    errorMessage.value = ''
-  }
-})
+watch(
+  () => props.visible,
+  (newVisible) => {
+    if (newVisible) {
+      collectionName.value = props.currentName
+      errorMessage.value = ''
+    }
+  },
+)
 
 // Validate input
 const isValid = computed(() => {
@@ -100,7 +84,7 @@ watch(collectionName, (newValue) => {
   if (name.length === 0) {
     errorMessage.value = ''
   } else if (name === props.currentName) {
-    errorMessage.value = ''  // Same name is just disabled, not error
+    errorMessage.value = '' // Same name is just disabled, not error
   } else if (props.existingNames.includes(name)) {
     errorMessage.value = '收藏夹名称已存在'
   } else if (name.length > 20) {

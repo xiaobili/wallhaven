@@ -2,39 +2,24 @@
   <div class="collection-sidebar">
     <div class="sidebar-header">
       <h3>收藏夹</h3>
-      <button
-        class="create-btn"
-        title="新建收藏夹"
-        @click="showCreateModal = true"
-      >
+      <button class="create-btn" title="新建收藏夹" @click="showCreateModal = true">
         <i class="fas fa-plus" />
       </button>
     </div>
 
     <div class="sidebar-content">
-      <div
-        v-if="loading"
-        class="loading-state"
-      >
+      <div v-if="loading" class="loading-state">
         <i class="fas fa-spinner fa-spin" />
         <span>加载中...</span>
       </div>
 
-      <div
-        v-else-if="collections.length === 0"
-        class="empty-state"
-      >
+      <div v-else-if="collections.length === 0" class="empty-state">
         <i class="fas fa-folder-open" />
         <p>还没有收藏夹</p>
-        <p class="hint">
-          点击上方 + 按钮创建
-        </p>
+        <p class="hint">点击上方 + 按钮创建</p>
       </div>
 
-      <div
-        v-else
-        class="collection-list"
-      >
+      <div v-else class="collection-list">
         <div
           class="collection-item all-favorites-item"
           :class="{ active: !selectedId }"
@@ -92,7 +77,15 @@ const emit = defineEmits<{
   select: [collectionId: string | null]
 }>()
 
-const { collections, loading, load: loadCollections, create, rename, delete: deleteCollection, setDefault } = useCollections()
+const {
+  collections,
+  loading,
+  load: loadCollections,
+  create,
+  rename,
+  delete: deleteCollection,
+  setDefault,
+} = useCollections()
 const { load: loadFavorites, uniqueWallpaperCount, getCollectionCount } = useFavorites()
 const { showSuccess, showError } = useAlert()
 
@@ -101,9 +94,7 @@ const showRenameModal = ref(false)
 const renameTarget = ref<Collection | null>(null)
 const selectedId = ref<string | null>(null)
 
-const existingNames = computed(() =>
-  collections.value.map(c => c.name)
-)
+const existingNames = computed(() => collections.value.map((c) => c.name))
 
 const handleSelectAll = () => {
   selectedId.value = null
@@ -127,7 +118,7 @@ const handleRenameClose = () => {
 
 const handleDelete = async (collection: Collection) => {
   const confirmed = window.confirm(
-    `确定要删除收藏夹"${collection.name}"吗？\n收藏的壁纸将从该收藏夹移除。`
+    `确定要删除收藏夹"${collection.name}"吗？\n收藏的壁纸将从该收藏夹移除。`,
   )
   if (!confirmed) return
 

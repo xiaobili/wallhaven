@@ -21,11 +21,7 @@ class ApiClientImpl {
    * 检查是否为生产环境
    */
   private isProduction(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      !!window.electronAPI &&
-      import.meta.env.PROD
-    )
+    return typeof window !== 'undefined' && !!window.electronAPI && import.meta.env.PROD
   }
 
   /**
@@ -69,7 +65,7 @@ class ApiClientImpl {
   async get<T>(
     url: string,
     params?: Record<string, unknown>,
-    apiKey?: string
+    apiKey?: string,
   ): Promise<IpcResponse<T>> {
     try {
       // 生产环境：通过 Electron IPC 代理
@@ -86,10 +82,7 @@ class ApiClientImpl {
         return {
           success: false,
           error: {
-            code:
-              result.status === 401
-                ? ErrorCodes.NETWORK_UNAUTHORIZED
-                : 'API_ERROR',
+            code: result.status === 401 ? ErrorCodes.NETWORK_UNAUTHORIZED : 'API_ERROR',
             message: result.error || 'API request failed',
           },
         }
@@ -117,11 +110,7 @@ class ApiClientImpl {
   /**
    * POST 请求
    */
-  async post<T>(
-    url: string,
-    data?: unknown,
-    apiKey?: string
-  ): Promise<IpcResponse<T>> {
+  async post<T>(url: string, data?: unknown, apiKey?: string): Promise<IpcResponse<T>> {
     try {
       // 生产环境：通过 Electron IPC 代理
       if (this.isProduction() && window.electronAPI) {

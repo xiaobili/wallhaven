@@ -1,15 +1,9 @@
 <template>
   <Transition name="fade">
-    <div
-      v-if="show"
-      class="loading-overlay"
-    >
+    <div v-if="show" class="loading-overlay">
       <div class="loading-content">
         <i class="fas fa-spinner fa-spin loading-icon" />
-        <p
-          v-if="text"
-          class="loading-text"
-        >
+        <p v-if="text" class="loading-text">
           {{ text }}
         </p>
       </div>
@@ -25,7 +19,7 @@ defineProps<{
 </script>
 
 <style scoped>
-@import url("@/static/css/animations.css");
+@import url('@/static/css/animations.css');
 
 .loading-overlay {
   position: fixed;

@@ -2,25 +2,13 @@
   <header id="header">
     <label>{{ title }}</label>
     <div class="win-btn-wrap">
-      <span
-        class="win-btn min-btn"
-        title="最小化"
-        @click="minimize"
-      >
+      <span class="win-btn min-btn" title="最小化" @click="minimize">
         <i class="fas fw fa-window-minimize" />
       </span>
-      <span
-        class="win-btn max-btn"
-        :title="isMaximized ? '还原' : '最大化'"
-        @click="maximize"
-      >
+      <span class="win-btn max-btn" :title="isMaximized ? '还原' : '最大化'" @click="maximize">
         <i :class="isMaximized ? 'fas fw fa-window-restore' : 'fas fw fa-window-maximize'" />
       </span>
-      <span
-        class="win-btn close-btn"
-        title="关闭"
-        @click="close"
-      >
+      <span class="win-btn close-btn" title="关闭" @click="close">
         <i class="fas fw fa-window-close" />
       </span>
     </div>
@@ -68,8 +56,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
-.win-btn-wrap{
+.win-btn-wrap {
   height: 40px;
   display: inline-block;
   position: fixed;
@@ -77,7 +64,7 @@ onMounted(() => {
   right: 10px;
 }
 
-.win-btn{
+.win-btn {
   -webkit-app-region: no-drag;
   display: inline-block;
   margin: 10px 15px 0 15px;
@@ -99,7 +86,7 @@ onMounted(() => {
   color: #ff5f56;
 }
 
-.min-btn{
+.min-btn {
   margin-top: 2px;
 }
 
@@ -118,12 +105,12 @@ onMounted(() => {
 @media (max-width: 639px) {
   #header {
     position: absolute;
-    min-width: 800px
+    min-width: 800px;
   }
 }
 
 #header {
-  color: #FFF;
+  color: #fff;
   justify-content: center;
   -ms-flex-align: center;
   align-items: center;
@@ -135,8 +122,11 @@ onMounted(() => {
   white-space: nowrap;
   background-color: rgb(58 56 56 / 27%);
   background-image: linear-gradient(to bottom, #787a7c4f 0, #3f414247 100%);
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, .75);
-  box-shadow: inset 0 0 0 1px rgba(31, 31, 31, .66), 0 0 0px rgba(0, 0, 0, 0), 0 0 10px rgba(0, 0, 0, .75)
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.75);
+  box-shadow:
+    inset 0 0 0 1px rgba(31, 31, 31, 0.66),
+    0 0 0px rgba(0, 0, 0, 0),
+    0 0 10px rgba(0, 0, 0, 0.75);
 }
 
 #header label {

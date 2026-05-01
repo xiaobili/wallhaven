@@ -7,15 +7,8 @@
     @mouseleave="showActions = false"
   >
     <div class="collection-icon">
-      <i
-        v-if="collection.isDefault"
-        class="fas fa-star"
-        title="默认收藏夹"
-      />
-      <i
-        v-else
-        class="fas fa-folder"
-      />
+      <i v-if="collection.isDefault" class="fas fa-star" title="默认收藏夹" />
+      <i v-else class="fas fa-folder" />
     </div>
     <div class="collection-info">
       <span class="collection-name">
@@ -24,10 +17,7 @@
       </span>
       <span class="collection-count">{{ count }} 张</span>
     </div>
-    <div
-      v-show="showActions"
-      class="collection-actions"
-    >
+    <div v-show="showActions" class="collection-actions">
       <button
         v-if="!collection.isDefault"
         class="action-btn set-default-btn"
@@ -36,11 +26,7 @@
       >
         <i class="fas fa-star" />
       </button>
-      <button
-        class="action-btn"
-        title="重命名"
-        @click.stop="handleRename"
-      >
+      <button class="action-btn" title="重命名" @click.stop="handleRename">
         <i class="fas fa-pen" />
       </button>
       <button
@@ -67,7 +53,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   count: 0,
-  isActive: false
+  isActive: false,
 })
 
 const emit = defineEmits<{

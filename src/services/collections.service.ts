@@ -49,7 +49,7 @@ class CollectionsServiceImpl {
       return { success: false, data: null, error: result.error }
     }
 
-    const collection = result.data?.find(c => c.id === id) || null
+    const collection = result.data?.find((c) => c.id === id) || null
     return { success: true, data: collection }
   }
 
@@ -64,7 +64,7 @@ class CollectionsServiceImpl {
       return { success: false, data: null, error: result.error }
     }
 
-    const defaultCollection = result.data?.find(c => c.isDefault) || null
+    const defaultCollection = result.data?.find((c) => c.isDefault) || null
     return { success: true, data: defaultCollection }
   }
 
