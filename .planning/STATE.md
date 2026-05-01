@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: 多线程下载与重试退避机制
-status: planning
-last_updated: "2026-05-01T12:00:00.000Z"
-last_activity: 2026-05-01 -- Phase 33 context gathered (auto-mode)
+status: executing
+last_updated: "2026-05-01T12:15:00.000Z"
+last_activity: 2026-05-01 -- Phase 33 Plan 01 completed
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 11
 ---
 
 # Project State
@@ -33,30 +33,30 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 33 of 35 (下载队列与并发控制)
-Plan: -- (not yet planned)
-Status: Context gathered -- ready for planning
-Last activity: 2026-05-01 -- Phase 33 context gathered (auto-mode)
+Plan: 02 (队列集成到IPC处理器)
+Status: Plan 01 completed -- Queue infrastructure created
+Last activity: 2026-05-01 -- Phase 33 Plan 01 completed
 
-Progress: [                    ] 0%
+Progress: [##                  ] 11%
 
 ---
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: --
-- Total execution time: --
+- Total plans completed: 1
+- Average duration: ~15 min
+- Total execution time: ~15 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| -- | -- | -- | -- |
+| 33 | 3 | 1 | ~15 min |
 
 **Recent Trend:**
-- Last 5 plans: (none)
-- Trend: N/A
+- Last 5 plans: 33-01 Queue Infrastructure
+- Trend: Initial execution
 
 *Updated after each plan completion*
 
@@ -70,6 +70,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - [Phase 33]: DownloadQueue lives in main process (download.handler.ts), not renderer -- prevents multi-window bypass, consistent with existing activeDownloads Map
+- [Phase 33]: Queue uses callback injection instead of direct import -- avoids circular dependency between download-queue.ts and download.handler.ts
+- [Phase 33]: Singleton accessors (setQueueInstance/getQueueInstance) -- enables cross-module queue access for DL-03 live setting propagation
 - [Phase 34]: Retry holds queue slot during backoff -- prevents starvation; only permanent failure or success releases the slot
 - [Phase 35]: New DownloadState `'retrying'` added to state union; new fields `retryCount`, `retryDelay` on DownloadProgressData
 
@@ -95,6 +97,12 @@ Items acknowledged and carried forward from previous milestones:
 
 ## Session Continuity
 
-Last session: 2026-05-01 12:00
-Stopped at: Phase 33 context gathered
-Resume file: .planning/phases/33-download-queue-concurrency/33-CONTEXT.md
+Last session: 2026-05-01 12:15
+Stopped at: Phase 33 Plan 01 completed
+Resume file: .planning/phases/33-download-queue-concurrency/33-01-PLAN.md
+
+## Completed Plans
+
+| Plan | Summary | Commits |
+|------|---------|---------|
+| 33-01 Queue Infrastructure | DownloadQueue class + executeDownload extraction | bdf7943, e3d612e |

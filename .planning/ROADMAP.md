@@ -42,7 +42,7 @@
 
 ```
 Plans:
-- [ ] 33-01-PLAN.md — Queue infrastructure: DownloadQueue class + executeDownload extraction
+- [x] 33-01-PLAN.md — Queue infrastructure: DownloadQueue class + executeDownload extraction (DONE)
 - [ ] 33-02-PLAN.md — Handler integration: IPC handlers use queue + settings propagation (DL-03)
 - [ ] 33-03-PLAN.md — Renderer adjustments: useDownload.ts for 'waiting' state handling
 ```
@@ -76,7 +76,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 33. 下载队列与并发控制 | 0/3 | In planning | - |
+| 33. 下载队列与并发控制 | 1/3 | In progress | Plan 01 done |
 | 34. 错误分类与重试退避 | 0/0 | Not started | - |
 | 35. 重试状态展示与UI集成 | 0/0 | Not started | - |
 
@@ -86,8 +86,8 @@ Plans:
 
 | ID | Phase | Description |
 |----|-------|-------------|
-| DL-01 | 33 | Follow maxConcurrentDownloads setting |
-| DL-02 | 33 | Auto-queue excess downloads |
+| DL-01 | 33 | Follow maxConcurrentDownloads setting | Partial — queue reads setting on each dequeue |
+| DL-02 | 33 | Auto-queue excess downloads | Partial — enqueue + 'waiting' events implemented |
 | DL-03 | 33 | Live setting propagation |
 | DL-04 | 33 | Graceful concurrency reduction |
 | DL-05 | 34 | Auto-retry on transient errors |
