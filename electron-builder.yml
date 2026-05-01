@@ -12,6 +12,7 @@ files:
 # 解包 sharp 模块以支持原生二进制文件
 asarUnpack:
   - '**/node_modules/sharp/**/*'
+  - '**/node_modules/@img/**/*'
   - resources/**
 # 图标配置
 win:
