@@ -25,6 +25,7 @@ export interface QueuedDownload {
   url: string
   filename: string
   saveDir: string
+  offset?: number // For resume support — 0 or undefined means fresh download
 }
 
 /**

@@ -184,6 +184,7 @@ export async function executeDownload(
   url: string,
   filename: string,
   saveDir: string,
+  offset?: number,
 ): Promise<{ filePath: string; size: number }> {
   // Ensure directory exists
   if (!fs.existsSync(saveDir)) {
@@ -221,22 +222,68 @@ export async function executeDownload(
     saveDir,
     filename,
     totalSize: 0, // Will be updated after response
-    downloadedSize: 0,
+    downloadedSize: offset ?? 0,
     lastPersistTime: Date.now(),
-    lastPersistOffset: 0,
+    lastPersistOffset: offset ?? 0,
   })
 
   try {
-    // Download file with progress tracking
+    // Build headers with optional Range for resume support
+    const headers: Record<string, string> = {}
+    if (offset && offset > 0) {
+      headers['Range'] = `bytes=${offset}-`
+    }
+
     const response = await axios({
       method: 'GET',
       url,
+      headers,
       responseType: 'stream',
       timeout: 60000,
       signal: abortController.signal,
     })
 
-    const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+    // Determine effective offset and total size based on server response
+    let effectiveOffset = offset ?? 0
+    let totalSize: number
+
+    if (offset && offset > 0) {
+      if (response.status === 206) {
+        // Server supports Range — append to existing partial file
+        const contentLength = parseInt(String(response.headers['content-length'] || '0'), 10)
+        totalSize = offset + contentLength
+      } else if (response.status === 200) {
+        // Server doesn't support Range — restart from 0
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath)
+        }
+        effectiveOffset = 0
+        totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+
+        // Notify renderer that full restart is required
+        const windows = BrowserWindow.getAllWindows()
+        if (windows.length > 0) {
+          windows[0].webContents.send('download-progress', {
+            taskId,
+            state: 'downloading',
+            offset: 0,
+            progress: 0,
+            totalSize,
+            resumeNotSupported: true,
+          })
+        }
+
+        logHandler(
+          'executeDownload',
+          `Server doesn't support Range, restarting from 0: ${taskId}`,
+          'info',
+        )
+      } else {
+        throw new Error(`Unexpected status code: ${response.status}`)
+      }
+    } else {
+      totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+    }
 
     // Update totalSize in activeDownloads
     const downloadTracker = activeDownloads.get(taskId)
@@ -244,11 +291,21 @@ export async function executeDownload(
       downloadTracker.totalSize = totalSize
     }
 
-    let downloadedSize = 0
-    let lastTime = Date.now()
-    let lastSize = 0
+    // Sync offset tracking for resume
+    if (downloadTracker && offset && offset > 0) {
+      downloadTracker.lastPersistOffset = effectiveOffset
+      downloadTracker.downloadedSize = effectiveOffset
+    }
 
-    const writer = fs.createWriteStream(tempPath)
+    let downloadedSize = effectiveOffset
+    let lastTime = Date.now()
+    let lastSize = effectiveOffset
+
+    // Create write stream — append mode for 206 resume, write mode otherwise
+    const writer = fs.createWriteStream(
+      tempPath,
+      offset && offset > 0 && response.status === 206 ? { flags: 'a' } : undefined,
+    )
 
     response.data.on('data', (chunk: Buffer) => {
       downloadedSize += chunk.length
@@ -382,7 +439,7 @@ const downloadQueue = new DownloadQueue(
   () => activeDownloads.size,
   async (item: QueuedDownload) => {
     try {
-      await executeDownload(item.taskId, item.url, item.filename, item.saveDir)
+      await executeDownload(item.taskId, item.url, item.filename, item.saveDir, item.offset)
     } finally {
       downloadQueue.processQueue()
     }
@@ -473,26 +530,11 @@ export function registerDownloadHandlers(): void {
         saveDir: string
       },
     ) => {
-      try {
-        const result = await executeDownload(taskId, url, filename, saveDir)
-        return { success: true, ...result }
-      } catch (error: any) {
-        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-          logHandler('start-download-task', `Download cancelled: ${taskId}`, 'info')
-          return {
-            success: false,
-            error: 'Download cancelled',
-            cancelled: true,
-          }
-        }
+      // 入队而非直接启动 — 队列管理并发（DL-01、DL-02）
+      downloadQueue.enqueue({ taskId, url, filename, saveDir })
 
-        logHandler('start-download-task', `Error: ${error.message}`, 'error')
-
-        return {
-          success: false,
-          error: error.message || '下载失败',
-        }
-      }
+      // 立即返回 — 下载进度事件更新渲染进程
+      return { success: true, taskId }
     },
   )
 
@@ -500,6 +542,12 @@ export function registerDownloadHandlers(): void {
    * 暂停下载任务
    */
   ipcMain.handle(IPC_CHANNELS.PAUSE_DOWNLOAD_TASK, async (_event, taskId: string) => {
+    // 如果任务在队列中等待，直接移除（无需实际暂停操作）
+    if (downloadQueue.remove(taskId)) {
+      return { success: true, state: 'removed_from_queue' }
+    }
+
+    // 不在队列中 — 必须是正在下载的任务
     const download = activeDownloads.get(taskId)
     if (!download) {
       return {
@@ -551,6 +599,9 @@ export function registerDownloadHandlers(): void {
       // Cleanup but preserve temp file
       cleanupDownload(taskId, true)
 
+      // 释放槽位 — 启动下一个排队任务
+      downloadQueue.processQueue()
+
       return {
         success: true,
       }
@@ -567,6 +618,12 @@ export function registerDownloadHandlers(): void {
    * 取消下载任务
    */
   ipcMain.handle(IPC_CHANNELS.CANCEL_DOWNLOAD_TASK, async (_event, taskId: string) => {
+    // 如果任务在队列中等待，直接移除
+    if (downloadQueue.remove(taskId)) {
+      return { success: true }
+    }
+
+    // 不在队列中 — 取消正在下载的任务
     const download = activeDownloads.get(taskId)
     if (!download) {
       return {
@@ -581,6 +638,9 @@ export function registerDownloadHandlers(): void {
 
       // 清理临时文件和记录
       cleanupDownload(taskId)
+
+      // 释放槽位 — 启动下一个排队任务
+      downloadQueue.processQueue()
 
       // 通知渲染进程任务已取消
       const windows = BrowserWindow.getAllWindows()
@@ -653,203 +713,10 @@ export function registerDownloadHandlers(): void {
         }
       }
 
-      // 4. Create AbortController
-      const abortController = new AbortController()
+      // 4. Enqueue resume task — queue manages concurrency gating
+      downloadQueue.enqueue({ taskId, url, filename, saveDir, offset })
 
-      // 5. Store active download
-      activeDownloads.set(taskId, {
-        abortController,
-        tempPath,
-        saveDir,
-        filename,
-        totalSize: 0, // Will be updated from response
-        downloadedSize: offset,
-        lastPersistTime: Date.now(),
-        lastPersistOffset: offset,
-      })
-
-      try {
-        // 6. Send Range request
-        const headers: Record<string, string> = {}
-        if (offset > 0) {
-          headers['Range'] = `bytes=${offset}-`
-        }
-
-        const response = await axios({
-          method: 'GET',
-          url,
-          headers,
-          responseType: 'stream',
-          timeout: 60000,
-          signal: abortController.signal,
-        })
-
-        // 7. Handle server response status
-        let writer: fs.WriteStream
-        let effectiveOffset = offset
-        let effectiveTotalSize: number
-        const download = activeDownloads.get(taskId)!
-
-        if (response.status === 206) {
-          // Server supports Range - append mode
-          writer = fs.createWriteStream(tempPath, { flags: 'a' })
-          const contentLength = parseInt(String(response.headers['content-length'] || '0'), 10)
-          effectiveTotalSize = offset + contentLength
-          download.totalSize = effectiveTotalSize
-        } else if (response.status === 200) {
-          // D-02: Server doesn't support Range - restart from 0
-          fs.unlinkSync(tempPath)
-          writer = fs.createWriteStream(tempPath, { flags: 'w' })
-          effectiveOffset = 0
-          effectiveTotalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
-          download.totalSize = effectiveTotalSize
-          download.downloadedSize = 0
-          download.lastPersistOffset = 0
-
-          // Notify renderer about restart with flag
-          const windows = BrowserWindow.getAllWindows()
-          if (windows.length > 0) {
-            windows[0].webContents.send('download-progress', {
-              taskId,
-              state: 'downloading',
-              offset: 0,
-              progress: 0,
-              totalSize: effectiveTotalSize,
-              resumeNotSupported: true,
-            })
-          }
-
-          logHandler(
-            'resume-download-task',
-            `Server doesn't support Range, restarting from 0: ${taskId}`,
-            'info',
-          )
-        } else {
-          throw new Error(`Unexpected status code: ${response.status}`)
-        }
-
-        // 8. Stream download with progress
-        let downloadedSize = effectiveOffset
-        let lastTime = Date.now()
-        let lastSize = effectiveOffset
-
-        response.data.on('data', (chunk: Buffer) => {
-          downloadedSize += chunk.length
-          download.downloadedSize = downloadedSize
-
-          // Every 100ms update progress
-          const now = Date.now()
-          if (now - lastTime >= 100) {
-            const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
-            const progress =
-              effectiveTotalSize > 0 ? (downloadedSize / effectiveTotalSize) * 100 : 0
-
-            const windows = BrowserWindow.getAllWindows()
-            if (windows.length > 0) {
-              windows[0].webContents.send('download-progress', {
-                taskId,
-                progress: Math.min(progress, 99),
-                offset: downloadedSize,
-                speed,
-                state: 'downloading',
-                totalSize: effectiveTotalSize,
-              })
-            }
-
-            // Check throttled state persistence
-            if (
-              shouldPersistState(
-                download.lastPersistTime,
-                download.lastPersistOffset,
-                downloadedSize,
-              )
-            ) {
-              const state: PendingDownload = {
-                taskId,
-                url,
-                filename,
-                saveDir,
-                offset: downloadedSize,
-                totalSize: effectiveTotalSize,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              }
-              writeStateFile(statePath, state)
-              download.lastPersistTime = Date.now()
-              download.lastPersistOffset = downloadedSize
-            }
-
-            lastTime = now
-            lastSize = downloadedSize
-          }
-        })
-
-        // 9. Use pipeline for proper stream handling
-        await streamPipeline(response.data, writer)
-
-        // 10. Check for abort
-        if (abortController.signal.aborted) {
-          return { success: false, error: 'Download paused or cancelled' }
-        }
-
-        // 11. Complete: rename temp file, delete state file
-        const filePath = path.join(saveDir, filename)
-        fs.renameSync(tempPath, filePath)
-        if (fs.existsSync(statePath)) {
-          try {
-            fs.unlinkSync(statePath)
-          } catch {
-            // Ignore cleanup errors
-          }
-        }
-
-        const finalSize = fs.statSync(filePath).size
-        activeDownloads.delete(taskId)
-
-        // 12. Notify completion
-        const windows = BrowserWindow.getAllWindows()
-        if (windows.length > 0) {
-          windows[0].webContents.send('download-progress', {
-            taskId,
-            progress: 100,
-            offset: finalSize,
-            speed: 0,
-            state: 'completed',
-            filePath,
-          })
-        }
-
-        return { success: true, filePath, size: finalSize }
-      } catch (error: any) {
-        // Check if user-initiated cancel
-        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-          logHandler('resume-download-task', `Download cancelled: ${taskId}`, 'info')
-          return { success: false, error: 'Download cancelled', cancelled: true }
-        }
-
-        logHandler('resume-download-task', `Error: ${error.message}`, 'error')
-
-        // Keep temp file for retry on network errors
-        activeDownloads.delete(taskId)
-
-        // Notify renderer of failure
-        const windows = BrowserWindow.getAllWindows()
-        if (windows.length > 0) {
-          windows[0].webContents.send('download-progress', {
-            taskId,
-            progress: 0,
-            offset: 0,
-            speed: 0,
-            state: 'failed',
-            error: error.message || 'Resume failed',
-          })
-        }
-
-        return {
-          success: false,
-          error: { code: 'RESUME_FAILED', message: error.message || 'Resume failed' },
-        }
-      }
+      return { success: true, taskId }
     },
   )
 
