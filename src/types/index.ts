@@ -177,7 +177,7 @@ export interface WallpaperActionInfo {
 /**
  * 下载任务状态
  */
-export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed'
+export type DownloadState = 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed' | 'retrying'
 
 /**
  * 下载任务项
@@ -196,6 +196,14 @@ export interface DownloadItem {
   path?: string
   time?: string
   wallpaperId?: string // 关联的壁纸ID
+  /** Current retry attempt (1-based, 1-3). Set when state='retrying' */
+  retryCount?: number
+  /** Backoff delay for current retry attempt in ms. From main process progress event */
+  retryDelay?: number
+  /** Date.now() timestamp when retrying state was entered. Used for countdown */
+  retryStartedAt?: number
+  /** Last error message from main process. Used for exhausted-retry display */
+  error?: string
 }
 
 /**

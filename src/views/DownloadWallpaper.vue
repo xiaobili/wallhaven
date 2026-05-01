@@ -21,7 +21,10 @@
           v-for="(item) in downloadList"
           :key="item.id"
           class="dowload-item"
-          :class="item.state === 'paused' ? 'pause-item' : ''"
+          :class="{
+            'pause-item': item.state === 'paused',
+            'failed-item': item.state === 'failed' && item.retryCount === 3
+          }"
         >
           <div class="img-view">
             <img
@@ -77,6 +80,21 @@
                   class="dowload-state"
                 >
                   已暂停
+                </div>
+                <!-- UI-01: Retrying state — show retry count -->
+                <div v-show="item.state === 'retrying'" class="dowload-state">
+                  重试中 (第{{ item.retryCount }}次/共3次)
+                </div>
+                <!-- UI-02: Live countdown to next retry attempt -->
+                <div v-show="item.state === 'retrying'" class="dowload-countdown">
+                  {{ formatCountdown(getRetryRemaining(item)) }}
+                </div>
+                <!-- UI-03: Exhausted retries — show failure message inline -->
+                <div
+                  v-show="item.state === 'failed' && item.retryCount === 3"
+                  class="dowload-state failed-message"
+                >
+                  下载失败 — 已重试 3 次
                 </div>
                 <div class="dowloaded-size">
                   已下载：{{ formatFileSize(item.offset) }}
@@ -165,7 +183,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { useDownload, useAlert } from '@/composables'
-import { formatFileSize, formatResolution, formatSpeed, formatTime } from '@/utils/helpers'
+import { formatFileSize, formatResolution, formatSpeed, formatTime, formatCountdown } from '@/utils/helpers'
 import Alert from '@/components/Alert.vue'
 
 // Composables
@@ -176,7 +194,8 @@ const {
   pauseDownload,
   cancelDownload,
   resumeDownload,
-  clearFinished
+  clearFinished,
+  getRetryRemaining,
 } = useDownload()
 const { alert, showSuccess, showError, showInfo, showWarning, hideAlert } = useAlert()
 
@@ -374,6 +393,21 @@ onUnmounted(() => {
 
 .pause-item .dowloaded-process-block {
   background: linear-gradient(to right, rgba(230, 160, 60, 255), 50%, rgba(230, 160, 60, 255));
+}
+
+/* Phase 35: Exhausted retry — gray progress bar (D-04) */
+.failed-item .dowloaded-process-block {
+  background: rgba(120, 120, 120, 0.6);
+}
+
+/* Phase 35: Countdown text style */
+.dowload-countdown {
+  margin-right: 10px;
+}
+
+/* Phase 35: Exhausted failure message — red tint to distinguish from normal gray text */
+.failed-message {
+  color: rgb(255, 140, 140) !important;
 }
 
 .dowload-item .img-view .img-context {

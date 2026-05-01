@@ -12,7 +12,9 @@ export const useDownloadStore = defineStore('download', () => {
   // ==================== 计算属性 ====================
 
   const activeDownloads = computed(() =>
-    downloadingList.value.filter((item) => item.state === 'downloading'),
+    downloadingList.value.filter(
+      (item) => item.state === 'downloading' || item.state === 'retrying',
+    ),
   )
 
   const pausedDownloads = computed(() =>

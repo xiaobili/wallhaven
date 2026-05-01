@@ -30,7 +30,7 @@
  * ```
  */
 
-import { computed, onMounted, onUnmounted, type ComputedRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type ComputedRef } from 'vue'
 import { useDownloadStore } from '@/stores/modules/download'
 import { downloadService, type DownloadProgressData } from '@/services'
 import { useAlert } from '@/composables'
@@ -59,6 +59,8 @@ export interface UseDownloadReturn {
   loadHistory: () => Promise<void>
   restorePendingDownloads: () => Promise<void>
   cleanupOrphanFiles: () => Promise<void>
+  /** Calculate remaining seconds for retry countdown (Phase 35) */
+  getRetryRemaining: (item: DownloadItem) => number
 }
 
 /**
@@ -74,6 +76,10 @@ export function useDownload(): UseDownloadReturn {
   // 进度订阅取消函数
   let unsubscribe: (() => void) | null = null
 
+  // 倒计时相关 (Phase 35: for 'retrying' state countdown)
+  const tickCounter = ref(0)
+  let countdownInterval: ReturnType<typeof setInterval> | null = null
+
   /**
    * 处理进度更新
    *
@@ -88,12 +94,32 @@ export function useDownload(): UseDownloadReturn {
       showWarning('服务器不支持断点续传，已重新开始下载')
     }
 
+    // state === 'retrying' — store retry info for UI countdown (D-05)
+    // MUST come before the `if (error)` check to prevent transient error toasts
+    if (state === 'retrying') {
+      const task = store.downloadingList.find((item) => item.id === taskId)
+      if (task) {
+        task.state = 'retrying'
+        task.retryCount = data.retryCount
+        task.retryDelay = data.retryDelay
+        task.retryStartedAt = Date.now()
+      }
+      return
+    }
+
     if (error) {
       const task = store.downloadingList.find((item) => item.id === taskId)
       if (task) {
         task.state = 'failed'
+        // UI-03: Store error for template display; suppress toast for retry-exhausted failures
+        if (error.includes('已重试')) {
+          task.retryCount = 3
+          task.error = error
+          // No toast — shown inline in template (D-04)
+        } else {
+          showError(`下载失败: ${error}`)
+        }
       }
-      showError(`下载失败: ${error}`)
       return
     }
 
@@ -140,16 +166,26 @@ export function useDownload(): UseDownloadReturn {
     store.updateProgress(taskId, progress, offset, speed, filePath)
   }
 
-  // 生命周期钩子：订阅进度
+  // 生命周期钩子：订阅进度 + 启动倒计时
   onMounted(() => {
     unsubscribe = downloadService.onProgress(handleProgress)
+
+    // Single interval drives all retry countdowns (D-01)
+    // tickCounter ref triggers reactive re-render via getRetryRemaining
+    countdownInterval = setInterval(() => {
+      tickCounter.value++
+    }, 1000)
   })
 
-  // 生命周期钩子：取消订阅
+  // 生命周期钩子：取消订阅 + 清理倒计时
   onUnmounted(() => {
     if (unsubscribe) {
       unsubscribe()
       unsubscribe = null
+    }
+    if (countdownInterval) {
+      clearInterval(countdownInterval)
+      countdownInterval = null
     }
   })
 
@@ -325,8 +361,8 @@ export function useDownload(): UseDownloadReturn {
       return false
     }
 
-    // If task is downloading or waiting in queue, cancel via main process
-    if (task.state === 'downloading' || task.state === 'waiting') {
+    // If task is downloading or waiting or retrying in queue, cancel via main process
+    if (task.state === 'downloading' || task.state === 'waiting' || task.state === 'retrying') {
       const result = await downloadService.cancelDownload(id)
       if (!result.success) {
         showError(result.error?.message || '取消下载失败')
@@ -462,6 +498,19 @@ export function useDownload(): UseDownloadReturn {
     }
   }
 
+  /**
+   * Calculate remaining seconds until next retry attempt
+   * Uses tickCounter ref to establish reactive dependency — template re-renders each tick
+   * @returns remaining seconds (0 = "即将重试...")
+   */
+  const getRetryRemaining = (item: DownloadItem): number => {
+    void tickCounter.value // establish reactive dependency for template re-render
+    if (item.state !== 'retrying' || !item.retryDelay || !item.retryStartedAt) return 0
+    const elapsed = Date.now() - item.retryStartedAt
+    const remaining = item.retryDelay - elapsed
+    return Math.max(0, Math.ceil(remaining / 1000))
+  }
+
   return {
     // 状态
     downloadingList: computed(() => store.downloadingList),
@@ -482,5 +531,6 @@ export function useDownload(): UseDownloadReturn {
     loadHistory,
     restorePendingDownloads,
     cleanupOrphanFiles,
+    getRetryRemaining,
   }
 }

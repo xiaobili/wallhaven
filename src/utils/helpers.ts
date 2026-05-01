@@ -170,6 +170,21 @@ export function formatTime(timeStr: string): string {
 }
 
 /**
+ * Format countdown seconds for retry display
+ * @param seconds - remaining seconds (0 or positive)
+ * @returns Formatted display string
+ * @example
+ * formatCountdown(4)   // Returns "下次重试: 4s"
+ * formatCountdown(0)   // Returns "即将重试..."
+ */
+export function formatCountdown(seconds: number): string {
+  if (seconds <= 0) {
+    return '即将重试...'
+  }
+  return `下次重试: ${seconds}s`
+}
+
+/**
  * 将数组转换为二进制字符串
  * @param selectedItems 已选中的项目数组
  * @param allItems 所有可能的项目数组

@@ -48,10 +48,16 @@ const activeDownloads = new Map<string, ActiveDownload>()
 
 /**
  * Retry timer references for backoff scheduling.
- * Each entry maps taskId → setTimeout handle, enabling PAUSE/CANCEL
- * to clear pending retry timers and prevent zombie downloads (Pitfall 3).
+ * Each entry maps taskId → { timer, resolve }, enabling PAUSE/CANCEL
+ * to clear pending retry timers AND resolve the wait promise so
+ * executeWithRetry can detect the cancellation via activeDownloads check.
+ * Prevents zombie downloads (Pitfall 3) and dangling promises (CR-01).
  */
-const retryTimers = new Map<string, ReturnType<typeof setTimeout>>()
+interface RetryTimerEntry {
+  timer: ReturnType<typeof setTimeout>
+  resolve: () => void
+}
+const retryTimers = new Map<string, RetryTimerEntry>()
 
 /** Retry backoff configuration constants */
 const BACKOFF_BASE_MS = 2000   // 2 seconds — base delay for first retry
@@ -259,29 +265,30 @@ function scheduleRetryTimer(taskId: string, delay: number, callback: () => void)
     retryTimers.delete(taskId)
     callback()
   }, delay)
-  retryTimers.set(taskId, timer)
+  retryTimers.set(taskId, { timer, resolve: callback })
 }
 
 /**
  * Cancel a pending retry timer for a given task.
  * Called by PAUSE/CANCEL handlers to prevent zombie retries (Pitfall 3).
+ * Also resolves the pending wait promise so executeWithRetry can proceed
+ * to its post-wait activeDownloads check (prevents zombie task — CR-01).
  * Safe to call even if no timer exists for the task.
  */
 function cancelRetryTimer(taskId: string): void {
-  const timer = retryTimers.get(taskId)
-  if (timer !== undefined) {
-    clearTimeout(timer)
+  const entry = retryTimers.get(taskId)
+  if (entry !== undefined) {
+    clearTimeout(entry.timer)
     retryTimers.delete(taskId)
+    entry.resolve()
   }
 }
 
 /**
  * Wait for the backoff delay, returning a Promise that resolves after the timer fires.
  * The timer reference is stored in retryTimers so that cancelRetryTimer() can
- * cancel the wait by clearing the timer, leaving the Promise pending forever.
- *
- * The caller (executeWithRetry) MUST check activeDownloads.has(taskId) after
- * the await to detect cancellation during the wait.
+ * cancel the wait and also resolve the Promise (CR-01 fix), allowing executeWithRetry
+ * to proceed to its post-wait activeDownloads cancellation check.
  */
 function waitWithBackoff(taskId: string, delay: number): Promise<void> {
   return new Promise((resolve) => {
@@ -533,6 +540,20 @@ export async function executeDownload(
 
     return { filePath, size: finalSize }
   } catch (error: any) {
+    // Guard against null/undefined thrown values (WR-01)
+    if (!error) {
+      logHandler('executeDownload', `Download failed: ${taskId}: null error`, 'error')
+      cleanupDownload(taskId)
+      const windows = BrowserWindow.getAllWindows()
+      if (windows.length > 0) {
+        windows[0].webContents.send('download-progress', {
+          taskId, progress: 0, offset: 0, speed: 0,
+          state: 'failed', error: '未知错误',
+        })
+      }
+      throw new Error('Unknown download error')
+    }
+
     // CanceledError — always re-throw without side effects (unchanged)
     if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
       throw error
@@ -631,6 +652,20 @@ async function executeWithRetry(
         'info',
       )
 
+      // Emit 'retrying' state to renderer so UI can show countdown (Phase 35)
+      const windows = BrowserWindow.getAllWindows()
+      if (windows.length > 0) {
+        windows[0].webContents.send('download-progress', {
+          taskId,
+          progress: 0,
+          offset: 0,
+          speed: 0,
+          state: 'retrying' as const,
+          retryCount: attempt,
+          retryDelay: delay,
+        })
+      }
+
       // Wait for backoff duration
       // The timer is stored in retryTimers so PAUSE/CANCEL can cancel it
       await waitWithBackoff(taskId, delay)
@@ -644,28 +679,29 @@ async function executeWithRetry(
   }
 
   // All MAX_RETRIES attempts failed — permanent failure
-  // Get the last error for the failure message
-  // (activeDownloads entry still exists because executeDownload skipped cleanup)
-  const lastError = new Error('下载失败')
   logHandler('executeWithRetry', `All retries exhausted for ${taskId}`, 'error')
 
-  // Final cleanup — removes from activeDownloads, frees queue slot
-  cleanupDownload(taskId)
+  // Final cleanup — only if activeDownloads entry still exists
+  // (executeDownload may have already cleaned up on the last attempt when
+  // retryCount >= MAX_RETRIES, see IN-01)
+  if (activeDownloads.has(taskId)) {
+    cleanupDownload(taskId)
 
-  // Emit final failure state
-  const windows = BrowserWindow.getAllWindows()
-  if (windows.length > 0) {
-    windows[0].webContents.send('download-progress', {
-      taskId,
-      progress: 0,
-      offset: 0,
-      speed: 0,
-      state: 'failed',
-      error: `下载失败 — 已重试 ${MAX_RETRIES} 次`,
-    })
+    // Emit final failure state
+    const windows = BrowserWindow.getAllWindows()
+    if (windows.length > 0) {
+      windows[0].webContents.send('download-progress', {
+        taskId,
+        progress: 0,
+        offset: 0,
+        speed: 0,
+        state: 'failed',
+        error: `下载失败 — 已重试 ${MAX_RETRIES} 次`,
+      })
+    }
   }
 
-  throw lastError
+  throw new Error(`下载失败 — 已重试 ${MAX_RETRIES} 次`)
 }
 
 /** Singleton download queue instance */
