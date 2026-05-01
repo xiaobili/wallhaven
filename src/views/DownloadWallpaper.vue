@@ -102,6 +102,13 @@
     <div class="dowloaded">
       <div class="m-title">
         <a class="dowload-title">已完成</a><a style="font-size: 10px">（重启后只保留最后20条记录）</a>
+        <button 
+          v-if="downloadFinishedList.length > 0"
+          class="clear-all-btn"
+          @click="clearAllFinished"
+        >
+          清除所有已完成记录
+        </button>
       </div>
       <div class="dowload-list">
         <div
@@ -168,7 +175,8 @@ const {
   removeFinished,
   pauseDownload,
   cancelDownload,
-  resumeDownload
+  resumeDownload,
+  clearFinished
 } = useDownload()
 const { alert, showSuccess, showError, showInfo, showWarning, hideAlert } = useAlert()
 
@@ -203,6 +211,16 @@ const delRecorder = async (id: string) => {
   if (confirmed) {
     await removeFinished(id)
     showSuccess('记录已删除')
+  }
+}
+
+// 清除所有已完成记录
+const clearAllFinished = async () => {
+  const confirmed = window.confirm(`确定要清除所有 ${downloadFinishedList.value.length} 条已完成记录吗？`)
+  if (confirmed) {
+    // 批量删除所有记录
+    await clearFinished()
+    showSuccess('已清除所有记录')
   }
 }
 
@@ -404,5 +422,27 @@ onUnmounted(() => {
 
 .op-del i:hover {
   color: #fafafa;
+}
+
+.clear-all-btn {
+  float: right;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #adadad;
+  background-color: transparent;
+  border: 1px solid #4a4b4c;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover {
+  color: #fff;
+  background-color: rgba(255, 77, 77, 0.2);
+  border-color: #ff4d4d;
+}
+
+.clear-all-btn:active {
+  transform: scale(0.98);
 }
 </style>
