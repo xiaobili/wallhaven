@@ -2,20 +2,21 @@
 /**
  * Electron Store IPC Handlers
  *
- * IMPORTANT: Uses dynamic import to avoid circular dependency with main/index.ts
+ * Uses static imports — the circular dependency with index.ts was broken
+ * by extracting `store` into its own module (store.ts).
  */
 
 import { ipcMain } from 'electron'
+import { store } from '../../store'
 import { logHandler } from './base'
+import { getQueueInstance } from './download-queue'
 
 export function registerStoreHandlers(): void {
   /**
    * Electron Store - 获取值
    */
-  ipcMain.handle('store-get', async (_event, key: string) => {
+  ipcMain.handle('store-get', (_event, key: string) => {
     try {
-      // CRITICAL: Dynamic import to avoid circular dependency
-      const { store } = await import('../../index')
       const value = store.get(key)
       return { success: true, value }
     } catch (error: any) {
@@ -27,15 +28,13 @@ export function registerStoreHandlers(): void {
   /**
    * Electron Store - 设置值
    */
-  ipcMain.handle('store-set', async (_event, { key, value }: { key: string; value: any }) => {
+  ipcMain.handle('store-set', (_event, { key, value }: { key: string; value: any }) => {
     try {
-      const { store } = await import('../../index')
       store.set(key, value)
 
       // DL-03: Live propagation of maxConcurrentDownloads setting
       // When appSettings change (e.g., concurrency slider), re-evaluate queue
       if (key === 'appSettings') {
-        const { getQueueInstance } = await import('./download-queue')
         getQueueInstance()?.processQueue()
       }
 
@@ -49,9 +48,8 @@ export function registerStoreHandlers(): void {
   /**
    * Electron Store - 删除值
    */
-  ipcMain.handle('store-delete', async (_event, key: string) => {
+  ipcMain.handle('store-delete', (_event, key: string) => {
     try {
-      const { store } = await import('../../index')
       // @ts-expect-error
       store.delete(key)
       return { success: true }
@@ -64,9 +62,8 @@ export function registerStoreHandlers(): void {
   /**
    * Electron Store - 清空所有数据
    */
-  ipcMain.handle('store-clear', async () => {
+  ipcMain.handle('store-clear', () => {
     try {
-      const { store } = await import('../../index')
       store.clear()
       return { success: true }
     } catch (error: any) {

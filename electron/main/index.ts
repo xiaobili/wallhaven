@@ -3,24 +3,11 @@ import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { existsSync, readFileSync } from 'node:fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import Store from 'electron-store'
+import { store } from './store'
 
 // 获取当前文件的目录路径
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-
-// 初始化 electron-store
-const store = new Store({
-  name: 'wallhaven-data',
-  defaults: {
-    // 壁纸搜索参数
-    wallpaperQueryParams: null,
-    // 应用设置
-    appSettings: null,
-    // 下载完成列表
-    downloadFinishedList: [],
-  },
-})
 
 // 将 store 实例导出供其他模块使用
 export { store }
@@ -94,7 +81,7 @@ function createWindow(): void {
   console.log('[Electron] Preload exists:', existsSync(preloadPath))
 
   if (!existsSync(preloadPath)) {
-    console.error('[Electron] ❌ Preload script not found at:', preloadPath)
+    console.error('[Electron] Preload script not found at:', preloadPath)
     console.error('[Electron] Please run "npm run build" first or check electron.vite.config.ts')
   }
 

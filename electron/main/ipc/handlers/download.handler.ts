@@ -8,6 +8,7 @@ import { ipcMain, BrowserWindow } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
+import { store } from '../../store'
 import { streamPipeline, logHandler } from './base'
 import { DownloadQueue, setQueueInstance, type QueuedDownload } from './download-queue'
 import {
@@ -1002,7 +1003,6 @@ export function registerDownloadHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.GET_PENDING_DOWNLOADS, async () => {
     try {
       // 1. Get download directory from settings
-      const { store } = await import('../../index')
       const downloadPath = store?.get('appSettings.downloadPath') as string | undefined
 
       if (!downloadPath || !fs.existsSync(downloadPath)) {

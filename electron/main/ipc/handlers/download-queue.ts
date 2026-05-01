@@ -14,7 +14,7 @@
  */
 
 import { BrowserWindow } from 'electron'
-import { store } from '../../index'
+import { store } from '../../store'
 import { logHandler } from './base'
 
 /**
