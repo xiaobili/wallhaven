@@ -250,6 +250,46 @@ function calculateBackoff(attempt: number): number {
 }
 
 /**
+ * Schedule a retry timer for a given task.
+ * Stores the timer reference so cancelRetryTimer can clear it.
+ * Automatically removes the reference after the timer fires.
+ */
+function scheduleRetryTimer(taskId: string, delay: number, callback: () => void): void {
+  const timer = setTimeout(() => {
+    retryTimers.delete(taskId)
+    callback()
+  }, delay)
+  retryTimers.set(taskId, timer)
+}
+
+/**
+ * Cancel a pending retry timer for a given task.
+ * Called by PAUSE/CANCEL handlers to prevent zombie retries (Pitfall 3).
+ * Safe to call even if no timer exists for the task.
+ */
+function cancelRetryTimer(taskId: string): void {
+  const timer = retryTimers.get(taskId)
+  if (timer !== undefined) {
+    clearTimeout(timer)
+    retryTimers.delete(taskId)
+  }
+}
+
+/**
+ * Wait for the backoff delay, returning a Promise that resolves after the timer fires.
+ * The timer reference is stored in retryTimers so that cancelRetryTimer() can
+ * cancel the wait by clearing the timer, leaving the Promise pending forever.
+ *
+ * The caller (executeWithRetry) MUST check activeDownloads.has(taskId) after
+ * the await to detect cancellation during the wait.
+ */
+function waitWithBackoff(taskId: string, delay: number): Promise<void> {
+  return new Promise((resolve) => {
+    scheduleRetryTimer(taskId, delay, resolve)
+  })
+}
+
+/**
  * Execute a single download from start to finish.
  * Extracted from the START_DOWNLOAD_TASK handler so both
  * the direct IPC path and the queue can use it.
