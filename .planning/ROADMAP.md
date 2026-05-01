@@ -74,7 +74,14 @@ Plans:
   1. Download list shows "重试中 (第X次/共3次)" for downloads currently in retry
   2. Download list shows live countdown to next retry attempt (e.g., "下次重试: 4s")
   3. Downloads that exhausted all 3 retries display "下载失败 -- 已重试 3 次"
-**Plans**: TBD
+**Plans**: 3 plans
+
+```
+Plans:
+- [ ] 35-01-PLAN.md — Type definitions, formatCountdown helper, main process 'retrying' emission (Wave 1)
+- [ ] 35-02-PLAN.md — Composable retrying branch, countdown timer, store filter update (Wave 2)
+- [ ] 35-03-PLAN.md — Template retrying/exhausted-failure UI blocks and CSS (Wave 3)
+```
 **UI hint**: yes
 
 ---
@@ -85,7 +92,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 33. 下载队列与并发控制 | 3/3 | Complete | 2026-05-01 |
 | 34. 错误分类与重试退避 | 3/3 | Complete | 2026-05-01 |
-| 35. 重试状态展示与UI集成 | 0/0 | Not started | - |
+| 35. 重试状态展示与UI集成 | 0/3 | Not started | - |
 
 ---
 
