@@ -40,10 +40,23 @@ interface ActiveDownload {
   downloadedSize: number
   lastPersistTime: number
   lastPersistOffset: number
+  retryCount?: number  // How many retries have been attempted (Phase 34)
 }
 
 // Store active downloads with their AbortControllers
 const activeDownloads = new Map<string, ActiveDownload>()
+
+/**
+ * Retry timer references for backoff scheduling.
+ * Each entry maps taskId → setTimeout handle, enabling PAUSE/CANCEL
+ * to clear pending retry timers and prevent zombie downloads (Pitfall 3).
+ */
+const retryTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+/** Retry backoff configuration constants */
+const BACKOFF_BASE_MS = 2000   // 2 seconds — base delay for first retry
+const BACKOFF_MAX_MS  = 30000  // 30 seconds — absolute ceiling
+const MAX_RETRIES     = 3      // Max retry attempts before permanent failure
 
 /**
  * Get state file path from temp file path
