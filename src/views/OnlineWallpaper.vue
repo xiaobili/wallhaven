@@ -82,6 +82,7 @@
       @close-search-modal="closeSearchModal"
       @toggle-favorite="handleToggleFavorite"
       @show-favorite-dropdown="handleShowFavoriteDropdown"
+      @select-all="handleSelectAll"
     />
 
     <!-- Collection Dropdown -->
@@ -217,6 +218,28 @@ const toggleSelection = (wallpaperId: string): void => {
   } else {
     // 未选中，添加选择
     selectedWallpapers.value.push(wallpaperId)
+  }
+}
+
+/**
+ * Handle select-all event from WallpaperList: batch add or remove all IDs in a section.
+ * Per D-04: payload contains { sectionIndex, ids[], selected }.
+ * - selected=true: add any IDs not already in selectedWallpapers
+ * - selected=false: remove all IDs in the payload from selectedWallpapers
+ */
+const handleSelectAll = (payload: { sectionIndex: number; ids: string[]; selected: boolean }): void => {
+  if (payload.selected) {
+    // Add all IDs not already selected
+    for (const id of payload.ids) {
+      if (!selectedWallpapers.value.includes(id)) {
+        selectedWallpapers.value.push(id)
+      }
+    }
+  } else {
+    // Remove all IDs in this section from selection
+    selectedWallpapers.value = selectedWallpapers.value.filter(
+      id => !payload.ids.includes(id)
+    )
   }
 }
 
