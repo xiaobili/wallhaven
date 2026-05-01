@@ -533,16 +533,35 @@ export async function executeDownload(
 
     return { filePath, size: finalSize }
   } catch (error: any) {
-    // If user-initiated cancel via axios CanceledError, re-throw without side effects
+    // CanceledError — always re-throw without side effects (unchanged)
     if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
       throw error
     }
 
-    // Non-cancel error: cleanup and notify
+    // Classify the error
+    const classification = classifyDownloadError(error)
+    const entry = activeDownloads.get(taskId)
+
+    // Retriable with retries remaining: skip cleanup, let executeWithRetry handle it
+    if (
+      classification.isRetriable &&
+      entry &&
+      (entry.retryCount ?? 0) < MAX_RETRIES
+    ) {
+      logHandler(
+        'executeDownload',
+        `Retriable error for ${taskId} (attempt ${(entry.retryCount ?? 0) + 1}/${MAX_RETRIES}): ${error.message}`,
+        'warn',
+      )
+      // Skip cleanupDownload — holds queue slot (DL-09)
+      // Skip 'failed' progress event — no UI notification during retry (D-12)
+      throw error
+    }
+
+    // Permanent error or retries exhausted: existing cleanup + emit + throw
     logHandler('executeDownload', `Download failed: ${taskId}: ${error.message}`, 'error')
     cleanupDownload(taskId)
 
-    // Notify renderer of failure
     const windows = BrowserWindow.getAllWindows()
     if (windows.length > 0) {
       windows[0].webContents.send('download-progress', {
