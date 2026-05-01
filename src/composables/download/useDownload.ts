@@ -76,6 +76,9 @@ export function useDownload(): UseDownloadReturn {
 
   /**
    * 处理进度更新
+   *
+   * Main process is source of truth for state transitions.
+   * Renderer responds to progress events rather than predicting state.
    */
   const handleProgress = (data: DownloadProgressData): void => {
     const { taskId, progress, offset, speed, state, filePath, error, resumeNotSupported } = data
@@ -89,31 +92,52 @@ export function useDownload(): UseDownloadReturn {
       const task = store.downloadingList.find((item) => item.id === taskId)
       if (task) {
         task.state = 'failed'
-        // 保留 offset，不重置 progress，便于用户恢复下载
       }
       showError(`下载失败: ${error}`)
       return
     }
 
+    // state === 'completed' — finalize download
     if (state === 'completed' && filePath) {
       store.completeDownload(taskId, filePath)
-      // 持久化已完成记录到 storage
       const finishedItem = store.finishedList.find((item) => item.id === taskId)
       if (finishedItem) {
         downloadService.saveFinishedRecord(finishedItem).catch((err) => {
           console.error('[useDownload] 保存已完成记录失败:', err)
         })
       }
-    } else if (state === 'paused') {
-      // 更新为暂停状态
+      return
+    }
+
+    // state === 'paused' — set paused state, preserve offset
+    if (state === 'paused') {
       const task = store.downloadingList.find((item) => item.id === taskId)
       if (task) {
         task.state = 'paused'
         task.offset = offset
       }
-    } else {
-      store.updateProgress(taskId, progress, offset, speed, filePath)
+      return
     }
+
+    // state === 'waiting' — task is enqueued but not yet started
+    // (DL-02: queue may hold task until a slot frees up)
+    if (state === 'waiting') {
+      const task = store.downloadingList.find((item) => item.id === taskId)
+      if (task) {
+        task.state = 'waiting'
+        task.offset = offset
+      }
+      return
+    }
+
+    // 'downloading' or any other state — update progress
+    // Ensure renderer state matches main process
+    const task = store.downloadingList.find((item) => item.id === taskId)
+    if (task && state === 'downloading') {
+      task.state = 'downloading'
+    }
+
+    store.updateProgress(taskId, progress, offset, speed, filePath)
   }
 
   // 生命周期钩子：订阅进度
@@ -155,6 +179,10 @@ export function useDownload(): UseDownloadReturn {
 
   /**
    * 启动下载
+   *
+   * Main process controls state transitions via download-progress events.
+   * This method enqueues the task and returns immediately — the queue
+   * determines when the download actually starts.
    */
   const startDownload = async (id: string): Promise<boolean> => {
     const task = store.downloadingList.find((item) => item.id === id)
@@ -163,20 +191,16 @@ export function useDownload(): UseDownloadReturn {
       return false
     }
 
-    task.state = 'downloading'
+    // Record start time but do NOT set state optimistically —
+    // main process controls state (waiting/downloading) via progress events
     task.time = new Date().toISOString()
 
     const result = await downloadService.startDownload(id, task.url, task.filename)
     console.log('[useDownload] startDownload result:', result)
 
     if (!result.success) {
-      // // 检查任务是否已被用户暂停 - 如果是，不要覆盖 paused 状态
-      // if (task.state === 'paused') {
-      //   console.log('[useDownload] startDownload failed but task is paused - keeping paused state')
-      //   return false
-      // }
-      // console.log('[useDownload] startDownload FAILED - setting state to waiting')
-      // task.state = 'waiting'
+      // On IPC failure, reset to 'waiting' (the initial state from addTask)
+      task.state = 'waiting'
       showError(result.error?.message || '启动下载失败')
       return false
     }
@@ -238,8 +262,8 @@ export function useDownload(): UseDownloadReturn {
       updatedAt: new Date().toISOString(),
     }
 
-    // 更新任务状态为下载中
-    task.state = 'downloading'
+    // Do NOT set state here — main process controls state via progress events.
+    // The queue may keep the task in 'waiting' until a slot is available.
 
     // 调用断点续传服务
     const result = await downloadService.resumeDownload(id, pendingDownload)
@@ -301,8 +325,8 @@ export function useDownload(): UseDownloadReturn {
       return false
     }
 
-    // 如果任务正在下载中，需要调用服务层取消
-    if (task.state === 'downloading') {
+    // If task is downloading or waiting in queue, cancel via main process
+    if (task.state === 'downloading' || task.state === 'waiting') {
       const result = await downloadService.cancelDownload(id)
       if (!result.success) {
         showError(result.error?.message || '取消下载失败')
