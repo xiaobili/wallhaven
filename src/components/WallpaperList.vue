@@ -17,6 +17,22 @@
           class="thumb-listing-page-header"
         >
           <h2>Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}</h2>
+          <span
+            class="select-all-trigger"
+            @click.stop="toggleSelectAll(sectionItem.data, i)"
+          >
+            <span
+              class="select-all-box"
+              :class="{
+                checked: getSelectState(sectionItem.data) === 'all',
+                indeterminate: getSelectState(sectionItem.data) === 'some'
+              }"
+            >
+              <i v-if="getSelectState(sectionItem.data) === 'all'" class="fas fa-check" />
+              <i v-else-if="getSelectState(sectionItem.data) === 'some'" class="fas fa-minus" />
+            </span>
+            <span class="select-all-label">{{ getSelectState(sectionItem.data) === 'all' ? '取消全选' : '全选' }}</span>
+          </span>
           <a
             class="icon to-top"
             href="#top"
@@ -147,6 +163,7 @@ const emit = defineEmits<{
   'download-img': [item: WallpaperItem];
   'close-search-modal': [];
   'select-wallpaper': [id: string];  // 切换选择状态
+  'select-all': [payload: { sectionIndex: number; ids: string[]; selected: boolean }];
   'toggle-favorite': [item: WallpaperItem, event: MouseEvent];  // left click - quick add
   'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent];  // right click - show dropdown
 }>();
@@ -185,6 +202,31 @@ const handleFavoriteRightClick = (item: WallpaperItem, event: MouseEvent): void 
  */
 const toggleSelect = (id: string): void => {
   emit('select-wallpaper', id)
+}
+
+type SelectState = 'none' | 'some' | 'all'
+
+/**
+ * Compute the selection state for a section's wallpapers:
+ * 'none' = no wallpapers selected, 'all' = every wallpaper selected, 'some' = mixed
+ */
+const getSelectState = (sectionData: WallpaperItem[]): SelectState => {
+  if (!props.selectedIds || props.selectedIds.length === 0) return 'none'
+  const selectedCount = sectionData.filter(item => props.selectedIds!.includes(item.id)).length
+  if (selectedCount === 0) return 'none'
+  if (selectedCount === sectionData.length) return 'all'
+  return 'some'
+}
+
+/**
+ * Toggle select-all for a section: if all are selected, deselect all; otherwise select all.
+ * Emits to parent with section index, all wallpaper IDs, and the target selection state.
+ */
+const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): void => {
+  const state = getSelectState(sectionData)
+  const selectAll = state !== 'all'  // toggle: if all selected → deselect; otherwise → select
+  const ids = sectionData.map(item => item.id)
+  emit('select-all', { sectionIndex, ids, selected: selectAll })
 }
 
 /**
@@ -303,6 +345,58 @@ onUnmounted(() => {
   100% {
     transform: scale(1);
   }
+}
+
+/* Select-all trigger in section headers */
+.select-all-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-left: 16px;
+  user-select: none;
+  -ms-flex-order: 15;
+  order: 15;
+}
+
+.select-all-box {
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: white;
+  font-size: 12px;
+}
+
+.select-all-trigger:hover .select-all-box {
+  background: rgba(102, 126, 234, 0.7);
+  border-color: white;
+  transform: scale(1.1);
+}
+
+.select-all-box.checked {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.select-all-box.indeterminate {
+  background: rgba(102, 126, 234, 0.5);
+  border-color: #667eea;
+}
+
+.select-all-label {
+  font-size: 13px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.select-all-trigger:hover .select-all-label {
+  color: white;
 }
 
 .main-bottom {
