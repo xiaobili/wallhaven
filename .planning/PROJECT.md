@@ -172,6 +172,10 @@ Requirements defined in `.planning/REQUIREMENTS.md` for v4.0.
 | useAlert 统一管理 Alert 状态 | 消除 4 处重复代码 | ✓ 代码复用 |
 | O(1) favoriteIds Set | 大收藏集下的高效查询 | ✓ 性能优化 |
 | 左键快速收藏/右键选择器 | 高效 UX，覆盖常见用例 | ✓ 用户体验 |
+| 重试循环在主进程（executeWithRetry）| 避免渲染进程轮询，与现有 executeDownload 一致 | ✓ Phase 34 |
+| 错误分类使用纯函数（classifyDownloadError）| 无副作用，可测试，与退避逻辑解耦 | ✓ Phase 34 |
+| 全抖动（full jitter）指数退避 | 防止惊群效应，分布均匀 | ✓ Phase 34 |
+| 定时器存储 resolve 回调 | 使 PAUSE/CANCEL 可解析等待 Promise，防止僵尸任务 | ✓ Phase 34 |
 
 ## 约束条件
 

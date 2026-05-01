@@ -22,7 +22,7 @@
 ## Phases
 
 - [x] **Phase 33: 下载队列与并发控制** -- Enforce concurrent download limits with main-process queue
-- [ ] **Phase 34: 错误分类与重试退避** -- Auto-retry transient failures with exponential backoff and jitter
+- [x] **Phase 34: 错误分类与重试退避** -- Auto-retry transient failures with exponential backoff and jitter (2026-05-01)
 - [ ] **Phase 35: 重试状态展示与UI集成** -- Show retry progress, countdown, and final failure state in download list
 
 ---
@@ -57,7 +57,14 @@ Plans:
   3. A download fails permanently after 3 failed retry attempts
   4. A retrying download holds its queue slot -- no extra concurrent connections are created for retries
   5. Cancelling or pausing a download cancels any pending retry timer (no zombie downloads)
-**Plans**: TBD
+**Plans**: 3 plans
+
+```
+Plans:
+- [x] 34-01-PLAN.md — Error classification and backoff utilities (DONE)
+- [x] 34-02-PLAN.md — Retry loop: executeWithRetry + modified catch block (DONE)
+- [x] 34-03-PLAN.md — Handler integration: queue + PAUSE + CANCEL (DONE)
+```
 
 ### Phase 35: 重试状态展示与UI集成
 **Goal**: Users see retry progress, countdown timer, and final failure state in the download list UI
@@ -76,8 +83,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 33. 下载队列与并发控制 | 1/3 | In progress | Plan 01 done |
-| 34. 错误分类与重试退避 | 0/0 | Not started | - |
+| 33. 下载队列与并发控制 | 3/3 | Complete | 2026-05-01 |
+| 34. 错误分类与重试退避 | 3/3 | Complete | 2026-05-01 |
 | 35. 重试状态展示与UI集成 | 0/0 | Not started | - |
 
 ---
@@ -86,18 +93,18 @@ Plans:
 
 | ID | Phase | Description |
 |----|-------|-------------|
-| DL-01 | 33 | Follow maxConcurrentDownloads setting | Partial — queue reads setting on each dequeue |
-| DL-02 | 33 | Auto-queue excess downloads | Partial — enqueue + 'waiting' events implemented |
-| DL-03 | 33 | Live setting propagation |
-| DL-04 | 33 | Graceful concurrency reduction |
-| DL-05 | 34 | Auto-retry on transient errors |
-| DL-06 | 34 | Permanent errors fail immediately |
-| DL-07 | 34 | Exponential backoff with jitter |
-| DL-08 | 34 | Max 3 retries |
-| DL-09 | 34 | Retry holds queue slot |
-| UI-01 | 35 | Show "retrying (X/3)" |
-| UI-02 | 35 | Show retry countdown |
-| UI-03 | 35 | Show final failure state |
+| DL-01 | 33 | Follow maxConcurrentDownloads setting | Complete |
+| DL-02 | 33 | Auto-queue excess downloads | Complete |
+| DL-03 | 33 | Live setting propagation | Complete |
+| DL-04 | 33 | Graceful concurrency reduction | Complete |
+| DL-05 | 34 | Auto-retry on transient errors | Complete |
+| DL-06 | 34 | Permanent errors fail immediately | Complete |
+| DL-07 | 34 | Exponential backoff with jitter | Complete |
+| DL-08 | 34 | Max 3 retries | Complete |
+| DL-09 | 34 | Retry holds queue slot | Complete |
+| UI-01 | 35 | Show "retrying (X/3)" | Pending |
+| UI-02 | 35 | Show retry countdown | Pending |
+| UI-03 | 35 | Show final failure state | Pending |
 
 ---
 
