@@ -1,69 +1,68 @@
-# Milestone v3.0 Requirements: 首屏动画
+# Requirements: Wallhaven v4.0 多线程下载与重试退避机制
 
----
+**Defined:** 2026-05-01
+**Core Value:** 收藏管理，分类随心 — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Active Requirements (This Milestone)
+## v4.0 Requirements
 
-### Splash Window Infrastructure
+### 下载队列与并发控制
 
-- [ ] **SPLASH-01**: User sees a dedicated splash window when launching the app
-- [ ] **SPLASH-02**: Splash window is frameless (no title bar, no window controls)
-- [ ] **SPLASH-03**: Splash window is centered on screen when shown
-- [ ] **SPLASH-04**: Splash window uses same dark theme as the app
+- [ ] **DL-01**: 应用下载时遵循设置页的"并行下载数"配置，不超过 N 个下载任务同时进行
+- [ ] **DL-02**: 超出并发限制的下载任务自动进入等待队列，当前下载完成后自动开始下一个
+- [ ] **DL-03**: 用户修改"并行下载数"设置后，新值立即生效，无需重启应用
+- [ ] **DL-04**: 并发数从高调低时，超出的活跃下载不会被中断（等待新任务时按新限制执行）
 
-### Bounce Logo Animation
+### 错误分类与重试退避
 
-- [ ] **ANIM-01**: Splash screen displays "Wallhaven" text as the logo
-- [ ] **ANIM-02**: Logo animates with bounce + elastic effect (scale in)
-- [ ] **ANIM-03**: Animation uses GPU-accelerated properties only (transform, opacity)
-- [ ] **ANIM-04**: Animation plays smoothly at 60fps
+- [ ] **DL-05**: 下载失败时自动判断错误类型，临时错误（网络超时、连接重置、5xx、429）自动重试
+- [ ] **DL-06**: 永久错误（404、403、401 等客户端错误）不重试，直接标记为失败
+- [ ] **DL-07**: 重试采用指数退避策略，每次重试等待时间递增（含 jitter 防抖动）
+- [ ] **DL-08**: 重试次数上限为 3 次，超过后标记为失败
+- [ ] **DL-09**: 重试中的下载依然占用并发槽位，不额外增加连接数
 
-### Timing & Coordination
+### 重试状态展示
 
-- [ ] **TIME-01**: Splash screen displays for minimum 1 second (no flash)
-- [ ] **TIME-02**: Splash screen stays visible until main window is fully ready
-- [ ] **TIME-03**: Main window shows only after minimum time AND window ready
-- [ ] **TIME-04**: On macOS reactivation (dock click), splash is NOT shown
+- [ ] **UI-01**: 下载列表中显示正在重试的下载任务，标明"重试中 (第X次/共3次)"
+- [ ] **UI-02**: 下载列表显示下次重试前的倒计时
+- [ ] **UI-03**: 最终失败的下载显示"下载失败 — 已重试 X 次"
 
-### Smooth Transition
+## v2 Requirements (Deferred)
 
-- [ ] **TRANS-01**: Splash window fades out smoothly when closing
-- [ ] **TRANS-02**: Main window fades in smoothly when showing
-- [ ] **TRANS-03**: No visible gap between splash close and main window show
-
----
-
-## Future Requirements (Deferred)
-
-- Loading progress bar or spinner below logo
-- Staggered letter-by-letter animation
-- Gradient or wallpaper background
-- Skip splash on fast subsequent launches (cache)
-- Custom animation timing configuration
-
----
+- **DL-NEXT**: 最大重试次数用户可配置（当前为编译时常数 3）
+- **DL-NEXT**: 将下载队列持久化到磁盘，应用重启后恢复等待队列
+- **DL-NEXT**: 应用重启后重置重试计数（临时性问题通常已解决）
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Interactive splash screen | Splash is display-only, no user interaction |
-| Dynamic loading state updates | MVP doesn't track load progress |
-| Platform-specific variations | Same experience on all platforms |
-| Multi-monitor position logic | Center on primary monitor is sufficient |
-
----
+| 单文件多线程分块下载 | HTTP Range 已在 v2.1 中用于断点续传，多线程分块下载增加大量复杂性且收益有限 |
+| 下载速度限制 | 非核心需求，增加复杂度而不直接解决可靠性问题 |
+| 重试按钮（手动重试） | 自动重试已覆盖，手动重试可后续迭代 |
+| "全部重新下载"功能 | 属于批量操作，不在此里程碑范围内 |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPLASH-01 to SPLASH-04 | 30 | Pending |
-| ANIM-01 to ANIM-04 | 31 | Pending |
-| TIME-01 to TIME-04 | 32 | Pending |
-| TRANS-01 to TRANS-03 | 32 | Pending |
+| DL-01 | 33 | Pending |
+| DL-02 | 33 | Pending |
+| DL-03 | 33 | Pending |
+| DL-04 | 33 | Pending |
+| DL-05 | 34 | Pending |
+| DL-06 | 34 | Pending |
+| DL-07 | 34 | Pending |
+| DL-08 | 34 | Pending |
+| DL-09 | 34 | Pending |
+| UI-01 | 35 | Pending |
+| UI-02 | 35 | Pending |
+| UI-03 | 35 | Pending |
+
+**Coverage:**
+- v4.0 requirements: 12 total
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
-
-*Created: 2026-04-30*
-*v3.0 首屏动画 - MVP Scope*
+*Requirements defined: 2026-05-01*
+*Last updated: 2026-05-01 after v4.0 milestone research*
