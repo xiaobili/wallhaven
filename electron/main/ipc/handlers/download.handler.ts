@@ -177,6 +177,59 @@ function cleanupDownload(taskId: string, preserveTempFile: boolean = false): voi
   activeDownloads.delete(taskId)
 }
 
+// ---- Error Classification (Phase 34) ----
+
+/**
+ * Classify a download error as retriable or permanent.
+ * Network errors and transient HTTP statuses (5xx, 429, 408) are retriable.
+ * Client errors (4xx except 408/429), user-cancelled, and resume-state errors are permanent.
+ * Unknown errors default to retriable (conservative — transient issues are more common).
+ */
+function classifyDownloadError(error: any): { isRetriable: boolean; reason: string } {
+  // 1. User-initiated cancel — never retry
+  if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+    return { isRetriable: false, reason: 'user_cancelled' }
+  }
+
+  // 2. Resume-state errors — never retry (data corruption needs user intervention)
+  if (error.code && typeof error.code === 'string' && error.code.startsWith('RESUME_')) {
+    return { isRetriable: false, reason: 'resume_error' }
+  }
+
+  // 3. HTTP status-based classification
+  if (error.response?.status) {
+    const status = error.response.status
+    // Transient HTTP statuses
+    if (status === 408 || status === 429 || (status >= 500 && status < 600)) {
+      return { isRetriable: true, reason: `http_${status}` }
+    }
+    // Permanent HTTP statuses (4xx except 408/429)
+    if (status >= 400 && status < 500) {
+      return { isRetriable: false, reason: `http_${status}` }
+    }
+  }
+
+  // 4. Network error codes from Node.js/Axios
+  if (error.code && typeof error.code === 'string') {
+    const retriableCodes = new Set([
+      'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED',
+      'ENETUNREACH', 'EADDRNOTAVAIL', 'EPIPE',
+      'ERR_NETWORK', 'ERR_CONNECTION_RESET',
+    ])
+    if (retriableCodes.has(error.code)) {
+      return { isRetriable: true, reason: `network_${error.code}` }
+    }
+  }
+
+  // 5. Axios-specific: timeout is retriable
+  if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+    return { isRetriable: true, reason: 'network_timeout' }
+  }
+
+  // 6. Unknown errors — conservative: assume transient
+  return { isRetriable: true, reason: 'unknown' }
+}
+
 /**
  * Execute a single download from start to finish.
  * Extracted from the START_DOWNLOAD_TASK handler so both
