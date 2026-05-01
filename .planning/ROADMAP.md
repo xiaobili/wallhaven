@@ -38,12 +38,19 @@
   2. When an active download finishes, the next waiting task auto-starts without user action
   3. Changing maxConcurrentDownloads from 3 to 5 immediately allows 2 more waiting tasks to begin
   4. Reducing maxConcurrentDownloads from 5 to 2 does not interrupt the 5 active downloads (they complete; new tasks respect limit of 2)
-**Plans**: TBD
+**Plans**: 3 plans
+
+```
+Plans:
+- [ ] 33-01-PLAN.md — Queue infrastructure: DownloadQueue class + executeDownload extraction
+- [ ] 33-02-PLAN.md — Handler integration: IPC handlers use queue + settings propagation (DL-03)
+- [ ] 33-03-PLAN.md — Renderer adjustments: useDownload.ts for 'waiting' state handling
+```
 
 ### Phase 34: 错误分类与重试退避
 **Goal**: Automatic retry of transient download failures with exponential backoff + full jitter, slot-holding to prevent starvation
 **Depends on**: Phase 33 (retry needs the queue for slot-holding)
-**Requirements**: DL-05, DL-06, DL-07, DL-08, DL-09
+**Requirement IDs**: DL-05, DL-06, DL-07, DL-08, DL-09
 **Success Criteria** (what must be TRUE):
   1. Transient errors (ECONNRESET, ETIMEDOUT, 5xx, 429) trigger automatic retry; permanent errors (404, 403, 401) mark as failed immediately
   2. Retry delay follows exponential backoff with full jitter (base doubling + random offset, capped at 30s)
@@ -55,7 +62,7 @@
 ### Phase 35: 重试状态展示与UI集成
 **Goal**: Users see retry progress, countdown timer, and final failure state in the download list UI
 **Depends on**: Phase 33, Phase 34
-**Requirements**: UI-01, UI-02, UI-03
+**Requirment IDs**: UI-01, UI-02, UI-03
 **Success Criteria** (what must be TRUE):
   1. Download list shows "重试中 (第X次/共3次)" for downloads currently in retry
   2. Download list shows live countdown to next retry attempt (e.g., "下次重试: 4s")
@@ -69,7 +76,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 33. 下载队列与并发控制 | 0/0 | Not started | - |
+| 33. 下载队列与并发控制 | 0/3 | In planning | - |
 | 34. 错误分类与重试退避 | 0/0 | Not started | - |
 | 35. 重试状态展示与UI集成 | 0/0 | Not started | - |
 
