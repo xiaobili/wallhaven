@@ -31,6 +31,14 @@ export function registerStoreHandlers(): void {
     try {
       const { store } = await import('../../index')
       store.set(key, value)
+
+      // DL-03: Live propagation of maxConcurrentDownloads setting
+      // When appSettings change (e.g., concurrency slider), re-evaluate queue
+      if (key === 'appSettings') {
+        const { getQueueInstance } = await import('./download-queue')
+        getQueueInstance()?.processQueue()
+      }
+
       return { success: true }
     } catch (error: any) {
       logHandler('store-set', `Error: ${error.message}`, 'error')
