@@ -1,89 +1,77 @@
-# Roadmap: v3.0 首屏动画
+# Roadmap: Wallhaven 壁纸浏览器
 
 ---
 
-## Overview
+## Milestones
 
-| Metric | Value |
-|--------|-------|
-| **Phases** | 3 |
-| **Requirements** | 15 |
-| **Starting Phase** | 30 |
-| **Estimated** | ~300 lines of code |
+- ✅ **v2.0 架构重构** -- Phases 1-5 (shipped 2026-04-26)
+- ✅ **v2.1 下载断点续传** -- Phases 6-9 (shipped 2026-04-27)
+- ✅ **v2.2 Store 分层迁移** -- Phases 10-13 (shipped 2026-04-27)
+- ✅ **v2.3 ElectronAPI 分层重构** -- Phase 14 (shipped 2026-04-27)
+- ✅ **v2.4 ImagePreview 导航功能** -- Phase 15 (shipped 2026-04-27)
+- ✅ **v2.5 壁纸收藏功能** -- Phases 16-22 (shipped 2026-04-29)
+- ✅ **v2.6 设置页缓存优化** -- Phase 23 (shipped 2026-04-29)
+- ✅ **v2.7 图片切换动画** -- Phases 24-25 (shipped 2026-04-29)
+- ✅ **v2.8 动画性能优化** -- Phases 26-27 (shipped 2026-04-30)
+- ✅ **v2.9 LoadingOverlay 动画优化** -- Phases 28-29 (shipped 2026-04-30)
+- ✅ **v3.0 首屏动画** -- Phases 30-32 (shipped 2026-04-30)
+- 🚧 **v4.0 多线程下载与重试退避机制** -- Phases 33-35 (in progress)
 
 ---
 
-## Phase Summary
+## Phases
 
-| # | Phase | Goal | Requirements | Success Criteria |
-|---|-------|------|--------------|------------------|
-| 30 | Splash Window Foundation | Create and configure the splash window | SPLASH-01 ~ 04 | 4 |
-| 31 | Bounce Logo Animation | Implement elastic bounce logo animation | ANIM-01 ~ 04 | 4 |
-| 32 | Coordination & Transition | Timing logic + smooth transitions | TIME-01 ~ 04, TRANS-01 ~ 03 | 7 |
+- [ ] **Phase 33: 下载队列与并发控制** -- Enforce concurrent download limits with main-process queue
+- [ ] **Phase 34: 错误分类与重试退避** -- Auto-retry transient failures with exponential backoff and jitter
+- [ ] **Phase 35: 重试状态展示与UI集成** -- Show retry progress, countdown, and final failure state in download list
 
 ---
 
 ## Phase Details
 
-### Phase 30: Splash Window Foundation
+### Phase 33: 下载队列与并发控制
+**Goal**: Download queue in main process gates concurrent execution so the maxConcurrentDownloads setting actually limits parallel work
+**Depends on**: Nothing (first phase of v4.0)
+**Requirements**: DL-01, DL-02, DL-03, DL-04
+**Success Criteria** (what must be TRUE):
+  1. User sets maxConcurrentDownloads=N and exactly N downloads execute in parallel; the (N+1)th enters waiting state
+  2. When an active download finishes, the next waiting task auto-starts without user action
+  3. Changing maxConcurrentDownloads from 3 to 5 immediately allows 2 more waiting tasks to begin
+  4. Reducing maxConcurrentDownloads from 5 to 2 does not interrupt the 5 active downloads (they complete; new tasks respect limit of 2)
+**Plans**: TBD
 
-**Goal:** Create the splash window infrastructure in Electron main process
+### Phase 34: 错误分类与重试退避
+**Goal**: Automatic retry of transient download failures with exponential backoff + full jitter, slot-holding to prevent starvation
+**Depends on**: Phase 33 (retry needs the queue for slot-holding)
+**Requirements**: DL-05, DL-06, DL-07, DL-08, DL-09
+**Success Criteria** (what must be TRUE):
+  1. Transient errors (ECONNRESET, ETIMEDOUT, 5xx, 429) trigger automatic retry; permanent errors (404, 403, 401) mark as failed immediately
+  2. Retry delay follows exponential backoff with full jitter (base doubling + random offset, capped at 30s)
+  3. A download fails permanently after 3 failed retry attempts
+  4. A retrying download holds its queue slot -- no extra concurrent connections are created for retries
+  5. Cancelling or pausing a download cancels any pending retry timer (no zombie downloads)
+**Plans**: TBD
 
-**Requirements:**
-- **SPLASH-01**: User sees a dedicated splash window when launching the app
-- **SPLASH-02**: Splash window is frameless (no title bar, no window controls)
-- **SPLASH-03**: Splash window is centered on screen when shown
-- **SPLASH-04**: Splash window uses same dark theme as the app
-
-**Success Criteria:**
-1. Launching `npm run dev` shows splash window before main window
-2. Splash window has no title bar or window controls
-3. Splash window appears centered on primary display
-4. Splash window background is dark (#1a1a1a or matching app theme)
-5. No errors in dev tools console related to splash window
-
----
-
-### Phase 31: Bounce Logo Animation
-
-**Goal:** Implement the "Wallhaven" text logo with bounce + elastic animation
-
-**Requirements:**
-- **ANIM-01**: Splash screen displays "Wallhaven" text as the logo
-- **ANIM-02**: Logo animates with bounce + elastic effect (scale in)
-- **ANIM-03**: Animation uses GPU-accelerated properties only (transform, opacity)
-- **ANIM-04**: Animation plays smoothly at 60fps
-
-**Success Criteria:**
-1. "Wallhaven" text is clearly visible in splash window
-2. Animation: scales from 0.3 → 1.05 → 0.9 → 1.0 (bounce effect)
-3. Animation uses `transform: scale()` and `opacity` only
-4. DevTools Performance tab shows consistent 60fps during animation
-5. Animation timing: ~1 second total duration with elastic easing
+### Phase 35: 重试状态展示与UI集成
+**Goal**: Users see retry progress, countdown timer, and final failure state in the download list UI
+**Depends on**: Phase 33, Phase 34
+**Requirements**: UI-01, UI-02, UI-03
+**Success Criteria** (what must be TRUE):
+  1. Download list shows "重试中 (第X次/共3次)" for downloads currently in retry
+  2. Download list shows live countdown to next retry attempt (e.g., "下次重试: 4s")
+  3. Downloads that exhausted all 3 retries display "下载失败 -- 已重试 3 次"
+**Plans**: TBD
+**UI hint**: yes
 
 ---
 
-### Phase 32: Coordination & Transition
+## Progress
 
-**Goal:** Implement timing logic and smooth window transitions
-
-**Requirements:**
-- **TIME-01**: Splash screen displays for minimum 1 second (no flash)
-- **TIME-02**: Splash screen stays visible until main window is fully ready
-- **TIME-03**: Main window shows only after minimum time AND window ready
-- **TIME-04**: On macOS reactivation (dock click), splash is NOT shown
-- **TRANS-01**: Splash window fades out smoothly when closing
-- **TRANS-02**: Main window fades in smoothly when showing
-- **TRANS-03**: No visible gap between splash close and main window show
-
-**Success Criteria:**
-1. Fast dev load: Splash shows for exactly ~1 second, not less
-2. Slow load simulation: Splash stays until main window ready
-3. Closing and reopening app via dock (macOS) does NOT show splash
-4. Splash opacity animates from 1 → 0 on close
-5. Main window opacity animates from 0 → 1 on show
-6. User never sees desktop between splash and main window
-7. No memory leaks: splashWindow reference cleared after close
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 33. 下载队列与并发控制 | 0/0 | Not started | - |
+| 34. 错误分类与重试退避 | 0/0 | Not started | - |
+| 35. 重试状态展示与UI集成 | 0/0 | Not started | - |
 
 ---
 
@@ -91,23 +79,20 @@
 
 | ID | Phase | Description |
 |----|-------|-------------|
-| SPLASH-01 | 30 | Dedicated splash window on launch |
-| SPLASH-02 | 30 | Frameless window |
-| SPLASH-03 | 30 | Centered on screen |
-| SPLASH-04 | 30 | Dark theme matching |
-| ANIM-01 | 31 | "Wallhaven" text logo |
-| ANIM-02 | 31 | Bounce + elastic animation |
-| ANIM-03 | 31 | GPU-accelerated properties only |
-| ANIM-04 | 31 | 60fps smooth animation |
-| TIME-01 | 32 | Minimum 1 second display |
-| TIME-02 | 32 | Wait for main window ready |
-| TIME-03 | 32 | Both conditions required |
-| TIME-04 | 32 | No splash on macOS reactivate |
-| TRANS-01 | 32 | Splash fade out |
-| TRANS-02 | 32 | Main window fade in |
-| TRANS-03 | 32 | No visible gap |
+| DL-01 | 33 | Follow maxConcurrentDownloads setting |
+| DL-02 | 33 | Auto-queue excess downloads |
+| DL-03 | 33 | Live setting propagation |
+| DL-04 | 33 | Graceful concurrency reduction |
+| DL-05 | 34 | Auto-retry on transient errors |
+| DL-06 | 34 | Permanent errors fail immediately |
+| DL-07 | 34 | Exponential backoff with jitter |
+| DL-08 | 34 | Max 3 retries |
+| DL-09 | 34 | Retry holds queue slot |
+| UI-01 | 35 | Show "retrying (X/3)" |
+| UI-02 | 35 | Show retry countdown |
+| UI-03 | 35 | Show final failure state |
 
 ---
 
-*Created: 2026-04-30*
-*v3.0 首屏动画 Roadmap ✓*
+*Created: 2026-05-01*
+*v4.0 多线程下载与重试退避机制 Roadmap*
