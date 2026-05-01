@@ -13,7 +13,6 @@
         class="thumb-listing-page"
       >
         <header
-          v-if="i !== 0"
           class="thumb-listing-page-header"
         >
           <h2>Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}</h2>
@@ -28,8 +27,14 @@
                 indeterminate: getSelectState(sectionItem.data) === 'some'
               }"
             >
-              <i v-if="getSelectState(sectionItem.data) === 'all'" class="fas fa-check" />
-              <i v-else-if="getSelectState(sectionItem.data) === 'some'" class="fas fa-minus" />
+              <i
+                v-if="getSelectState(sectionItem.data) === 'all'"
+                class="fas fa-check"
+              />
+              <i
+                v-else-if="getSelectState(sectionItem.data) === 'some'"
+                class="fas fa-minus"
+              />
             </span>
             <span class="select-all-label">{{ getSelectState(sectionItem.data) === 'all' ? '取消全选' : '全选' }}</span>
           </span>
