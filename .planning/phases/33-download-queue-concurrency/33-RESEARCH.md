@@ -565,19 +565,19 @@ ipcMain.handle(IPC_CHANNELS.RESUME_DOWNLOAD_TASK, async (_event, params) => {
 | A1 | `store.get('appSettings')?.maxConcurrentDownloads` returns the current value when settings change via the renderer's `storeSet` IPC | Standard Stack | If electron-store has a stale in-memory cache, DL-03 breaks. Verified by existing pattern -- `storeSet` calls `store.set()` which updates the in-memory store. The queue reads via `store.get()` which always returns the latest value. |
 | A2 | The `executeDownload()` function extracted from the START handler will work identically when called from both the IPC handler path and the queue path | Architecture Patterns | If `executeDownload()` relies on `_event` (the IPC event object), it will fail when called from the queue (no event). Need to ensure the function only uses the params it receives, not the event. Current code at line 232 does not use `_event` -- it's typed as `_event` (unused). |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should the START_DOWNLOAD_TASK handler's early return change the renderer-side flow?**
+1. **Should the START_DOWNLOAD_TASK handler's early return change the renderer-side flow?** -- **RESOLVED:** Emit a `'downloading'` progress event from `executeDownload()` at the start, remove optimistic `task.state = 'downloading'` from `useDownload.ts:startDownload()`. Main process is source of truth.
    - What we know: Currently `useDownload.ts:startDownload()` calls `task.state = 'downloading'` **before** the IPC call. With the queue, the task may stay in 'waiting'.
    - What's unclear: Whether to move the `state = 'downloading'` transition into the progress handler (so the main process controls state transitions) or keep the optimistic 'downloading' state and let the queue's 'waiting' event override it.
    - Recommendation: The safer approach is to emit a `'downloading'` progress event from `executeDownload()` at the start, and let the `useDownload.ts` `handleProgress` manage state transitions. Remove the manual `task.state = 'downloading'` from `useDownload.ts:startDownload()`. The main process is now the source of truth for download state.
 
-2. **How does the change from synchronous IPC return to fire-and-forget affect the renderer's download flow?**
+2. **How does the change from synchronous IPC return to fire-and-forget affect the renderer's download flow?** -- **RESOLVED:** IPC return treated as "enqueue confirmed" only. `download-progress` event with `state: 'completed'` remains the canonical completion signal. Callers of `startDownload()` must not rely on IPC return for completion status.
    - What we know: Currently the renderer calls `await startDownload(taskId)` and receives `{ success: true, filePath }` after the download completes.
    - What's unclear: Does any code rely on the IPC return value for the task completion status (versus the `download-progress` event)?
    - Recommendation: Check all callers of `startDownload()` in OnlineWallpaper.vue and FavoritesPage.vue. The `download-progress` event with `state: 'completed'` is the canonical completion signal. The IPC return should be treated as "enqueue confirmed" only.
 
-3. **What is the processQueue trigger for settings changes?**
+3. **What is the processQueue trigger for settings changes?** -- **RESOLVED:** Option (a) -- modify the store-set handler in `store.handler.ts` to check if 'appSettings' changed and call `downloadQueue.processQueue()`. Implemented in Plan 02 Task 2.
    - What we know: Settings page calls `storeSet('appSettings', {..., maxConcurrentDownloads: N })` which triggers an IPC to electron-store.
    - What's unclear: Who calls `downloadQueue.processQueue()` when the setting changes?
    - Recommendation: The simplest approach is that every `processQueue()` call already reads the latest setting (no caching). But for the case where the user RAISES the limit (e.g., 3 to 5), no slot-freeing event occurs. The queue needs an explicit trigger. Options: (a) Add a `store-set` handler hook that checks if 'appSettings' changed and calls `processQueue()`, (b) Have the renderer settings page send a notification IPC after saving, (c) Use a polling interval. Option (a) is cleanest -- modify the store-set handler in store.handler.ts to check for settings changes.
