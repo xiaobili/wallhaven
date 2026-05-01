@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: 多线程下载与重试退避机制
-status: executing
-last_updated: "2026-05-01T05:00:00.000Z"
-last_activity: 2026-05-01 -- Phase 33 Plan 02 completed
+status: planning
+last_updated: "2026-05-01T12:30:00.000Z"
+last_activity: 2026-05-01 -- Phase 33 completed and verified
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
   completed_plans: 3
   percent: 33
@@ -33,11 +33,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 33 of 35 (下载队列与并发控制)
-Plan: 02 (Handler Integration — Queue integration into IPC handlers + settings hook)
-Status: Plan 02 completed — All four handlers use DownloadQueue; settings change triggers re-evaluation
-Last activity: 2026-05-01 -- Phase 33 Plan 02 completed
+Plan: All 3 plans completed
+Status: Phase 33 completed — Download queue and concurrency control
+Last activity: 2026-05-01 -- Phase 33 completed and verified
 
-Progress: [#######             ] 33%
+Progress: [##########          ] 33%
 
 ---
 
@@ -100,9 +100,9 @@ Items acknowledged and carried forward from previous milestones:
 
 ## Session Continuity
 
-Last session: 2026-05-01 05:00
-Stopped at: Phase 33 Plan 02 completed
-Resume file: .planning/phases/33-download-queue-concurrency/33-02-SUMMARY.md
+Last session: 2026-05-01 12:30
+Stopped at: Phase 33 complete — ready for Phase 34
+Resume file: .planning/phases/34-error-classification-retry/34-CONTEXT.md (create via /gsd-discuss-phase 34)
 
 ## Completed Plans
 
