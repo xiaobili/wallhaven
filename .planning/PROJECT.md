@@ -8,15 +8,9 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **收藏管理，分类随心** — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Current Milestone: v4.0 多线程下载与重试退避机制
+## Current Milestone: Planning next milestone
 
-**Goal:** 实现真实的并行下载和下载失败自动重试，提升下载可靠性和效率
-
-**Target features:**
-- 多线程下载：让设置页面的「并行下载数」配置真正生效，N 个下载任务并行执行
-- 下载失败重试退避：下载失败后自动重试，采用指数退避策略，避免风暴式重试
-
-**Last Shipped:** v3.0 首屏动画 (2026-04-30)
+**Last Shipped:** v4.1 壁纸列表全选功能 (2026-05-01)
 
 **Shipped Milestones:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
@@ -30,6 +24,8 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 - v2.8 动画性能优化 (2026-04-30) — 2 requirements, 1 phase
 - v2.9 LoadingOverlay 动画优化 (2026-04-30) — 1 requirement, 1 phase
 - v3.0 首屏动画 (2026-04-30) — 15 requirements, 3 phases
+- v4.0 多线程下载与重试退避机制 (2026-05-01) — 12 requirements, 3 phases
+- v4.1 壁纸列表全选功能 (2026-05-01) — 1 phase
 
 ## Requirements
 
@@ -75,9 +71,9 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 ### Active
 
-<!-- v4.0 多线程下载与重试退避机制 -->
+<!-- v4.0 and v4.1 shipped — requirements archived to milestones/ -->
 
-Requirements defined in `.planning/REQUIREMENTS.md` for v4.0.
+Requirements for next milestone to be defined via `/gsd-new-milestone`.
 
 ### Future
 
@@ -176,6 +172,11 @@ Requirements defined in `.planning/REQUIREMENTS.md` for v4.0.
 | 错误分类使用纯函数（classifyDownloadError）| 无副作用，可测试，与退避逻辑解耦 | ✓ Phase 34 |
 | 全抖动（full jitter）指数退避 | 防止惊群效应，分布均匀 | ✓ Phase 34 |
 | 定时器存储 resolve 回调 | 使 PAUSE/CANCEL 可解析等待 Promise，防止僵尸任务 | ✓ Phase 34 |
+| 'retrying' DownloadState 新状态 | 区分重试中与下载中状态，UI 可针对性展示 | ✓ Phase 35 |
+| 倒计时使用 tickCounter ref + setInterval | 单一定时器驱动所有重试倒计时，避免每任务单独定时器 | ✓ Phase 35 |
+| 三态复选框（none/some/all）| 全选状态视觉反馈，与现有 .thumb-checkbox 风格一致 | ✓ Phase 36 |
+| Section 范围操作 | select-all 仅影响当前 sectionItem.data 数组 | ✓ Phase 36 |
+| 新 `select-all` emit | 事件负载包含 sectionIndex + ids + selected | ✓ Phase 36 |
 
 ## 约束条件
 
@@ -196,16 +197,17 @@ Requirements defined in `.planning/REQUIREMENTS.md` for v4.0.
 
 ## Context
 
-**Shipped**: v2.0 架构重构 (2026-04-26), v2.1 下载断点续传 (2026-04-27), v2.2 Store 分层迁移 (2026-04-27), v2.3 ElectronAPI 分层重构 (2026-04-27), v2.4 ImagePreview 导航功能 (2026-04-27), v2.5 壁纸收藏功能 (2026-04-29), v2.6 设置页缓存优化 (2026-04-29), v2.7 图片切换动画 (2026-04-29)
+**Shipped**: v2.0 架构重构 (2026-04-26), v2.1 下载断点续传 (2026-04-27), v2.2 Store 分层迁移 (2026-04-27), v2.3 ElectronAPI 分层重构 (2026-04-27), v2.4 ImagePreview 导航功能 (2026-04-27), v2.5 壁纸收藏功能 (2026-04-29), v2.6 设置页缓存优化 (2026-04-29), v2.7 图片切换动画 (2026-04-29), v2.8 动画性能优化 (2026-04-30), v2.9 LoadingOverlay 动画优化 (2026-04-30), v3.0 首屏动画 (2026-04-30), v4.0 多线程下载与重试退避机制 (2026-05-01), v4.1 壁纸列表全选功能 (2026-05-01)
 
 **Statistics**:
 - v2.0 Timeline: 7 days (2026-04-19 → 2026-04-26)
 - v2.1 Timeline: 2 days (2026-04-26 → 2026-04-27)
 - v2.2-v2.4 Timeline: 1 day (2026-04-27)
 - v2.5 Timeline: 1 day (2026-04-28)
-- Total Files modified: 144+
-- Lines of code: ~13,364 (TypeScript + Vue)
-- Requirements: 82+ total across all milestones
+- v4.0-v4.1 Timeline: 1 day (2026-05-01)
+- Total Files modified: 160+
+- Lines of code: ~13,900 (TypeScript + Vue)
+- Requirements: 94+ total across all milestones
 
 **Known Technical Debt**:
 - Type duplication between `env.d.ts` and `src/shared/types/ipc.ts` (code review finding)
@@ -234,4 +236,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-05-01 v4.0 里程碑启动*
+*最后更新：2026-05-01 v4.0 and v4.1 shipped*

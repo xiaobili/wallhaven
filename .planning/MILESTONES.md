@@ -40,28 +40,51 @@
 
 ---
 
-## v2.2 Store 分层迁移 — 🔵 IN PROGRESS
+## v2.2 Store 分层迁移 — ✅ SHIPPED 2026-04-27
 
-**Phases**: 4 (Phases 10-13) | **Requirements**: 10
+**Phases**: 4 (Phases 10-13) | **Requirements**: 10/10
 
-**Goal**: 将 views 中直接使用的 store 全部迁移到 composables，强化 View → Composable → Store 分层架构
+**Delivered**: 将 views 中直接使用的 store 全部迁移到 composables，强化分层架构
 
-**Target Features**:
+**Key Accomplishments**:
 - 移除所有 views 中对 store 的直接导入
-- 通过现有 composables (useSettings, useDownload, useWallpaperList) 访问 store 状态
 - 扩展 useSettings 支持表单响应式绑定
 - 添加 ESLint 规则防止未来回归
-
-**Phase Structure**:
-| Phase | Name | Requirements | Success Criteria |
-|-------|------|--------------|------------------|
-| 10 | Simple Substitutions | SMIG-01, SMIG-02 | 4 |
-| 11 | OnlineWallpaper Migration | SMIG-03, CMIG-01 | 5 |
-| 12 | SettingPage Migration | CMIG-02, CMIG-03 | 5 |
-| 13 | Verification & Enforcement | CLUP-01~04 | 4 |
-
-**Started**: 2026-04-27
+- 完整验证 View → Composable → Store 分层完整性
 
 ---
 
-*Last updated: 2026-04-27*
+## v4.0 多线程下载与重试退避机制 — ✅ SHIPPED 2026-05-01
+
+**Phases**: 3 (Phases 33-35) | **Plans**: 9 | **Requirements**: 12/12
+
+**Delivered**: 实现真实的并行下载控制和下载失败自动重试，提升下载可靠性和效率
+
+**Key Accomplishments**:
+- 下载队列与并发控制：设置页的"并行下载数"配置真正生效，N 个下载任务并行执行
+- 指数退避重试：下载失败后自动重试（全抖动，2s 基数，30s 上限，最多 3 次）
+- 错误分类：网络错误/5xx/429 临时重试，404/403 等永久失败
+- 重试状态展示：UI 显示重试进度、倒计时、最终失败状态
+- 槽位保持：重试中的下载持续占用并发槽位，防止饥饿
+
+**Archives**: `milestones/v4.0-ROADMAP.md`, `milestones/v4.0-REQUIREMENTS.md`
+
+---
+
+## v4.1 壁纸列表全选功能 — ✅ SHIPPED 2026-05-01
+
+**Phases**: 1 (Phase 36) | **Plans**: 1 | **Requirements**: N/A (feature request)
+
+**Delivered**: 在壁纸列表每个分节标题中添加全选/取消全选复选框，一键选择当前页面所有壁纸
+
+**Key Accomplishments**:
+- 三态复选框：全选（checked）/部分选中（indeterminate）/未选（none）
+- 中文标签："全选"/"取消全选" 根据状态动态切换
+- 事件驱动：新 `select-all` emit 携带 sectionIndex + ids + selected 负载
+- 批量处理：父组件 handleSelectAll 批量添加/移除 selectedWallpapers
+
+**Archives**: `milestones/v4.1-ROADMAP.md`
+
+---
+
+*Last updated: 2026-05-01 — v4.0 and v4.1 shipped*

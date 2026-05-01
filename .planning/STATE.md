@@ -1,11 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: 多线程下载与重试退避机制
+milestone: v4.0+v4.1
 status: completed
-stopped_at: Completed 36-01 — select-all feature implemented
-last_updated: "2026-05-01T16:00:00.000Z"
-last_activity: 2026-05-01 -- Phase 36 completed (1 plan executed)
+stopped_at: Milestones v4.0 and v4.1 shipped — Phase 35 and Phase 36 complete
+last_updated: "2026-05-01T18:00:00.000Z"
+last_activity: 2026-05-01 -- v4.0 and v4.1 archived and tagged
 progress:
   total_phases: 36
   completed_phases: 36
@@ -17,8 +16,8 @@ progress:
 # Project State
 
 > Updated: 2026-05-01
-> Current: v4.0 多线程下载与重试退避机制
-> Status: All phases complete — ready for phase transition
+> Current: All milestones shipped — ready for next milestone
+> Status: v4.0 and v4.1 complete
 
 ---
 
@@ -27,101 +26,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** 收藏管理，分类随心 -- 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
-**Current focus:** v4.0 多线程下载与重试退避机制
+**Current focus:** Planning next milestone
 
 ---
 
 ## Current Position
 
-Phase: 36 of 36 (壁纸列表全选功能)
-Plan: 1 plan completed
-Status: Phase 36 executed — Select-all feature implemented
-Last activity: 2026-05-01 -- Phase 36 executed and type-checked
+Milestones: v4.0 (Phases 33-35, 9 plans) and v4.1 (Phase 36, 1 plan)
+Status: Both milestones shipped 2026-05-01
 
 Progress: [####################] 100% (All phases complete)
 
 ---
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 7
-- Average duration: ~10 min
-- Total execution time: ~72 min
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 33 | 3 | 3 | ~11 min |
-| 34 | 3 | 3 | ~9 min |
-| 36 | 1 | 1 | ~12 min |
-
-**Recent Trend:**
-
-- Last 5 plans: 35-03 UI Template, 36-01 Select-all feature
-- Trend: Stable execution
-
-*Updated after each plan completion*
-
----
-
-## Accumulated Context
-
-### Roadmap Evolution
-
-- Phase 36 added: 在WallpaperList.vue 组件中的 <header> 标签内部添加全选当前页的按钮，并实现全选功能
-
-### Decisions
-
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Phase 33]: DownloadQueue lives in main process (download.handler.ts), not renderer -- prevents multi-window bypass, consistent with existing activeDownloads Map
-- [Phase 33]: Queue uses callback injection instead of direct import -- avoids circular dependency between download-queue.ts and download.handler.ts
-- [Phase 33]: Singleton accessors (setQueueInstance/getQueueInstance) -- enables cross-module queue access for DL-03 live setting propagation
-- [Phase 33]: Main process is source of truth for download state transitions -- renderer responds to progress events instead of predicting/optimistically setting state
-- [Phase 33]: executeDownload() handles both fresh and resume via optional offset parameter, eliminating duplicate RESUME handler code
-- [Phase 33]: Dynamic import for getQueueInstance in store.handler.ts prevents circular dependency with download-queue.ts
-- [Phase 34]: Retry holds queue slot during backoff -- prevents starvation; only permanent failure or success releases the slot
-- [Phase 34]: classifyDownloadError() maps error codes/statuses to retriable/permanent -- network errors, 5xx, 408, 429 are retriable; 4xx (except 408/429), CanceledError, RESUME_* are permanent; unknown defaults to retriable (conservative)
-- [Phase 34]: Backoff uses full jitter (random 0 to exponential cap) -- prevents thundering herd on shared server failures
-- [Phase 34]: waitWithBackoff stores timer + resolve callback in retryTimers Map -- enables PAUSE/CANCEL to resolve the wait promise (CR-01 fix), allowing executeWithRetry's post-wait activeDownloads check to detect cancellation
-- [Phase 34]: executeWithRetry checks activeDownloads.has(taskId) after wait -- detects pause/cancel during backoff period
-- [Phase 34]: executeDownload catch block skips cleanup/emit for retriable errors when retries remain -- slot held via activeDownloads persistence (DL-09)
-- [Phase 34]: Null/undefined error guard in executeDownload catch -- prevents permanent slot blockage on rare null throws (WR-01)
-- [Phase 35]: New DownloadState `'retrying'` added to state union; new fields `retryCount`, `retryDelay` on DownloadProgressData
-- [Phase 36]: Select-all uses three-state checkbox (none/some/all) with Chinese labels "全选"/"取消全选"
-- [Phase 36]: Select-all emit carries `{ sectionIndex, ids, selected }` payload per D-04
-- [Phase 36]: Select-all trigger positioned at CSS `order: 15` between heading (10) and spacer (20)
-- [Phase 36]: Indeterminate state uses semi-transparent primary fill to distinguish from full checked
-
-### Pending Todos
-
-None yet.
-
-### Blockers/Concerns
-
-None yet.
-
----
-
-## Deferred Items
-
-Items acknowledged and carried forward from previous milestones:
-
-| Category | Item | Status | Deferred At |
-|----------|------|--------|-------------|
-| *(none)* | | | |
-
----
-
-## Session Continuity
-
-Last session: 2026-05-01
-Stopped at: Phase 36 executed and completed
-Resume file: None — all phases complete
 
 ## Completed Plans
 
@@ -133,7 +49,11 @@ Resume file: None — all phases complete
 | 34-01 Retry Utilities | Error classification + backoff + timer utilities | 81fd3ba, bbe761a, a0aec53 |
 | 34-02 Retry Loop | executeWithRetry + modified catch block | 01da070, d6c22f3 |
 | 34-03 Handler Integration | Queue + PAUSE + CANCEL retry wiring | 21a7d8a, 2a33a99, 06f0df2 |
-| 35-01 Type Foundation | Type defs + formatCountdown + retrying emission | (uncommitted) |
-| 35-02 Composable & Store | Retrying branch in handleProgress + countdown timer + store filter | (uncommitted) |
-| 35-03 UI Template | Retrying/failed v-show blocks + CSS for retry states | (uncommitted) |
-| 36-01 Select-all Feature | Select-all checkbox in section headers + batch handler | a6531dd, 6ebf58b |
+| 35-01 Type Foundation | Type defs + formatCountdown + retrying emission | 63a97bd |
+| 35-02 Composable & Store | Retrying branch in handleProgress + countdown timer + store filter | 63a97bd |
+| 35-03 UI Template | Retrying/failed v-show blocks + CSS for retry states | 63a97bd |
+| 36-01 Select-all Feature | Select-all checkbox in section headers + batch handler | a6531dd, 6ebf58b, 9d73302 |
+
+---
+
+*Updated: 2026-05-01*
