@@ -673,7 +673,7 @@ const downloadQueue = new DownloadQueue(
   () => activeDownloads.size,
   async (item: QueuedDownload) => {
     try {
-      await executeDownload(item.taskId, item.url, item.filename, item.saveDir, item.offset)
+      await executeWithRetry(item.taskId, item.url, item.filename, item.saveDir, item.offset)
     } finally {
       downloadQueue.processQueue()
     }
