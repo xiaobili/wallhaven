@@ -14,7 +14,7 @@
  */
 
 import { BrowserWindow } from 'electron'
-import { store } from '../index'
+import { store } from '../../index'
 import { logHandler } from './base'
 
 /**
@@ -90,7 +90,8 @@ export class DownloadQueue {
    * - maxConcurrentDownloads setting changes (via getQueueInstance)
    */
   processQueue(): void {
-    const maxConcurrent = store.get('appSettings')?.maxConcurrentDownloads ?? 3
+    const appSettings = store.get('appSettings') as unknown as { maxConcurrentDownloads?: number } | undefined
+    const maxConcurrent = appSettings?.maxConcurrentDownloads ?? 3
     const activeCount = this._getActiveCount()
 
     logHandler(

@@ -9,6 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import axios from 'axios'
 import { streamPipeline, logHandler } from './base'
+import { DownloadQueue, setQueueInstance, type QueuedDownload } from './download-queue'
 import {
   IPC_CHANNELS,
   type ResumeDownloadParams,
@@ -163,6 +164,234 @@ function cleanupDownload(taskId: string, preserveTempFile: boolean = false): voi
   activeDownloads.delete(taskId)
 }
 
+/**
+ * Execute a single download from start to finish.
+ * Extracted from the START_DOWNLOAD_TASK handler so both
+ * the direct IPC path and the queue can use it.
+ *
+ * Sets up AbortController, activeDownloads entry, performs HTTP GET with axios,
+ * streams response to temp file, emits progress events, handles completion/error.
+ *
+ * Does NOT handle IPC response format — the caller wraps return/throw.
+ * Does NOT handle queue processing — processQueue() is the queue's responsibility.
+ *
+ * @returns The final file path and size on success
+ * @throws On any error — CanceledError re-thrown for external abort without side effects;
+ *         other errors trigger cleanup and failed progress event before re-throw
+ */
+export async function executeDownload(
+  taskId: string,
+  url: string,
+  filename: string,
+  saveDir: string,
+): Promise<{ filePath: string; size: number }> {
+  // Ensure directory exists
+  if (!fs.existsSync(saveDir)) {
+    fs.mkdirSync(saveDir, { recursive: true })
+  }
+
+  const filePath = path.join(saveDir, filename)
+
+  // If file already exists, complete immediately
+  if (fs.existsSync(filePath)) {
+    const windows = BrowserWindow.getAllWindows()
+    if (windows.length > 0) {
+      windows[0].webContents.send('download-progress', {
+        taskId,
+        progress: 100,
+        offset: fs.statSync(filePath).size,
+        speed: 0,
+        state: 'completed',
+        filePath,
+      })
+    }
+    return { filePath, size: fs.statSync(filePath).size }
+  }
+
+  // Create temp file
+  const tempPath = filePath + '.download'
+
+  // Create AbortController for pause/cancel
+  const abortController = new AbortController()
+
+  // Store active download
+  activeDownloads.set(taskId, {
+    abortController,
+    tempPath,
+    saveDir,
+    filename,
+    totalSize: 0, // Will be updated after response
+    downloadedSize: 0,
+    lastPersistTime: Date.now(),
+    lastPersistOffset: 0,
+  })
+
+  try {
+    // Download file with progress tracking
+    const response = await axios({
+      method: 'GET',
+      url,
+      responseType: 'stream',
+      timeout: 60000,
+      signal: abortController.signal,
+    })
+
+    const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
+
+    // Update totalSize in activeDownloads
+    const downloadTracker = activeDownloads.get(taskId)
+    if (downloadTracker) {
+      downloadTracker.totalSize = totalSize
+    }
+
+    let downloadedSize = 0
+    let lastTime = Date.now()
+    let lastSize = 0
+
+    const writer = fs.createWriteStream(tempPath)
+
+    response.data.on('data', (chunk: Buffer) => {
+      downloadedSize += chunk.length
+
+      // Update ActiveDownload tracking
+      const activeDownload = activeDownloads.get(taskId)
+      if (activeDownload) {
+        activeDownload.downloadedSize = downloadedSize
+      }
+
+      // Every 100ms update progress
+      const now = Date.now()
+      if (now - lastTime >= 100) {
+        const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
+        const progress = totalSize > 0 ? (downloadedSize / totalSize) * 100 : 0
+
+        // Send progress to renderer
+        const windows = BrowserWindow.getAllWindows()
+        if (windows.length > 0) {
+          windows[0].webContents.send('download-progress', {
+            taskId,
+            progress: Math.min(progress, 99), // Max 99%, 100% when complete
+            offset: downloadedSize,
+            speed,
+            state: 'downloading',
+            totalSize,
+          })
+        }
+
+        // Check if we should persist state (throttled at 5s or 10MB)
+        const download = activeDownloads.get(taskId)
+        if (
+          download &&
+          shouldPersistState(
+            download.lastPersistTime,
+            download.lastPersistOffset,
+            downloadedSize,
+          )
+        ) {
+          const statePath = getStateFilePath(tempPath)
+          const state: PendingDownload = {
+            taskId,
+            url,
+            filename,
+            saveDir,
+            offset: downloadedSize,
+            totalSize,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          writeStateFile(statePath, state)
+          download.lastPersistTime = Date.now()
+          download.lastPersistOffset = downloadedSize
+        }
+
+        lastTime = now
+        lastSize = downloadedSize
+      }
+    })
+
+    // Use pipeline to ensure proper stream closure
+    await streamPipeline(response.data, writer)
+
+    // Check if interrupted (pause/cancel)
+    if (abortController.signal.aborted) {
+      // Pause/cancel handler manages cleanup and state notification
+      throw new Error('Download paused or cancelled')
+    }
+
+    // Rename temp file to final file
+    fs.renameSync(tempPath, filePath)
+
+    // Delete state file on completion
+    const statePath = getStateFilePath(tempPath)
+    if (fs.existsSync(statePath)) {
+      try {
+        fs.unlinkSync(statePath)
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+
+    const finalSize = fs.statSync(filePath).size
+
+    // Clean up active download record
+    activeDownloads.delete(taskId)
+
+    // Notify renderer of completion
+    const windows = BrowserWindow.getAllWindows()
+    if (windows.length > 0) {
+      windows[0].webContents.send('download-progress', {
+        taskId,
+        progress: 100,
+        offset: finalSize,
+        speed: 0,
+        state: 'completed',
+        filePath,
+      })
+    }
+
+    return { filePath, size: finalSize }
+  } catch (error: any) {
+    // If user-initiated cancel via axios CanceledError, re-throw without side effects
+    if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      throw error
+    }
+
+    // Non-cancel error: cleanup and notify
+    logHandler('executeDownload', `Download failed: ${taskId}: ${error.message}`, 'error')
+    cleanupDownload(taskId)
+
+    // Notify renderer of failure
+    const windows = BrowserWindow.getAllWindows()
+    if (windows.length > 0) {
+      windows[0].webContents.send('download-progress', {
+        taskId,
+        progress: 0,
+        offset: 0,
+        speed: 0,
+        state: 'failed',
+        error: error.message || '下载失败',
+      })
+    }
+
+    throw error
+  }
+}
+
+/** Singleton download queue instance */
+const downloadQueue = new DownloadQueue(
+  () => activeDownloads.size,
+  async (item: QueuedDownload) => {
+    try {
+      await executeDownload(item.taskId, item.url, item.filename, item.saveDir)
+    } finally {
+      downloadQueue.processQueue()
+    }
+  },
+)
+
+// Register singleton for cross-module access (DL-03 settings propagation)
+setQueueInstance(downloadQueue)
+
 export function registerDownloadHandlers(): void {
   /**
    * 下载壁纸
@@ -245,187 +474,9 @@ export function registerDownloadHandlers(): void {
       },
     ) => {
       try {
-        // 确保目录存在
-        if (!fs.existsSync(saveDir)) {
-          fs.mkdirSync(saveDir, { recursive: true })
-        }
-
-        const filePath = path.join(saveDir, filename)
-
-        // 如果文件已存在，直接完成
-        if (fs.existsSync(filePath)) {
-          // 通知渲染进程任务完成
-          const windows = BrowserWindow.getAllWindows()
-          if (windows.length > 0) {
-            windows[0].webContents.send('download-progress', {
-              taskId,
-              progress: 100,
-              offset: fs.statSync(filePath).size,
-              speed: 0,
-              state: 'completed',
-              filePath,
-            })
-          }
-
-          return {
-            success: true,
-            filePath,
-            message: '文件已存在',
-          }
-        }
-
-        // 创建临时文件
-        const tempPath = filePath + '.download'
-
-        // 创建 AbortController 用于暂停/取消
-        const abortController = new AbortController()
-
-        // 存储活跃下载
-        activeDownloads.set(taskId, {
-          abortController,
-          tempPath,
-          saveDir,
-          filename,
-          totalSize: 0, // Will be updated after response
-          downloadedSize: 0,
-          lastPersistTime: Date.now(),
-          lastPersistOffset: 0,
-        })
-
-        // 下载文件并跟踪进度
-        const response = await axios({
-          method: 'GET',
-          url,
-          responseType: 'stream',
-          timeout: 60000,
-          signal: abortController.signal,
-        })
-
-        const totalSize = parseInt(String(response.headers['content-length'] || '0'), 10)
-
-        // Update totalSize in activeDownloads
-        const downloadTracker = activeDownloads.get(taskId)
-        if (downloadTracker) {
-          downloadTracker.totalSize = totalSize
-        }
-
-        let downloadedSize = 0
-        let lastTime = Date.now()
-        let lastSize = 0
-
-        const writer = fs.createWriteStream(tempPath)
-
-        response.data.on('data', (chunk: Buffer) => {
-          downloadedSize += chunk.length
-
-          // Update ActiveDownload tracking
-          const activeDownload = activeDownloads.get(taskId)
-          if (activeDownload) {
-            activeDownload.downloadedSize = downloadedSize
-          }
-
-          // 每100ms更新一次进度
-          const now = Date.now()
-          if (now - lastTime >= 100) {
-            const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
-            const progress = totalSize > 0 ? (downloadedSize / totalSize) * 100 : 0
-
-            // 发送进度到渲染进程
-            const windows = BrowserWindow.getAllWindows()
-            if (windows.length > 0) {
-              const progressData = {
-                taskId,
-                progress: Math.min(progress, 99), // 最多99%，完成时设为100%
-                offset: downloadedSize,
-                speed,
-                state: 'downloading',
-                totalSize,
-              }
-              windows[0].webContents.send('download-progress', progressData)
-            }
-
-            // Check if we should persist state (throttled)
-            const download = activeDownloads.get(taskId)
-            if (
-              download &&
-              shouldPersistState(
-                download.lastPersistTime,
-                download.lastPersistOffset,
-                downloadedSize,
-              )
-            ) {
-              const statePath = getStateFilePath(tempPath)
-              const state: PendingDownload = {
-                taskId,
-                url,
-                filename,
-                saveDir,
-                offset: downloadedSize,
-                totalSize,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              }
-              writeStateFile(statePath, state)
-              download.lastPersistTime = Date.now()
-              download.lastPersistOffset = downloadedSize
-            }
-
-            lastTime = now
-            lastSize = downloadedSize
-          }
-        })
-
-        // 使用pipeline确保流正确关闭
-        await streamPipeline(response.data, writer)
-
-        // 检查是否被中断
-        if (abortController.signal.aborted) {
-          // 被暂停或取消，不完成下载
-          return {
-            success: false,
-            error: 'Download paused or cancelled',
-          }
-        }
-
-        // 重命名临时文件为正式文件
-        fs.renameSync(tempPath, filePath)
-
-        // Delete state file on completion
-        const statePath = getStateFilePath(tempPath)
-        if (fs.existsSync(statePath)) {
-          try {
-            fs.unlinkSync(statePath)
-          } catch {
-            // Ignore cleanup errors
-          }
-        }
-
-        const finalSize = fs.statSync(filePath).size
-
-        // 清理活跃下载记录
-        activeDownloads.delete(taskId)
-
-        // 通知渲染进程任务完成
-        const windows = BrowserWindow.getAllWindows()
-        if (windows.length > 0) {
-          const completeData = {
-            taskId,
-            progress: 100,
-            offset: finalSize,
-            speed: 0,
-            state: 'completed',
-            filePath,
-          }
-          windows[0].webContents.send('download-progress', completeData)
-        }
-
-        return {
-          success: true,
-          filePath,
-          size: finalSize,
-        }
+        const result = await executeDownload(taskId, url, filename, saveDir)
+        return { success: true, ...result }
       } catch (error: any) {
-        // 检查是否是用户主动取消
         if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
           logHandler('start-download-task', `Download cancelled: ${taskId}`, 'info')
           return {
@@ -436,22 +487,6 @@ export function registerDownloadHandlers(): void {
         }
 
         logHandler('start-download-task', `Error: ${error.message}`, 'error')
-
-        // 清理临时文件
-        cleanupDownload(taskId)
-
-        // 通知渲染进程下载失败
-        const windows = BrowserWindow.getAllWindows()
-        if (windows.length > 0) {
-          windows[0].webContents.send('download-progress', {
-            taskId,
-            progress: 0,
-            offset: 0,
-            speed: 0,
-            state: 'failed',
-            error: error.message || '下载失败',
-          })
-        }
 
         return {
           success: false,
