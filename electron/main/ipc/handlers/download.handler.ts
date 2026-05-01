@@ -578,6 +578,96 @@ export async function executeDownload(
   }
 }
 
+// ---- Retry Loop ----
+
+/**
+ * Execute a download with automatic retry for transient failures.
+ * Wraps executeDownload in a retry loop with exponential backoff + full jitter.
+ *
+ * - Retriable errors trigger up to MAX_RETRIES (3) retry attempts
+ * - Each attempt uses increasing backoff delay (0-2s, 0-4s, 0-8s)
+ * - The queue slot is held during retry via activeDownloads persistence (DL-09)
+ * - CanceledError and permanent errors pass through immediately
+ * - After all retries exhausted: cleanup, emit 'failed', throw
+ */
+async function executeWithRetry(
+  taskId: string,
+  url: string,
+  filename: string,
+  saveDir: string,
+  offset?: number,
+): Promise<{ filePath: string; size: number }> {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // On success, return immediately
+      return await executeDownload(taskId, url, filename, saveDir, offset)
+    } catch (error: any) {
+      // CanceledError — re-throw immediately (pause/cancel during active download)
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        throw error
+      }
+
+      // Non-retriable — re-throw immediately
+      const classification = classifyDownloadError(error)
+      if (!classification.isRetriable) {
+        throw error
+      }
+
+      // At this point: retriable error, and executeDownload already skipped cleanup.
+      // Check if the task still exists (may have been paused/cancelled during the download attempt).
+      const entry = activeDownloads.get(taskId)
+      if (!entry) {
+        throw error
+      }
+
+      // Track retry count on the active download entry
+      entry.retryCount = attempt
+
+      // Calculate and log backoff
+      const delay = calculateBackoff(attempt)
+      logHandler(
+        'executeWithRetry',
+        `Retry ${attempt}/${MAX_RETRIES} for ${taskId} in ${Math.round(delay)}ms: ${error.message}`,
+        'info',
+      )
+
+      // Wait for backoff duration
+      // The timer is stored in retryTimers so PAUSE/CANCEL can cancel it
+      await waitWithBackoff(taskId, delay)
+
+      // After wait: verify the task wasn't paused or cancelled during the wait
+      if (!activeDownloads.has(taskId)) {
+        throw new Error('Download task was paused or cancelled during retry wait')
+      }
+      // Continue to next retry attempt
+    }
+  }
+
+  // All MAX_RETRIES attempts failed — permanent failure
+  // Get the last error for the failure message
+  // (activeDownloads entry still exists because executeDownload skipped cleanup)
+  const lastError = new Error('下载失败')
+  logHandler('executeWithRetry', `All retries exhausted for ${taskId}`, 'error')
+
+  // Final cleanup — removes from activeDownloads, frees queue slot
+  cleanupDownload(taskId)
+
+  // Emit final failure state
+  const windows = BrowserWindow.getAllWindows()
+  if (windows.length > 0) {
+    windows[0].webContents.send('download-progress', {
+      taskId,
+      progress: 0,
+      offset: 0,
+      speed: 0,
+      state: 'failed',
+      error: `下载失败 — 已重试 ${MAX_RETRIES} 次`,
+    })
+  }
+
+  throw lastError
+}
+
 /** Singleton download queue instance */
 const downloadQueue = new DownloadQueue(
   () => activeDownloads.size,
