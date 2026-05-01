@@ -180,37 +180,18 @@ function cleanupDownload(taskId: string, preserveTempFile: boolean = false): voi
 // ---- Retry Utilities (Phase 34) ----
 
 /**
- * Calculate backoff delay with exponential backoff and full jitter.
- *
- * Formula: random(0, min(BASE * 2^(attempt-1), MAX))
- * - attempt is 1-based (1 = first retry)
- * - Full jitter prevents thundering herd (Pitfall 4)
- * - Capped at BACKOFF_MAX_MS (30s)
- *
- * Example delays: attempt 1 -> 0-2s, attempt 2 -> 0-4s, attempt 3 -> 0-8s
- */
-function calculateBackoff(attempt: number): number {
-  const exponential = Math.min(
-    BACKOFF_BASE_MS * Math.pow(2, attempt - 1),
-    BACKOFF_MAX_MS,
-  )
-  // Full jitter: random(0, exponential)
-  return Math.random() * exponential
-}
-
-/**
  * Classify a download error as retriable or permanent.
  * Network errors and transient HTTP statuses (5xx, 429, 408) are retriable.
  * Client errors (4xx except 408/429), user-cancelled, and resume-state errors are permanent.
- * Unknown errors default to retriable (conservative — transient issues are more common).
+ * Unknown errors default to retriable (conservative -- transient issues are more common).
  */
 function classifyDownloadError(error: any): { isRetriable: boolean; reason: string } {
-  // 1. User-initiated cancel — never retry
+  // 1. User-initiated cancel -- never retry
   if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
     return { isRetriable: false, reason: 'user_cancelled' }
   }
 
-  // 2. Resume-state errors — never retry (data corruption needs user intervention)
+  // 2. Resume-state errors -- never retry (data corruption needs user intervention)
   if (error.code && typeof error.code === 'string' && error.code.startsWith('RESUME_')) {
     return { isRetriable: false, reason: 'resume_error' }
   }
@@ -245,8 +226,27 @@ function classifyDownloadError(error: any): { isRetriable: boolean; reason: stri
     return { isRetriable: true, reason: 'network_timeout' }
   }
 
-  // 6. Unknown errors — conservative: assume transient
+  // 6. Unknown errors -- conservative: assume transient
   return { isRetriable: true, reason: 'unknown' }
+}
+
+/**
+ * Calculate backoff delay with exponential backoff and full jitter.
+ *
+ * Formula: random(0, min(BASE * 2^(attempt-1), MAX))
+ * - attempt is 1-based (1 = first retry)
+ * - Full jitter prevents thundering herd (Pitfall 4)
+ * - Capped at BACKOFF_MAX_MS (30s)
+ *
+ * Example delays: attempt 1 -> 0-2s, attempt 2 -> 0-4s, attempt 3 -> 0-8s
+ */
+function calculateBackoff(attempt: number): number {
+  const exponential = Math.min(
+    BACKOFF_BASE_MS * Math.pow(2, attempt - 1),
+    BACKOFF_MAX_MS,
+  )
+  // Full jitter: random(0, exponential)
+  return Math.random() * exponential
 }
 
 /**
