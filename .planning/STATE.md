@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: 多线程下载与重试退避机制
-status: planning
+status: executing
 last_updated: "2026-05-01T12:30:00.000Z"
-last_activity: 2026-05-01 -- Phase 33 completed and verified
+last_activity: 2026-05-01 -- Phase 34 execution started
 progress:
   total_phases: 3
   completed_phases: 1
@@ -32,10 +32,10 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 33 of 35 (下载队列与并发控制)
-Plan: All 3 plans completed
-Status: Phase 33 completed — Download queue and concurrency control
-Last activity: 2026-05-01 -- Phase 33 completed and verified
+Phase: 34 of 35 (错误分类与重试退避)
+Plan: Starting execution — 3 plans
+Status: Phase 34 executing — Error classification and retry backoff
+Last activity: 2026-05-01 -- Phase 34 execution started
 
 Progress: [##########          ] 33%
 
