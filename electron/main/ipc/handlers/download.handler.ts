@@ -860,7 +860,10 @@ export function registerDownloadHandlers(): void {
       return { success: true }
     }
 
-    // 不在队列中 — 取消正在下载的任务
+    // 取消任何待处理的重试定时器（Phase 34 — 任务可能正在等待退避重试）
+    cancelRetryTimer(taskId)
+
+    // 不在队列中 — 取消正在下载或等待重试的任务
     const download = activeDownloads.get(taskId)
     if (!download) {
       return {
