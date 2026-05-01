@@ -21,7 +21,7 @@
 
 ## Phases
 
-- [ ] **Phase 33: 下载队列与并发控制** -- Enforce concurrent download limits with main-process queue
+- [x] **Phase 33: 下载队列与并发控制** -- Enforce concurrent download limits with main-process queue
 - [ ] **Phase 34: 错误分类与重试退避** -- Auto-retry transient failures with exponential backoff and jitter
 - [ ] **Phase 35: 重试状态展示与UI集成** -- Show retry progress, countdown, and final failure state in download list
 
