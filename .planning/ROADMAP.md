@@ -16,6 +16,7 @@
 - ✅ **v2.9 LoadingOverlay 动画优化** -- Phases 28-29 (shipped 2026-04-30)
 - ✅ **v3.0 首屏动画** -- Phases 30-32 (shipped 2026-04-30)
 - 🚧 **v4.0 多线程下载与重试退避机制** -- Phases 33-35 (in progress)
+- 🚧 **v4.1 壁纸列表全选功能** -- Phase 36 (in progress)
 
 ---
 
@@ -24,6 +25,8 @@
 - [x] **Phase 33: 下载队列与并发控制** -- Enforce concurrent download limits with main-process queue
 - [x] **Phase 34: 错误分类与重试退避** -- Auto-retry transient failures with exponential backoff and jitter (2026-05-01)
 - [ ] **Phase 35: 重试状态展示与UI集成** -- Show retry progress, countdown, and final failure state in download list
+
+- [ ] **Phase 36: 壁纸列表全选功能** -- Add "select all" button to WallpaperList.vue header for batch selection on current page
 
 ---
 
@@ -84,6 +87,16 @@ Plans:
 ```
 **UI hint**: yes
 
+### Phase 36: 壁纸列表全选功能
+**Goal**: Add a "select all on current page" button inside WallpaperList.vue `<header>` that batch-selects all visible wallpapers
+**Depends on**: Nothing
+**Plans**: 1 plan
+
+```
+Plans:
+- [x] 36-01-PLAN.md — Add select-all button to header + implement batch selection logic
+```
+
 ---
 
 ## Progress
@@ -93,6 +106,7 @@ Plans:
 | 33. 下载队列与并发控制 | 3/3 | Complete | 2026-05-01 |
 | 34. 错误分类与重试退避 | 3/3 | Complete | 2026-05-01 |
 | 35. 重试状态展示与UI集成 | 0/3 | Not started | - |
+| 36. 壁纸列表全选功能 | 1/1 | Complete | 2026-05-01 |
 
 ---
 

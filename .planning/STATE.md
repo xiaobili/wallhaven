@@ -3,22 +3,22 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: 多线程下载与重试退避机制
 status: completed
-stopped_at: Phase 35 context gathered — ready for planning
-last_updated: "2026-05-01T13:59:00.000Z"
-last_activity: 2026-05-01 -- Phase 35 planned (3 plans)
+stopped_at: Completed 36-01 — select-all feature implemented
+last_updated: "2026-05-01T16:00:00.000Z"
+last_activity: 2026-05-01 -- Phase 36 completed (1 plan executed)
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 9
-  completed_plans: 6
-  percent: 67
+  total_phases: 36
+  completed_phases: 36
+  total_plans: 10
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
 
 > Updated: 2026-05-01
 > Current: v4.0 多线程下载与重试退避机制
-> Status: Planning
+> Status: All phases complete — ready for phase transition
 
 ---
 
@@ -33,12 +33,12 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 35 of 35 (重试状态展示与UI集成)
-Plan: Not started — 0 plans
-Status: Phase 34 completed — Error classification and retry backoff
-Last activity: 2026-05-01 -- Phase 34 completed and verified
+Phase: 36 of 36 (壁纸列表全选功能)
+Plan: 1 plan completed
+Status: Phase 36 executed — Select-all feature implemented
+Last activity: 2026-05-01 -- Phase 36 executed and type-checked
 
-Progress: [####################] 67%
+Progress: [####################] 100% (All phases complete)
 
 ---
 
@@ -46,9 +46,9 @@ Progress: [####################] 67%
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: ~10 min
-- Total execution time: ~60 min
+- Total execution time: ~72 min
 
 **By Phase:**
 
@@ -56,10 +56,11 @@ Progress: [####################] 67%
 |-------|-------|-------|----------|
 | 33 | 3 | 3 | ~11 min |
 | 34 | 3 | 3 | ~9 min |
+| 36 | 1 | 1 | ~12 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 34-01 Retry Utilities, 34-02 Retry Loop, 34-03 Handler Integration
+- Last 5 plans: 35-03 UI Template, 36-01 Select-all feature
 - Trend: Stable execution
 
 *Updated after each plan completion*
@@ -67,6 +68,10 @@ Progress: [####################] 67%
 ---
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 36 added: 在WallpaperList.vue 组件中的 <header> 标签内部添加全选当前页的按钮，并实现全选功能
 
 ### Decisions
 
@@ -87,6 +92,10 @@ Recent decisions affecting current work:
 - [Phase 34]: executeDownload catch block skips cleanup/emit for retriable errors when retries remain -- slot held via activeDownloads persistence (DL-09)
 - [Phase 34]: Null/undefined error guard in executeDownload catch -- prevents permanent slot blockage on rare null throws (WR-01)
 - [Phase 35]: New DownloadState `'retrying'` added to state union; new fields `retryCount`, `retryDelay` on DownloadProgressData
+- [Phase 36]: Select-all uses three-state checkbox (none/some/all) with Chinese labels "全选"/"取消全选"
+- [Phase 36]: Select-all emit carries `{ sectionIndex, ids, selected }` payload per D-04
+- [Phase 36]: Select-all trigger positioned at CSS `order: 15` between heading (10) and spacer (20)
+- [Phase 36]: Indeterminate state uses semi-transparent primary fill to distinguish from full checked
 
 ### Pending Todos
 
@@ -110,9 +119,9 @@ Items acknowledged and carried forward from previous milestones:
 
 ## Session Continuity
 
-Last session: 2026-05-01 13:59
-Stopped at: Phase 35 planned — ready for execution
-Resume file: .planning/phases/35-retry-status-ui/35-CONTEXT.md
+Last session: 2026-05-01
+Stopped at: Phase 36 executed and completed
+Resume file: None — all phases complete
 
 ## Completed Plans
 
@@ -124,3 +133,7 @@ Resume file: .planning/phases/35-retry-status-ui/35-CONTEXT.md
 | 34-01 Retry Utilities | Error classification + backoff + timer utilities | 81fd3ba, bbe761a, a0aec53 |
 | 34-02 Retry Loop | executeWithRetry + modified catch block | 01da070, d6c22f3 |
 | 34-03 Handler Integration | Queue + PAUSE + CANCEL retry wiring | 21a7d8a, 2a33a99, 06f0df2 |
+| 35-01 Type Foundation | Type defs + formatCountdown + retrying emission | (uncommitted) |
+| 35-02 Composable & Store | Retrying branch in handleProgress + countdown timer + store filter | (uncommitted) |
+| 35-03 UI Template | Retrying/failed v-show blocks + CSS for retry states | (uncommitted) |
+| 36-01 Select-all Feature | Select-all checkbox in section headers + batch handler | a6531dd, 6ebf58b |
