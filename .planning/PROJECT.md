@@ -8,17 +8,15 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **收藏管理，分类随心** — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Current Milestone: v3.0 首屏动画
+## Current Milestone: v4.0 多线程下载与重试退避机制
 
-**Goal:** 为 Electron 应用添加品牌首屏动画，提升启动体验
+**Goal:** 实现真实的并行下载和下载失败自动重试，提升下载可靠性和效率
 
 **Target features:**
-- 独立 Splash 窗口：启动时先显示独立的无框首屏窗口
-- 文字 Logo 动画："Wallhaven" 文字以弹跳+弹性效果呈现
-- 时长控制：至少显示 1 秒，最长等待主应用加载完成
-- 平滑过渡：首屏窗口关闭后主窗口无缝显示
+- 多线程下载：让设置页面的「并行下载数」配置真正生效，N 个下载任务并行执行
+- 下载失败重试退避：下载失败后自动重试，采用指数退避策略，避免风暴式重试
 
-**Last Shipped:** v2.9 LoadingOverlay 动画优化 (2026-04-30)
+**Last Shipped:** v3.0 首屏动画 (2026-04-30)
 
 **Shipped Milestones:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases
@@ -31,6 +29,7 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 - v2.7 图片切换动画 (2026-04-29) — 2 requirements, 1 phase
 - v2.8 动画性能优化 (2026-04-30) — 2 requirements, 1 phase
 - v2.9 LoadingOverlay 动画优化 (2026-04-30) — 1 requirement, 1 phase
+- v3.0 首屏动画 (2026-04-30) — 15 requirements, 3 phases
 
 ## Requirements
 
@@ -76,7 +75,9 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 ### Active
 
-(None — will be defined in REQUIREMENTS.md for next milestone)
+<!-- v4.0 多线程下载与重试退避机制 -->
+
+Requirements defined in `.planning/REQUIREMENTS.md` for v4.0.
 
 ### Future
 
@@ -229,4 +230,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *创建时间：2025-04-25*
-*最后更新：2026-04-30 v3.0 里程碑启动*
+*最后更新：2026-05-01 v4.0 里程碑启动*
