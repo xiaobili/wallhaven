@@ -1,12 +1,25 @@
 <template>
-  <main id="main" @click="emit('close-search-modal')">
-    <div id="thumbs" class="thumbs-container">
-      <section v-for="(sectionItem, i) in pageData.sections" :key="i" class="thumb-listing-page">
+  <main
+    id="main"
+    @click="emit('close-search-modal')"
+  >
+    <div
+      id="thumbs"
+      class="thumbs-container"
+    >
+      <section
+        v-for="(sectionItem, i) in pageData.sections"
+        :key="i"
+        class="thumb-listing-page"
+      >
         <header class="thumb-listing-page-header">
           <h2>
             Page <span class="thumb-listing-page-num">{{ i + 1 }}</span> / {{ pageData.totalPage }}
           </h2>
-          <span class="select-all-trigger" @click.stop="toggleSelectAll(sectionItem.data, i)">
+          <span
+            class="select-all-trigger"
+            @click.stop="toggleSelectAll(sectionItem.data, i)"
+          >
             <span
               class="select-all-box"
               :class="{
@@ -14,19 +27,33 @@
                 indeterminate: getSelectState(sectionItem.data) === 'some',
               }"
             >
-              <i v-if="getSelectState(sectionItem.data) === 'all'" class="fas fa-check" />
-              <i v-else-if="getSelectState(sectionItem.data) === 'some'" class="fas fa-minus" />
+              <i
+                v-if="getSelectState(sectionItem.data) === 'all'"
+                class="fas fa-check"
+              />
+              <i
+                v-else-if="getSelectState(sectionItem.data) === 'some'"
+                class="fas fa-minus"
+              />
             </span>
             <span class="select-all-label">{{
               getSelectState(sectionItem.data) === 'all' ? '取消全选' : '全选'
             }}</span>
           </span>
-          <a class="icon to-top" href="#top" title="Back to top" @click.prevent="scrollToTop">
+          <a
+            class="icon to-top"
+            href="#top"
+            title="Back to top"
+            @click.prevent="scrollToTop"
+          >
             <i class="far fa-lg fa-chevron-up" />
           </a>
         </header>
         <ul>
-          <li v-for="liItem in sectionItem.data" :key="liItem.id">
+          <li
+            v-for="liItem in sectionItem.data"
+            :key="liItem.id"
+          >
             <figure
               class="thumb"
               :class="[
@@ -50,21 +77,32 @@
               </div> -->
 
               <!-- 选择框 -->
-              <div class="thumb-checkbox" @click.stop.prevent="toggleSelect(liItem.id)">
-                <i v-if="isSelected(liItem.id)" class="fas fa-check check-icon" />
+              <div
+                class="thumb-checkbox"
+                @click.stop.prevent="toggleSelect(liItem.id)"
+              >
+                <i
+                  v-if="isSelected(liItem.id)"
+                  class="fas fa-check check-icon"
+                />
               </div>
 
-              <!-- 收藏按钮 -->
+              <!-- 收藏按钮 - 三态颜色 (per D-04, D-05, D-06) -->
               <div
                 class="thumb-favorite-btn"
-                :class="{ 'is-favorite': isFavorite(liItem.id) }"
+                :class="{
+                  'is-favorite': heartState(liItem.id) === 'default',
+                  'is-favorite-in-other': heartState(liItem.id) === 'non-default',
+                }"
                 :title="
-                  isFavorite(liItem.id) ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'
+                  heartState(liItem.id) !== 'none'
+                    ? '已收藏 · 右键选择收藏夹'
+                    : '添加到收藏 · 右键选择收藏夹'
                 "
                 @click.stop="handleFavoriteLeftClick(liItem, $event)"
                 @contextmenu.prevent="handleFavoriteRightClick(liItem, $event)"
               >
-                <i :class="isFavorite(liItem.id) ? 'fas fa-heart' : 'far fa-heart'" />
+                <i :class="heartState(liItem.id) !== 'none' ? 'fas fa-heart' : 'far fa-heart'" />
               </div>
 
               <a
@@ -83,14 +121,20 @@
                 :src="liItem.thumbs.small"
                 decoding="async"
                 fetchpriority="low"
+              >
+              <a
+                class="preview"
+                @click.stop="emit('preview', liItem)"
               />
-              <a class="preview" @click.stop="emit('preview', liItem)" />
               <div class="thumb-info">
                 <span class="wall-res">{{ formatResolution(liItem.resolution) }}</span>
                 <a class="jsAnchor overlay-anchor wall-favs">{{
                   formatFileSize(liItem.file_size)
                 }}</a>
-                <span v-if="liItem.file_type === 'image/png'" class="png"><span>PNG</span></span>
+                <span
+                  v-if="liItem.file_type === 'image/png'"
+                  class="png"
+                ><span>PNG</span></span>
                 <a
                   class="jsAnchor thumb-tags-toggle tagged"
                   title="下载"
@@ -105,11 +149,17 @@
       </section>
     </div>
     <div class="main-bottom">
-      <div v-show="loading" class="loading-span">
+      <div
+        v-show="loading"
+        class="loading-span"
+      >
         <i class="fas fa-spinner" />
       </div>
-      <div v-show="error" class="error-span">
-        <i class="fas fa-times"> <br />网络异常，请点击右上角刷新按钮重试。</i>
+      <div
+        v-show="error"
+        class="error-span"
+      >
+        <i class="fas fa-times"> <br>网络异常，请点击右上角刷新按钮重试。</i>
       </div>
     </div>
   </main>
@@ -118,6 +168,8 @@
 <script setup lang="ts">
 import type { WallpaperItem, TotalPageData } from '@/types'
 import { formatResolution, formatFileSize } from '@/utils/helpers'
+import { getHeartState } from '@/utils/heart'
+import type { HeartState } from '@/utils/heart'
 import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
@@ -126,6 +178,9 @@ const props = defineProps<{
   error: boolean
   selectedIds?: string[] // 选中的壁纸ID列表
   favoriteIds?: Set<string> // 收藏的壁纸ID集合
+  // New props for three-state heart (per D-01)
+  wallpaperCollectionMap: Map<string, string[]>
+  defaultCollectionId: string | null
 }>()
 
 const emit = defineEmits<{
@@ -147,10 +202,12 @@ const isSelected = (id: string): boolean => {
 }
 
 /**
- * 检查是否已收藏
+ * Compute heart visual state for a wallpaper.
+ * Returns 'default' (red), 'non-default' (blue), or 'none' (transparent outline).
+ * Uses the shared getHeartState pure function from @/utils/heart.
  */
-const isFavorite = (id: string): boolean => {
-  return props.favoriteIds?.has(id) || false
+const heartState = (id: string): HeartState => {
+  return getHeartState(id, props.defaultCollectionId, props.wallpaperCollectionMap)
 }
 
 /**
@@ -435,6 +492,24 @@ onUnmounted(() => {
   border-color: #ff6b6b;
   opacity: 1;
   visibility: visible;
+}
+
+/* Blue heart state: in non-default collection(s) only */
+.thumb-favorite-btn.is-favorite-in-other {
+  background: #5b8def;
+  border-color: #5b8def;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Blue hover — same transform/opacity as red, but blue color.
+   Must override .thumb-favorite-btn:hover (specificity 0,1,1) with
+   (0,2,1) to prevent red flash on hover per RESEARCH.md Pitfall 3. */
+.thumb-favorite-btn.is-favorite-in-other:hover {
+  background: rgba(91, 141, 239, 0.7);
+  border-color: #5b8def;
+  transform: scale(1.1);
+  opacity: 1;
 }
 
 /* 收藏指示器样式 */
