@@ -117,9 +117,9 @@ const {
   saveCustomParams,
 } = useWallpaperList()
 const { addTask, startDownload, isDownloading } = useDownload()
-const { settings, selectFolder, update: updateSettings } = useSettings()
+const { settings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
-const { setWallpaper } = useWallpaperSetter()
+const { setWallpaper, setBgFromUrl } = useWallpaperSetter()
 
 // Favorites composable
 const { favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()
@@ -310,21 +310,7 @@ const preview = (imgItem: WallpaperItem): void => {
 }
 
 const setBg = async (imgItem: WallpaperItem): Promise<void> => {
-  try {
-    // 首先下载图片
-    const downloadResult = await downloadWallpaperFile(imgItem)
-
-    if (!downloadResult.success || !downloadResult.filePath) {
-      showError('下载壁纸失败: ' + (downloadResult.error || '未知错误'))
-      return
-    }
-
-    // 设置为桌面壁纸
-    await setWallpaper(downloadResult.filePath)
-  } catch (error: any) {
-    console.error('设置壁纸错误:', error)
-    showError('设置壁纸失败: ' + error.message)
-  }
+  return setBgFromUrl(imgItem)
 }
 
 const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
@@ -338,57 +324,7 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
   }
 }
 
-/**
- * 下载壁纸文件
- */
-const downloadWallpaperFile = async (
-  imgItem: WallpaperItem,
-): Promise<{
-  success: boolean
-  filePath: string | null
-  error: string | null
-}> => {
-  // 从store获取下载目录
-  let downloadPath = settings.value.downloadPath
 
-  if (!downloadPath) {
-    // 如果没有设置下载目录，提示用户
-    const selectResult = await selectFolder()
-    if (!selectResult.success || !selectResult.data) {
-      return { success: false, filePath: null, error: '未选择下载目录' }
-    }
-
-    // 保存下载目录到 electron-store
-    await updateSettings({ downloadPath: selectResult.data })
-    downloadPath = selectResult.data
-  }
-
-  const saveDir = downloadPath
-
-  // 生成文件名（从URL提取扩展名）
-  let ext = '.jpg'
-  if (imgItem.path) {
-    const match = imgItem.path.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)
-    if (match) {
-      ext = match[0]
-    }
-  }
-  const filename = `wallhaven-${imgItem.id}${ext}`
-
-  // 通过 electronClient 下载
-  const { electronClient } = await import('@/clients')
-  const result = await electronClient.downloadWallpaper({
-    url: imgItem.path,
-    filename,
-    saveDir,
-  })
-
-  return {
-    success: result.success,
-    filePath: result.data || null,
-    error: result.error?.message || null,
-  }
-}
 
 const closePreview = (): void => {
   imgShow.value = false
