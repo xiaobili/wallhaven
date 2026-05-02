@@ -8,9 +8,9 @@ Wallhaven 壁纸浏览器是一款基于 Electron 的桌面壁纸浏览与下载
 
 **收藏管理，分类随心** — 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
 
-## Current Milestone: All phases complete
+## Current Milestone: v4.3 downloadWallpaperFile 分层重构
 
-**Last Shipped:** v4.2 Composable 提取 (2026-05-02)
+**In Progress:** Phase 38 (2026-05-02)
 
 **Shipped Milestones:**
 - v2.0 架构重构 (2026-04-26) — 38 requirements, 5 phases

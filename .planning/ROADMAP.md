@@ -18,6 +18,7 @@
 - ✅ **v4.0 多线程下载与重试退避机制** -- Phases 33-35 (shipped 2026-05-01)
 - ✅ **v4.1 壁纸列表全选功能** -- Phase 36 (shipped 2026-05-01)
 - ✅ **v4.2 Composable 提取** -- Phase 37 (shipped 2026-05-02)
+- 🚧 **v4.3 downloadWallpaperFile 分层重构** -- Phase 38 (in progress)
 
 ---
 
@@ -48,6 +49,15 @@
 
 ---
 
+<details>
+<summary>🚧 v4.3 downloadWallpaperFile 分层重构 (Phase 38) — IN PROGRESS</summary>
+
+- [ ] Phase 38: downloadWallpaperFile 分层重构与重复下载检测 (0/0 plans) — in progress
+
+</details>
+
+---
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -57,6 +67,7 @@
 | 35. 重试状态展示与UI集成 | v4.0 | 3/3 | Complete | 2026-05-01 |
 | 36. 壁纸列表全选功能 | v4.1 | 1/1 | Complete | 2026-05-01 |
 | 37. Composable 提取 | v4.2 | 2/2 | Complete | 2026-05-02 |
+| 38. downloadWallpaperFile 分层重构 | v4.3 | 0/0 | In Progress | — |
 
 ---
 

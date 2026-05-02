@@ -1,22 +1,22 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.2
-status: completed
-last_updated: "2026-05-02T15:07:00.000Z"
-last_activity: 2026-05-02 -- Phase 37 complete
+milestone: v4.3
+milestone_name: downloadWallpaperFile 分层重构
+status: executing
+last_updated: "2026-05-02T07:31:26.926Z"
 progress:
-  total_phases: 37
-  completed_phases: 37
-  total_plans: 2
-  completed_plans: 2
+  total_phases: 38
+  completed_phases: 22
+  total_plans: 44
+  completed_plans: 82
   percent: 100
 ---
 
 # Project State
 
 > Updated: 2026-05-02
-> Current: Phase 37 complete — composable extraction finished
-> Status: All 37 phases complete
+> Current: Phase 38 in progress — downloadWallpaperFile 分层重构与重复下载检测
+> Status: 37/38 phases complete
 
 ---
 
@@ -33,8 +33,11 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 **Phase 37:** Composable extraction (2 plans, 2/2 complete)
 Progress: [####################] 100%
 
-Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans)
-Status: All phases complete
+**Phase 38:** downloadWallpaperFile 分层重构与重复下载检测 (0 plans, 0/0 complete)
+Progress: [                    ] 0%
+
+Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans), v4.3 (Phase 38, in progress)
+Status: 37/38 phases complete — Phase 38 in progress
 
 ---
 
@@ -43,6 +46,7 @@ Status: All phases complete
 ### Roadmap Evolution
 
 - Phase 37 added: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数
+- Phase 38 added: downloadWallpaperFile 分层重构与重复下载检测
 
 ## Completed Plans
 
