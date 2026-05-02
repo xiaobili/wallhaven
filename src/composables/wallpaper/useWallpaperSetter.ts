@@ -17,8 +17,8 @@
  */
 
 import { ref, type Ref } from 'vue'
-import { wallpaperService } from '@/services'
-import { useAlert, useSettings } from '@/composables'
+import { wallpaperService, downloadService } from '@/services'
+import { useAlert } from '@/composables'
 import type { WallpaperItem } from '@/types'
 
 /**
@@ -52,7 +52,6 @@ export interface UseWallpaperSetterReturn {
 export function useWallpaperSetter(): UseWallpaperSetterReturn {
   const { showError, showSuccess } = useAlert()
   const loading = ref(false)
-  const { settings, selectFolder, update: updateSettings } = useSettings()
 
   /**
    * 设置桌面壁纸
@@ -86,31 +85,13 @@ export function useWallpaperSetter(): UseWallpaperSetterReturn {
    * @returns 下载结果
    */
   const downloadWallpaperFile = async (imgItem: WallpaperItem): Promise<DownloadResult> => {
-    // 读取下载目录
-    let downloadPath = settings.value.downloadPath
-
-    // 如果没有设置下载目录，让用户选择
-    if (!downloadPath) {
-      const selectResult = await selectFolder()
-      if (!selectResult.success || !selectResult.data) {
-        return { success: false, filePath: null, error: '未选择下载目录' }
-      }
-      downloadPath = selectResult.data
-      await updateSettings({ downloadPath: selectResult.data })
-    }
-
     // 提取文件扩展名
     const extMatch = imgItem.path.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)
     const ext = extMatch?.[0] || '.jpg'
     const filename = `wallhaven-${imgItem.id}${ext}`
 
-    // 动态导入 electronClient（避免 vitest 环境报错）
-    const { electronClient } = await import('@/clients')
-    const result = await electronClient.downloadWallpaper({
-      url: imgItem.path,
-      filename,
-      saveDir: downloadPath,
-    })
+    // 委托给 downloadService（路径解析、重复检测、下载执行）
+    const result = await downloadService.simpleDownload(imgItem.path, filename)
 
     return {
       success: result.success,

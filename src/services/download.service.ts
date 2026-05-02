@@ -128,6 +128,35 @@ class DownloadServiceImpl {
   }
 
   /**
+   * 简单下载（不经过下载队列）
+   * 路径解析 -> 重复检测 -> 下载执行
+   * @param url - 下载 URL
+   * @param filename - 保存文件名
+   * @returns 下载结果，包含文件路径
+   */
+  async simpleDownload(url: string, filename: string): Promise<IpcResponse<string>> {
+    const pathResult = await this.getDownloadPath()
+    if (!pathResult.success || !pathResult.data) {
+      return {
+        success: false,
+        error: pathResult.error || {
+          code: 'DOWNLOAD_PATH_NOT_SET',
+          message: 'Download path not configured',
+        },
+      }
+    }
+    const saveDir = pathResult.data
+
+    const fullPath = `${saveDir}/${filename}`
+    const existsResult = await electronClient.fileExists(fullPath)
+    if (existsResult.success && existsResult.data) {
+      return { success: true, data: fullPath }
+    }
+
+    return electronClient.downloadWallpaper({ url, filename, saveDir })
+  }
+
+  /**
    * 启动下载任务
    * @param taskId - 任务 ID
    * @param url - 下载 URL
