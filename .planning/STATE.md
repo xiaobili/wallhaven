@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.0+v4.1
-status: completed
-stopped_at: Milestones v4.0 and v4.1 shipped — Phase 35 and Phase 36 complete
-last_updated: "2026-05-01T18:00:00.000Z"
-last_activity: 2026-05-01 -- v4.0 and v4.1 archived and tagged
+milestone: v4.2
+status: planning
+stopped_at: ''
+last_updated: "2026-05-02T14:30:00.000Z"
+last_activity: 2026-05-02 -- Phase 37 context gathered
 progress:
-  total_phases: 36
+  total_phases: 37
   completed_phases: 36
   total_plans: 10
   completed_plans: 10
-  percent: 100
+  percent: 97
 ---
 
 # Project State
@@ -38,6 +38,12 @@ Status: Both milestones shipped 2026-05-01
 Progress: [####################] 100% (All phases complete)
 
 ---
+
+## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 37 added: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数
 
 ## Completed Plans
 
