@@ -1,22 +1,22 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.3
-milestone_name: downloadWallpaperFile 分层重构
-status: executing
+milestone: v4.4
+milestone_name: 收藏状态小红心与取消收藏
+status: planning
 last_updated: "2026-05-02T08:30:00.000Z"
 progress:
-  total_phases: 38
+  total_phases: 39
   completed_phases: 38
   total_plans: 46
   completed_plans: 86
-  percent: 100
+  percent: 97
 ---
 
 # Project State
 
 > Updated: 2026-05-02
-> Current: Phase 38 complete — All 38 phases done
-> Status: 37/38 phases complete
+> Current: Phase 39 context gathered — ready for planning
+> Status: 38/39 phases complete
 
 ---
 
@@ -36,8 +36,11 @@ Progress: [####################] 100%
 **Phase 38:** downloadWallpaperFile 分层重构与重复下载检测 (2 plans, 2/2 complete)
 Progress: [####################] 100%
 
-Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans), v4.3 (Phase 38, 2 plans)
-Status: 38/38 phases complete — All phases complete!
+**Phase 39:** 收藏状态小红心逻辑与取消收藏功能 (0 plans, 0/0 complete)
+Progress: [                    ] 0%
+
+Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans), v4.3 (Phase 38, 2 plans), v4.4 (Phase 39)
+Status: 38/39 phases complete — Phase 39 in planning
 
 ---
 
@@ -47,6 +50,7 @@ Status: 38/38 phases complete — All phases complete!
 
 - Phase 37 added: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数
 - Phase 38 added: downloadWallpaperFile 分层重构与重复下载检测
+- Phase 39 added: 收藏状态小红心逻辑与取消收藏功能
 
 ## Completed Plans
 
