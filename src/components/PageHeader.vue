@@ -2,13 +2,25 @@
   <header id="header">
     <label>{{ title }}</label>
     <div class="win-btn-wrap">
-      <span class="win-btn min-btn" title="最小化" @click="minimize">
+      <span
+        class="win-btn min-btn"
+        title="最小化"
+        @click="minimize"
+      >
         <i class="fas fw fa-window-minimize" />
       </span>
-      <span class="win-btn max-btn" :title="isMaximized ? '还原' : '最大化'" @click="maximize">
+      <span
+        class="win-btn max-btn"
+        :title="isMaximized ? '还原' : '最大化'"
+        @click="maximize"
+      >
         <i :class="isMaximized ? 'fas fw fa-window-restore' : 'fas fw fa-window-maximize'" />
       </span>
-      <span class="win-btn close-btn" title="关闭" @click="close">
+      <span
+        class="win-btn close-btn"
+        title="关闭"
+        @click="close"
+      >
         <i class="fas fw fa-window-close" />
       </span>
     </div>

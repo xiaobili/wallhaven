@@ -90,7 +90,13 @@ defineOptions({ name: 'FavoritesPage' })
 
 // Composables
 const { collections, load: loadCollections } = useCollections()
-const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper, remove } = useFavorites()
+const {
+  favorites,
+  favoriteIds,
+  load: loadFavorites,
+  getCollectionsForWallpaper,
+  remove,
+} = useFavorites()
 const { alert, showSuccess, showWarning, hideAlert } = useAlert()
 const { addTask, startDownload, isDownloading } = useDownload()
 const { setBgFromUrl } = useWallpaperSetter()
@@ -226,7 +232,6 @@ const handleDownload = async (wallpaperData: WallpaperItem): Promise<void> => {
 const handleSetBg = (imgItem: WallpaperItem): Promise<void> => {
   return setBgFromUrl(imgItem)
 }
-
 
 // Lifecycle
 onActivated(async () => {

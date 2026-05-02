@@ -137,7 +137,13 @@ const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 const { setBgFromUrl } = useWallpaperSetter()
 
 // Favorites composable
-const { favorites, favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()
+const {
+  favorites,
+  favoriteIds,
+  add: addFavorite,
+  remove: removeFavorite,
+  isInCollection,
+} = useFavorites()
 
 // Collections composable for getDefault
 const { getDefault } = useCollections()
@@ -342,6 +348,7 @@ const closeSearchModal = (): void => {
 }
 
 const preview = (imgItem: WallpaperItem): void => {
+  closeFavoriteDropdown()
   imgInfo.value = imgItem
   imgShow.value = true
 }
@@ -360,8 +367,6 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
     showError('添加下载任务失败: ' + error.message)
   }
 }
-
-
 
 const closePreview = (): void => {
   imgShow.value = false

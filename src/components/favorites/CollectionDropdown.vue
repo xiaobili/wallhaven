@@ -1,7 +1,12 @@
 <template>
   <Teleport to="body">
     <Transition name="dropdown">
-      <div v-if="visible" class="collection-dropdown" :style="dropdownStyle" @click.stop>
+      <div
+        v-if="visible"
+        class="collection-dropdown"
+        :style="dropdownStyle"
+        @click.stop
+      >
         <!-- Collection list with checkboxes -->
         <div
           v-for="collection in collections"
@@ -10,10 +15,20 @@
           :class="{ selected: isInCollection(collection.id) }"
           @click="toggleCollection(collection.id)"
         >
-          <i v-if="isInCollection(collection.id)" class="fas fa-check" />
-          <i v-else class="far fa-square" />
+          <i
+            v-if="isInCollection(collection.id)"
+            class="fas fa-check"
+          />
+          <i
+            v-else
+            class="far fa-square"
+          />
           <span>{{ collection.name }}</span>
-          <i v-if="collection.isDefault" class="fas fa-star default-star" title="默认收藏夹" />
+          <i
+            v-if="collection.isDefault"
+            class="fas fa-star default-star"
+            title="默认收藏夹"
+          />
           <button
             v-if="isInCollection(collection.id) && !collection.isDefault"
             class="remove-btn"
@@ -23,7 +38,12 @@
           </button>
         </div>
         <!-- Empty state -->
-        <div v-if="collections.length === 0" class="dropdown-empty">暂无收藏夹</div>
+        <div
+          v-if="collections.length === 0"
+          class="dropdown-empty"
+        >
+          暂无收藏夹
+        </div>
       </div>
     </Transition>
   </Teleport>

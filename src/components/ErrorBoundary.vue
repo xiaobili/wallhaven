@@ -1,6 +1,9 @@
 <template>
   <slot v-if="!error" />
-  <div v-else class="error-boundary">
+  <div
+    v-else
+    class="error-boundary"
+  >
     <div class="error-boundary-content">
       <i class="fas fa-exclamation-triangle error-boundary-icon" />
       <h3>组件错误</h3>
@@ -8,7 +11,12 @@
       <p class="error-detail">
         {{ errorInfo.message }}
       </p>
-      <button class="retry-button" @click="resetError"><i class="fas fa-redo" /> 重试</button>
+      <button
+        class="retry-button"
+        @click="resetError"
+      >
+        <i class="fas fa-redo" /> 重试
+      </button>
     </div>
   </div>
 </template>

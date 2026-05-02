@@ -7,10 +7,18 @@
       role="alert"
     >
       <div class="alert-content">
-        <i v-if="showIcon" :class="['alert-icon', iconClass]" />
+        <i
+          v-if="showIcon"
+          :class="['alert-icon', iconClass]"
+        />
         <span class="alert-message">{{ message }}</span>
       </div>
-      <button v-if="closable" class="alert-close" aria-label="关闭" @click="handleClose">
+      <button
+        v-if="closable"
+        class="alert-close"
+        aria-label="关闭"
+        @click="handleClose"
+      >
         <i class="fas fa-times" />
       </button>
     </div>

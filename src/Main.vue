@@ -1,7 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="left-menu">
-    <img class="logo-wrap" src="./static/icons/logo.png" />
+    <img
+      class="logo-wrap"
+      src="./static/icons/logo.png"
+    >
     <div class="version-wrap">
       {{ version }}
     </div>
@@ -9,25 +12,37 @@
       <label class="menu-title">我的壁纸</label>
       <ul class="menu-ul">
         <li class="menu-item">
-          <router-link to="/online" class="menu-native">
+          <router-link
+            to="/online"
+            class="menu-native"
+          >
             <i class="fas fa-cloud" />
             在线壁纸<span class="li-border" />
           </router-link>
         </li>
         <li class="menu-item">
-          <router-link to="/switch" class="menu-native">
+          <router-link
+            to="/switch"
+            class="menu-native"
+          >
             <i class="fas fa-folder" />
             本地列表<span class="li-border" />
           </router-link>
         </li>
         <li class="menu-item">
-          <router-link to="download" class="menu-native">
+          <router-link
+            to="download"
+            class="menu-native"
+          >
             <i class="fas fa-inbox-in" />
             下载中心<span class="li-border" />
           </router-link>
         </li>
         <li class="menu-item">
-          <router-link to="/favorites" class="menu-native">
+          <router-link
+            to="/favorites"
+            class="menu-native"
+          >
             <i class="fas fa-heart" />
             我的收藏<span class="li-border" />
           </router-link>
@@ -36,7 +51,10 @@
       <label class="menu-title more">更多</label>
       <ul class="menu-ul">
         <li class="menu-item">
-          <router-link to="setting" class="menu-native">
+          <router-link
+            to="setting"
+            class="menu-native"
+          >
             <i class="fas fa-cog" />
             设置<span class="li-border" />
           </router-link>
@@ -44,13 +62,19 @@
       </ul>
     </div>
   </div>
-  <div class="container" :style="{ width: calContainerW + 'px' }">
+  <div
+    class="container"
+    :style="{ width: calContainerW + 'px' }"
+  >
     <!-- 使用 KeepAlive 缓存路由组件，避免重复渲染 -->
     <router-view v-slot="{ Component, route }">
       <KeepAlive
         :include="['OnlineWallpaper', 'LocalWallpaper', 'DownloadWallpaper', 'FavoritesPage']"
       >
-        <component :is="Component" :key="route.path" />
+        <component
+          :is="Component"
+          :key="route.path"
+        />
       </KeepAlive>
     </router-view>
   </div>

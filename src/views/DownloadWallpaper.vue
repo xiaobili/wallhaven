@@ -13,7 +13,10 @@
       <div class="m-title">
         <a class="dowloading-title">下载中</a>
       </div>
-      <div v-show="downloadList.length > 0" class="dowload-list">
+      <div
+        v-show="downloadList.length > 0"
+        class="dowload-list"
+      >
         <div
           v-for="item in downloadList"
           :key="item.id"
@@ -24,7 +27,10 @@
           }"
         >
           <div class="img-view">
-            <img class="img-context" :src="item.small" />
+            <img
+              class="img-context"
+              :src="item.small"
+            >
           </div>
           <div class="down-content">
             <div class="img-info">
@@ -43,24 +49,50 @@
                 >
                   <i class="fas fw fa-play-circle" />
                 </div>
-                <div class="op-cancel" @click="onCancelDownload(item.id)">
+                <div
+                  class="op-cancel"
+                  @click="onCancelDownload(item.id)"
+                >
                   <i class="fas fw fa-times-circle" />
                 </div>
               </div>
-              <div class="img-resolution">尺寸：{{ formatResolution(item.resolution) }}</div>
-              <div class="file-size">图片大小：{{ formatFileSize(item.size) }}</div>
+              <div class="img-resolution">
+                尺寸：{{ formatResolution(item.resolution) }}
+              </div>
+              <div class="file-size">
+                图片大小：{{ formatFileSize(item.size) }}
+              </div>
               <div class="rigth-bottoim">
-                <div v-show="item.state === 'downloading'" class="dowload-speed">
+                <div
+                  v-show="item.state === 'downloading'"
+                  class="dowload-speed"
+                >
                   下载速度：{{ formatSpeed(item.speed) }}
                 </div>
-                <div v-show="item.state === 'waiting'" class="dowload-state">等待中</div>
-                <div v-show="item.state === 'paused'" class="dowload-state">已暂停</div>
+                <div
+                  v-show="item.state === 'waiting'"
+                  class="dowload-state"
+                >
+                  等待中
+                </div>
+                <div
+                  v-show="item.state === 'paused'"
+                  class="dowload-state"
+                >
+                  已暂停
+                </div>
                 <!-- UI-01: Retrying state — show retry count -->
-                <div v-show="item.state === 'retrying'" class="dowload-state">
+                <div
+                  v-show="item.state === 'retrying'"
+                  class="dowload-state"
+                >
                   重试中 (第{{ item.retryCount }}次/共3次)
                 </div>
                 <!-- UI-02: Live countdown to next retry attempt -->
-                <div v-show="item.state === 'retrying'" class="dowload-countdown">
+                <div
+                  v-show="item.state === 'retrying'"
+                  class="dowload-countdown"
+                >
                   {{ formatCountdown(getRetryRemaining(item)) }}
                 </div>
                 <!-- UI-03: Exhausted retries — show failure message inline -->
@@ -70,21 +102,30 @@
                 >
                   下载失败 — 已重试 3 次
                 </div>
-                <div class="dowloaded-size">已下载：{{ formatFileSize(item.offset) }}</div>
+                <div class="dowloaded-size">
+                  已下载：{{ formatFileSize(item.offset) }}
+                </div>
               </div>
               <div class="dowloaded-process">
-                <div class="dowloaded-process-block" :style="{ width: item.progress + '%' }" />
+                <div
+                  class="dowloaded-process-block"
+                  :style="{ width: item.progress + '%' }"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div v-if="downloadList.length <= 0" class="empty-list">没有正在下载中的任务~</div>
+      <div
+        v-if="downloadList.length <= 0"
+        class="empty-list"
+      >
+        没有正在下载中的任务~
+      </div>
     </div>
     <div class="dowloaded">
       <div class="m-title">
-        <a class="dowload-title">已完成</a
-        ><a style="font-size: 10px">（重启后只保留最后20条记录）</a>
+        <a class="dowload-title">已完成</a><a style="font-size: 10px">（重启后只保留最后20条记录）</a>
         <button
           v-if="downloadFinishedList.length > 0"
           class="clear-all-btn"
@@ -94,31 +135,53 @@
         </button>
       </div>
       <div class="dowload-list">
-        <div v-for="item in downloadFinishedList" :key="item.id" class="dowload-item">
+        <div
+          v-for="item in downloadFinishedList"
+          :key="item.id"
+          class="dowload-item"
+        >
           <div class="img-view">
-            <img class="img-context" :src="item.small" />
+            <img
+              class="img-context"
+              :src="item.small"
+            >
           </div>
           <div class="down-content">
             <div class="img-info">
-              <div class="op-del" @click="delRecorder(item.id)">
+              <div
+                class="op-del"
+                @click="delRecorder(item.id)"
+              >
                 <i class="fas fw fa-trash" />
               </div>
-              <div class="op-open" @click="showInFolder(item.path)">
+              <div
+                class="op-open"
+                @click="showInFolder(item.path)"
+              >
                 <i class="fas fw fa-folder-open" />
               </div>
               <div class="dowload-date">
                 {{ formatTime(item.time) }}
               </div>
               <div class="downloaded-info">
-                <div class="img-resolution">尺寸：{{ formatResolution(item.resolution) }}</div>
-                <div class="file-size">图片大小：{{ formatFileSize(item.size) }}</div>
+                <div class="img-resolution">
+                  尺寸：{{ formatResolution(item.resolution) }}
+                </div>
+                <div class="file-size">
+                  图片大小：{{ formatFileSize(item.size) }}
+                </div>
               </div>
               <div class="img-info" />
             </div>
           </div>
         </div>
       </div>
-      <div v-if="downloadFinishedList.length <= 0" class="empty-list">没有完成的任务~</div>
+      <div
+        v-if="downloadFinishedList.length <= 0"
+        class="empty-list"
+      >
+        没有完成的任务~
+      </div>
     </div>
   </main>
 </template>
