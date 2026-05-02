@@ -19,7 +19,8 @@
 - ✅ **v4.1 壁纸列表全选功能** -- Phase 36 (shipped 2026-05-01)
 - ✅ **v4.2 Composable 提取** -- Phase 37 (shipped 2026-05-02)
 - ✅ **v4.3 downloadWallpaperFile 分层重构** -- Phase 38 (shipped 2026-05-02)
-- 🚧 **v4.4 收藏状态小红心与取消收藏** -- Phase 39 (in progress)
+- ✅ **v4.4 收藏状态小红心与取消收藏** -- Phase 39 (shipped 2026-05-02)
+- 🚧 **v4.5 在线壁纸页面小红心状态** -- Phase 40 (in progress)
 
 ---
 
@@ -64,13 +65,27 @@ Plans:
 ---
 
 <details>
-<summary>🚧 v4.4 收藏状态小红心与取消收藏 (Phase 39) — IN PROGRESS</summary>
+<summary>✅ v4.4 收藏状态小红心与取消收藏 (Phase 39) — SHIPPED 2026-05-02</summary>
 
-- [ ] Phase 39: 收藏状态小红心逻辑与取消收藏功能 (2 plans) — in progress
+- [x] Phase 39: 收藏状态小红心逻辑与取消收藏功能 (2/2 plans) — completed 2026-05-02
 
 Plans:
-- [ ] 39-01-PLAN.md — Make FavoriteWallpaperCard badge clickable (emit unfavorite, hover tooltip, click-stop)
-- [ ] 39-02-PLAN.md — Implement unfavorite handlers in FavoritesPage (card badge + ImagePreview heart)
+- [x] 39-01-PLAN.md — Make FavoriteWallpaperCard badge clickable (emit unfavorite, hover tooltip, click-stop)
+- [x] 39-02-PLAN.md — Implement unfavorite handlers in FavoritesPage (card badge + ImagePreview heart)
+
+</details>
+
+---
+
+<details open>
+<summary>🚧 v4.5 在线壁纸页面小红心状态 (Phase 40) — IN PROGRESS</summary>
+
+- [ ] Phase 40: 在线壁纸页面小红心多收藏夹状态区分 — WallpaperList/ImagePreview 组件颜色逻辑 (3 plans) — in progress
+
+Plans:
+- [ ] 40-01-PLAN.md — Create heart.ts utility + compute wallpaperCollectionMap/defaultCollectionId in OnlineWallpaper
+- [ ] 40-02-PLAN.md — Implement three-state heart in WallpaperList (red/blue/transparent + CSS)
+- [ ] 40-03-PLAN.md — Implement three-state heart in ImagePreview (with backward-compatible fallback + CSS)
 
 </details>
 
@@ -86,7 +101,8 @@ Plans:
 | 36. 壁纸列表全选功能 | v4.1 | 1/1 | Complete | 2026-05-01 |
 | 37. Composable 提取 | v4.2 | 2/2 | Complete | 2026-05-02 |
 | 38. downloadWallpaperFile 分层重构 | v4.3 | 2/2 | Complete | 2026-05-02 |
-| 39. 收藏状态小红心逻辑与取消收藏功能 | v4.4 | 0/2 | In Progress | — |
+| 39. 收藏状态小红心逻辑与取消收藏功能 | v4.4 | 2/2 | Complete | 2026-05-02 |
+| 40. 在线壁纸页面小红心多收藏夹状态区分 | v4.5 | 0/3 | In Progress | — |
 
 ---
 
