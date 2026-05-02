@@ -17,6 +17,7 @@
 - ✅ **v3.0 首屏动画** -- Phases 30-32 (shipped 2026-04-30)
 - ✅ **v4.0 多线程下载与重试退避机制** -- Phases 33-35 (shipped 2026-05-01)
 - ✅ **v4.1 壁纸列表全选功能** -- Phase 36 (shipped 2026-05-01)
+- ✅ **v4.2 Composable 提取** -- Phase 37 (shipped 2026-05-02)
 
 ---
 
@@ -38,6 +39,13 @@
 
 </details>
 
+<details>
+<summary>✅ v4.2 Composable 提取 (Phase 37) — SHIPPED 2026-05-02</summary>
+
+- [x] Phase 37: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数 (2/2 plans) — completed 2026-05-02
+
+</details>
+
 ---
 
 ## Progress
@@ -48,6 +56,7 @@
 | 34. 错误分类与重试退避 | v4.0 | 3/3 | Complete | 2026-05-01 |
 | 35. 重试状态展示与UI集成 | v4.0 | 3/3 | Complete | 2026-05-01 |
 | 36. 壁纸列表全选功能 | v4.1 | 1/1 | Complete | 2026-05-01 |
+| 37. Composable 提取 | v4.2 | 2/2 | Complete | 2026-05-02 |
 
 ---
 
@@ -67,19 +76,3 @@
 | UI-01 | 35 | Show "retrying (X/3)" | Complete |
 | UI-02 | 35 | Show retry countdown | Complete |
 | UI-03 | 35 | Show final failure state | Complete |
-
-### Phase 37: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数
-
-**Goal:** 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中重复的 downloadWallpaperFile 与 setBg/handleSetBg 逻辑提取到 useWallpaperSetter composable，消除代码重复
-**Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05
-**Depends on:** Phase 36
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 37-01-PLAN.md — 扩展 useWallpaperSetter 添加 DownloadResult、downloadWallpaperFile、setBgFromUrl
-- [x] 37-02-PLAN.md — 清理 FavoritesPage.vue 和 OnlineWallpaper.vue 的重复逻辑
-
----
-
-*Created: 2026-05-01*
-*Last updated: 2026-05-02 — Phase 37 plans created*
