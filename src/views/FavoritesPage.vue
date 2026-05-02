@@ -34,14 +34,26 @@
             <span class="wallpaper-count">{{ filteredFavorites.length }} 张壁纸</span>
           </div>
 
-          <div v-if="filteredFavorites.length === 0" class="empty-collection">
+          <div
+            v-if="filteredFavorites.length === 0"
+            class="empty-collection"
+          >
             <i class="fas fa-images" />
-            <p v-if="!selectedCollectionId">还没有收藏任何壁纸</p>
-            <p v-else>这个收藏夹还没有壁纸</p>
-            <p class="hint">去在线壁纸页面发现喜欢的壁纸吧</p>
+            <p v-if="!selectedCollectionId">
+              还没有收藏任何壁纸
+            </p>
+            <p v-else>
+              这个收藏夹还没有壁纸
+            </p>
+            <p class="hint">
+              去在线壁纸页面发现喜欢的壁纸吧
+            </p>
           </div>
 
-          <div v-else class="favorites-grid">
+          <div
+            v-else
+            class="favorites-grid"
+          >
             <FavoriteWallpaperCard
               v-for="favorite in filteredFavorites"
               :key="`${favorite.wallpaperId}-${favorite.collectionId}`"
@@ -80,7 +92,7 @@ const { collections, load: loadCollections } = useCollections()
 const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper } = useFavorites()
 const { alert, showSuccess, showWarning, hideAlert } = useAlert()
 const { addTask, startDownload, isDownloading } = useDownload()
-const { setWallpaper } = useWallpaperSetter()
+const { setWallpaper, setBgFromUrl } = useWallpaperSetter()
 
 // State
 const selectedCollectionId = ref<string | null>(null)
@@ -184,9 +196,10 @@ const handleDownload = async (wallpaperData: WallpaperItem): Promise<void> => {
   showSuccess('已添加到下载队列')
 }
 
-const handleSetBg = async (wallpaperData: WallpaperItem): Promise<void> => {
-  await setWallpaper(wallpaperData.path)
+const handleSetBg = (imgItem: WallpaperItem): Promise<void> => {
+  return setBgFromUrl(imgItem)
 }
+
 
 // Lifecycle
 onActivated(async () => {
