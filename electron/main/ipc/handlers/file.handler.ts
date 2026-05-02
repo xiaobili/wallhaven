@@ -101,6 +101,19 @@ export function registerFileHandlers(): void {
   })
 
   /**
+   * 检查文件是否存在
+   */
+  ipcMain.handle('file-exists', async (_event, filePath: string) => {
+    try {
+      const exists = fs.existsSync(filePath)
+      return { success: true, exists }
+    } catch (error: any) {
+      logHandler('file-exists', `Error: ${error.message}`, 'error')
+      return { success: false, exists: false }
+    }
+  })
+
+  /**
    * 打开文件夹
    */
   ipcMain.handle('open-folder', async (_event, folderPath: string) => {

@@ -16,6 +16,7 @@ export interface ElectronAPI {
 
   // 文件操作
   deleteFile: (filePath: string) => Promise<{ success: boolean; error: string | null }>
+  checkFileExists: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>
 
   // 下载功能
   downloadWallpaper: (params: {
@@ -127,6 +128,10 @@ const electronAPI: ElectronAPI = {
   deleteFile: (filePath: string) => {
     console.log('[Preload] deleteFile called:', filePath)
     return ipcRenderer.invoke(IPC_CHANNELS.DELETE_FILE, filePath)
+  },
+  checkFileExists: (filePath: string) => {
+    console.log('[Preload] checkFileExists called:', filePath)
+    return ipcRenderer.invoke(IPC_CHANNELS.FILE_EXISTS, filePath)
   },
 
   // 下载功能

@@ -58,6 +58,7 @@ interface ElectronAPI {
 
   // 文件操作
   deleteFile: (filePath: string) => Promise<{ success: boolean; error: string | null }>
+  checkFileExists: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>
 
   // 下载功能
   downloadWallpaper: (params: {

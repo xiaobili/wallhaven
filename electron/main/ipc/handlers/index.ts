@@ -24,6 +24,7 @@ export const REGISTERED_CHANNELS = [
   'select-folder',
   'read-directory',
   'delete-file',
+  'file-exists',
   'open-folder',
   // Download management
   'download-wallpaper',

@@ -257,6 +257,36 @@ class ElectronClientImpl {
     }
   }
 
+  /**
+   * 检查文件是否存在
+   */
+  async fileExists(filePath: string): Promise<IpcResponse<boolean>> {
+    if (!this.isAvailable()) {
+      return this.createUnavailableResponse<boolean>()
+    }
+
+    try {
+      const result = await window.electronAPI.checkFileExists(filePath)
+      if (result.success) {
+        return { success: true, data: result.exists }
+      }
+      return {
+        success: false,
+        data: false,
+        error: {
+          code: 'FILE_EXISTS_ERROR',
+          message: result.error || 'File existence check failed',
+        },
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: false,
+        error: { code: 'FILE_EXISTS_ERROR', message: String(error) },
+      }
+    }
+  }
+
   // ==================== 下载管理 ====================
 
   /**

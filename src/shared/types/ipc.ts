@@ -18,6 +18,7 @@ export const IPC_CHANNELS = {
   READ_DIRECTORY: 'read-directory',
   OPEN_FOLDER: 'open-folder',
   DELETE_FILE: 'delete-file',
+  FILE_EXISTS: 'file-exists',
 
   // 下载
   DOWNLOAD_WALLPAPER: 'download-wallpaper',
@@ -121,6 +122,21 @@ export interface OpenFolderResponse {
 export interface DeleteFileResponse {
   success: boolean
   error: string | null
+}
+
+/**
+ * 文件存在检查请求
+ */
+export interface FileExistsRequest {
+  filePath: string
+}
+
+/**
+ * 文件存在检查响应
+ */
+export interface FileExistsResponse {
+  success: boolean
+  exists: boolean
 }
 
 /**
