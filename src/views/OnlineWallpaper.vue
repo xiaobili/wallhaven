@@ -23,6 +23,8 @@
       :wallpaper-list="wallpaperList"
       :current-index="previewIndex"
       :favorite-ids="favoriteIds"
+      :wallpaper-collection-map="wallpaperCollectionMap"
+      :default-collection-id="defaultCollectionId"
       @download-img="downloadImg"
       @set-bg="setBg"
       @close="closePreview"
@@ -75,6 +77,8 @@
       :error="error"
       :selected-ids="selectedWallpapers"
       :favorite-ids="favoriteIds"
+      :wallpaper-collection-map="wallpaperCollectionMap"
+      :default-collection-id="defaultCollectionId"
       @set-bg="setBg"
       @preview="preview"
       @download-img="downloadImg"
@@ -133,7 +137,7 @@ const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
 const { setBgFromUrl } = useWallpaperSetter()
 
 // Favorites composable
-const { favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()
+const { favorites, favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()
 
 // Collections composable for getDefault
 const { getDefault } = useCollections()
@@ -170,6 +174,28 @@ const previewIndex = computed(() => {
   if (!imgInfo.value) return -1
   return wallpaperList.value.findIndex((wp) => wp.id === imgInfo.value?.id)
 })
+
+// Computed: wallpaperId → collectionId[] mapping for three-state heart
+// Groups FavoriteItem[] by wallpaperId. Used by child components to
+// determine heart color (red for default, blue for other).
+const wallpaperCollectionMap = computed(() => {
+  const map = new Map<string, string[]>()
+  for (const fav of favorites.value) {
+    const ids = map.get(fav.wallpaperId)
+    if (ids) {
+      ids.push(fav.collectionId)
+    } else {
+      map.set(fav.wallpaperId, [fav.collectionId])
+    }
+  }
+  return map
+})
+
+// Computed: default collection ID for heart state determination.
+// Must be computed to track Pinia store reactivity per RESEARCH.md Pitfall 4.
+// When no default is set, returns null (causes getHeartState to treat ANY
+// collection membership as 'non-default' per D-05 edge case).
+const defaultCollectionId = computed(() => getDefault()?.id ?? null)
 
 // Lifecycle hooks
 onMounted(() => {
