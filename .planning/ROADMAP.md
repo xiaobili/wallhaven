@@ -19,6 +19,7 @@
 - ✅ **v4.1 壁纸列表全选功能** -- Phase 36 (shipped 2026-05-01)
 - ✅ **v4.2 Composable 提取** -- Phase 37 (shipped 2026-05-02)
 - ✅ **v4.3 downloadWallpaperFile 分层重构** -- Phase 38 (shipped 2026-05-02)
+- 🚧 **v4.4 收藏状态小红心与取消收藏** -- Phase 39 (in progress)
 
 ---
 
@@ -62,6 +63,19 @@ Plans:
 
 ---
 
+<details>
+<summary>🚧 v4.4 收藏状态小红心与取消收藏 (Phase 39) — IN PROGRESS</summary>
+
+- [ ] Phase 39: 收藏状态小红心逻辑与取消收藏功能 (2 plans) — in progress
+
+Plans:
+- [ ] 39-01-PLAN.md — Make FavoriteWallpaperCard badge clickable (emit unfavorite, hover tooltip, click-stop)
+- [ ] 39-02-PLAN.md — Implement unfavorite handlers in FavoritesPage (card badge + ImagePreview heart)
+
+</details>
+
+---
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -72,6 +86,7 @@ Plans:
 | 36. 壁纸列表全选功能 | v4.1 | 1/1 | Complete | 2026-05-01 |
 | 37. Composable 提取 | v4.2 | 2/2 | Complete | 2026-05-02 |
 | 38. downloadWallpaperFile 分层重构 | v4.3 | 2/2 | Complete | 2026-05-02 |
+| 39. 收藏状态小红心逻辑与取消收藏功能 | v4.4 | 0/2 | In Progress | — |
 
 ---
 
