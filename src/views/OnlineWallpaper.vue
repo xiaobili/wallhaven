@@ -1,7 +1,10 @@
 <template>
   <div class="online-wallpaper-page">
     <!-- 加载遮罩层 -->
-    <LoadingOverlay :show="showLoadingOverlay" text="搜索中..." />
+    <LoadingOverlay
+      :show="showLoadingOverlay"
+      text="搜索中..."
+    />
 
     <!-- Alert 提示框 -->
     <Alert
@@ -42,7 +45,10 @@
     />
 
     <!-- 显示错误信息 -->
-    <div v-if="error" class="error-container">
+    <div
+      v-if="error"
+      class="error-container"
+    >
       <div class="error-content">
         <i class="fas fa-exclamation-triangle error-icon" />
         <h3>网络异常</h3>
@@ -52,7 +58,12 @@
           <li>API Key 是否正确（如果需要）</li>
           <li>防火墙或代理设置</li>
         </ul>
-        <button class="button red" @click="retryFetch"><i class="fas fa-redo" /> 重试</button>
+        <button
+          class="button red"
+          @click="retryFetch"
+        >
+          <i class="fas fa-redo" /> 重试
+        </button>
       </div>
     </div>
 
@@ -119,7 +130,7 @@ const {
 const { addTask, startDownload, isDownloading } = useDownload()
 const { settings } = useSettings()
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
-const { setWallpaper, setBgFromUrl } = useWallpaperSetter()
+const { setBgFromUrl } = useWallpaperSetter()
 
 // Favorites composable
 const { favoriteIds, add: addFavorite, remove: removeFavorite, isInCollection } = useFavorites()

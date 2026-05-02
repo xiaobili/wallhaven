@@ -92,7 +92,7 @@ const { collections, load: loadCollections } = useCollections()
 const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper } = useFavorites()
 const { alert, showSuccess, showWarning, hideAlert } = useAlert()
 const { addTask, startDownload, isDownloading } = useDownload()
-const { setWallpaper, setBgFromUrl } = useWallpaperSetter()
+const { setBgFromUrl } = useWallpaperSetter()
 
 // State
 const selectedCollectionId = ref<string | null>(null)

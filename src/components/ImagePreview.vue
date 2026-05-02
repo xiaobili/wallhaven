@@ -1,16 +1,36 @@
 <template>
-  <div class="mask" :class="showing === true ? '' : 'out'">
-    <a class="close_btn" @click="close" />
+  <div
+    class="mask"
+    :class="showing === true ? '' : 'out'"
+  >
+    <a
+      class="close_btn"
+      @click="close"
+    />
     <!-- 左侧导航按钮 - 上一张 -->
-    <div v-if="canNavigatePrev" class="nav-btn nav-btn-prev" title="上一张" @click="navigatePrev">
+    <div
+      v-if="canNavigatePrev"
+      class="nav-btn nav-btn-prev"
+      title="上一张"
+      @click="navigatePrev"
+    >
       <i class="fas fa-chevron-left" />
     </div>
     <!-- 右侧导航按钮 - 下一张 -->
-    <div v-if="canNavigateNext" class="nav-btn nav-btn-next" title="下一张" @click="navigateNext">
+    <div
+      v-if="canNavigateNext"
+      class="nav-btn nav-btn-next"
+      title="下一张"
+      @click="navigateNext"
+    >
       <i class="fas fa-chevron-right" />
     </div>
     <div class="img-view">
-      <Transition :name="effectiveTransitionName" mode="out-in" @after-enter="endAnimation">
+      <Transition
+        :name="effectiveTransitionName"
+        mode="out-in"
+        @after-enter="endAnimation"
+      >
         <img
           v-if="imgInfo"
           :key="imgInfo.id"
@@ -18,16 +38,19 @@
           :class="{ 'initial-anim': isInitialOpen }"
           :src="imgInfo.path"
           :style="{ 'max-height': calHeight }"
-        />
+        >
       </Transition>
       <img
         v-show="!showing"
         class="img-class close-bg"
         :src="imgBgSrc"
         :style="{ 'max-height': calHeight }"
-      />
+      >
     </div>
-    <div class="sidebar-fixed-wrapper" style="bottom: 40px">
+    <div
+      class="sidebar-fixed-wrapper"
+      style="bottom: 40px"
+    >
       <div class="details-sidebar-fixed-box hi-de">
         <div
           class="sidebar-fixed_box comments-middle-icon"
@@ -60,7 +83,11 @@
           </div>
         </div>
       </div>
-      <div class="back-to-top sidebar-fixed_box" z-st="shortcut_totop" style="display: block" />
+      <div
+        class="back-to-top sidebar-fixed_box"
+        z-st="shortcut_totop"
+        style="display: block"
+      />
     </div>
   </div>
 </template>
