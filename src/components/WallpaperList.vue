@@ -177,9 +177,7 @@ const props = defineProps<{
   loading: boolean
   error: boolean
   selectedIds?: string[] // 选中的壁纸ID列表
-  favoriteIds?: Set<string> // 收藏的壁纸ID集合
-  // New props for three-state heart (per D-01)
-  wallpaperCollectionMap: Map<string, string[]>
+  wallpaperCollectionMap: Map<string, string[]> // 壁纸收藏关系
   defaultCollectionId: string | null
 }>()
 

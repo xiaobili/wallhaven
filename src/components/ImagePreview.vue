@@ -62,6 +62,7 @@
           </div>
         </div>
         <div
+          v-show="!isLocal"
           class="sidebar-fixed_box favorite-btn"
           :class="{
             'is-favorite': heartState === 'default',
@@ -121,6 +122,8 @@ const props = withDefaults(defineProps<Props>(), {
   wallpaperList: () => [],
   currentIndex: -1,
   favoriteIds: () => new Set(),
+  wallpaperCollectionMap: () => new Map(),
+  defaultCollectionId: null,
 })
 
 // 定义 emits

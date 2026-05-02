@@ -13,7 +13,7 @@
       @set-bg="handleSetBg"
       @close="closePreview"
       @navigate="handleNavigate"
-      @toggle-favorite="() => {}"
+      @toggle-favorite="handleToggleFavorite"
     />
 
     <Alert
@@ -62,6 +62,7 @@
               @preview="handlePreview"
               @download="handleDownload"
               @set-bg="handleSetBg"
+              @unfavorite="handleCardUnfavorite"
             />
           </div>
         </div>
@@ -89,7 +90,7 @@ defineOptions({ name: 'FavoritesPage' })
 
 // Composables
 const { collections, load: loadCollections } = useCollections()
-const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper } = useFavorites()
+const { favorites, favoriteIds, load: loadFavorites, getCollectionsForWallpaper, remove } = useFavorites()
 const { alert, showSuccess, showWarning, hideAlert } = useAlert()
 const { addTask, startDownload, isDownloading } = useDownload()
 const { setBgFromUrl } = useWallpaperSetter()
@@ -134,6 +135,23 @@ const previewIndex = computed(() => {
   return favoriteWallpaperList.value.findIndex((wp) => wp.id === imgInfo.value?.id)
 })
 
+// Shared unfavorite logic used by both card badge and ImagePreview handlers
+const unfavoriteWallpaper = async (wallpaperId: string): Promise<void> => {
+  if (selectedCollectionId.value) {
+    // Specific collection view — remove from this collection only
+    await remove(wallpaperId, selectedCollectionId.value)
+  } else {
+    // "All favorites" view — remove from ALL collections
+    // Collect all collection IDs first (snapshot) to avoid stale iteration
+    const collectionIds = favorites.value
+      .filter((f) => f.wallpaperId === wallpaperId)
+      .map((f) => f.collectionId)
+    for (const cid of collectionIds) {
+      await remove(wallpaperId, cid)
+    }
+  }
+}
+
 // Helper for card badge data
 const getCollectionNamesForWallpaper = (wallpaperId: string): string[] => {
   return getCollectionsForWallpaper(wallpaperId)
@@ -142,6 +160,15 @@ const getCollectionNamesForWallpaper = (wallpaperId: string): string[] => {
 // Event handlers
 const handleCollectionSelect = (collectionId: string | null): void => {
   selectedCollectionId.value = collectionId
+}
+
+const handleCardUnfavorite = async (wallpaperId: string): Promise<void> => {
+  await unfavoriteWallpaper(wallpaperId)
+}
+
+const handleToggleFavorite = (item: WallpaperItem): void => {
+  // In FavoritesPage, heart click ONLY unfavorites (no toggle-to-add)
+  void unfavoriteWallpaper(item.id)
 }
 
 const handlePreview = (wallpaperData: WallpaperItem): void => {
