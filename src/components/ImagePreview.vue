@@ -63,13 +63,16 @@
         </div>
         <div
           class="sidebar-fixed_box favorite-btn"
-          :class="{ 'is-favorite': isFavorite }"
-          :title="isFavorite ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'"
+          :class="{
+            'is-favorite': heartState === 'default',
+            'is-favorite-in-other': heartState === 'non-default',
+          }"
+          :title="heartState !== 'none' ? '已收藏 · 右键选择收藏夹' : '添加到收藏 · 右键选择收藏夹'"
           @click="handleFavoriteClick"
           @contextmenu.prevent="handleFavoriteRightClick"
         >
           <div class="icon-wrap">
-            <i :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'" />
+            <i :class="heartState !== 'none' ? 'fas fa-heart' : 'far fa-heart'" />
           </div>
         </div>
         <div
@@ -96,6 +99,8 @@
 import type { WallpaperItem } from '@/types'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useImageTransition } from '@/composables'
+import { getHeartState } from '@/utils/heart'
+import type { HeartState } from '@/utils/heart'
 
 // 定义 props
 interface Props {
@@ -105,6 +110,9 @@ interface Props {
   wallpaperList?: WallpaperItem[]
   currentIndex?: number
   favoriteIds?: Set<string>
+  // New optional props for three-state heart (OnlineWallpaper only, per D-10)
+  wallpaperCollectionMap?: Map<string, string[]>
+  defaultCollectionId?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -155,9 +163,25 @@ const canNavigateNext = computed(() => {
   return props.currentIndex >= 0 && props.currentIndex < props.wallpaperList.length - 1
 })
 
-const isFavorite = computed(() => {
-  if (!props.imgInfo) return false
-  return props.favoriteIds?.has(props.imgInfo.id) || false
+/**
+ * Compute heart visual state.
+ * Three-state path: uses wallpaperCollectionMap + defaultCollectionId props (OnlineWallpaper)
+ * Fallback path: uses favoriteIds Set (FavoritesPage, LocalWallpaper)
+ */
+const heartState = computed<HeartState>(() => {
+  if (!props.imgInfo) return 'none'
+
+  // Three-state path: OnlineWallpaper provides collection map data
+  if (props.wallpaperCollectionMap) {
+    return getHeartState(
+      props.imgInfo.id,
+      props.defaultCollectionId ?? null,
+      props.wallpaperCollectionMap,
+    )
+  }
+
+  // fallback path: FavoritesPage, LocalWallpaper — binary isFavorited
+  return props.favoriteIds?.has(props.imgInfo.id) ? 'default' : 'none'
 })
 
 // 监听 showing 变化，重置初始动画状态
@@ -458,5 +482,22 @@ onUnmounted(() => {
 
 .favorite-btn.is-favorite .icon-wrap {
   color: #fff;
+}
+
+/* Blue heart state: in non-default collection(s) only */
+.favorite-btn.is-favorite-in-other {
+  background-color: #5b8def;
+  border-color: #5b8def;
+}
+
+.favorite-btn.is-favorite-in-other .icon-wrap {
+  color: #fff;
+}
+
+/* Blue hover — override .favorite-btn:hover (specificity 0,1,1) with
+   (0,2,1) to prevent red flash per RESEARCH.md Pitfall 3. */
+.favorite-btn.is-favorite-in-other:hover {
+  background-color: rgba(91, 141, 239, 0.7);
+  border-color: #5b8def;
 }
 </style>
