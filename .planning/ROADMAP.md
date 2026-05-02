@@ -73,11 +73,11 @@
 **Goal:** 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中重复的 downloadWallpaperFile 与 setBg/handleSetBg 逻辑提取到 useWallpaperSetter composable，消除代码重复
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05
 **Depends on:** Phase 36
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 37-01-PLAN.md — 扩展 useWallpaperSetter 添加 DownloadResult、downloadWallpaperFile、setBgFromUrl
-- [ ] 37-02-PLAN.md — 清理 FavoritesPage.vue 和 OnlineWallpaper.vue 的重复逻辑
+- [x] 37-01-PLAN.md — 扩展 useWallpaperSetter 添加 DownloadResult、downloadWallpaperFile、setBgFromUrl
+- [x] 37-02-PLAN.md — 清理 FavoritesPage.vue 和 OnlineWallpaper.vue 的重复逻辑
 
 ---
 
