@@ -58,7 +58,9 @@ interface ElectronAPI {
 
   // 文件操作
   deleteFile: (filePath: string) => Promise<{ success: boolean; error: string | null }>
-  checkFileExists: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>
+  checkFileExists: (
+    filePath: string,
+  ) => Promise<{ success: boolean; exists: boolean; error?: string }>
 
   // 下载功能
   downloadWallpaper: (params: {
@@ -73,7 +75,12 @@ interface ElectronAPI {
     url: string
     filename: string
     saveDir: string
-  }) => Promise<{ success: boolean; filePath: string | null; error: string | null }>
+  }) => Promise<{
+    success: boolean
+    filePath: string | null
+    error: string | null
+    taskId?: string | null
+  }>
 
   // 暂停下载任务
   pauseDownloadTask: (taskId: string) => Promise<{ success: boolean; error?: string }>

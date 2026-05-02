@@ -333,8 +333,8 @@ class ElectronClientImpl {
 
     try {
       const result = await window.electronAPI.startDownloadTask(params)
-      if (result.success && result.filePath) {
-        return { success: true, data: result.filePath }
+      if (result.success && result.taskId) {
+        return { success: true, data: result.taskId }
       }
       return {
         success: false,

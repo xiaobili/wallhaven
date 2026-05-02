@@ -41,7 +41,7 @@ interface ActiveDownload {
   downloadedSize: number
   lastPersistTime: number
   lastPersistOffset: number
-  retryCount?: number  // How many retries have been attempted (Phase 34)
+  retryCount?: number // How many retries have been attempted (Phase 34)
 }
 
 // Store active downloads with their AbortControllers
@@ -61,9 +61,9 @@ interface RetryTimerEntry {
 const retryTimers = new Map<string, RetryTimerEntry>()
 
 /** Retry backoff configuration constants */
-const BACKOFF_BASE_MS = 2000   // 2 seconds — base delay for first retry
-const BACKOFF_MAX_MS  = 30000  // 30 seconds — absolute ceiling
-const MAX_RETRIES     = 3      // Max retry attempts before permanent failure
+const BACKOFF_BASE_MS = 2000 // 2 seconds — base delay for first retry
+const BACKOFF_MAX_MS = 30000 // 30 seconds — absolute ceiling
+const MAX_RETRIES = 3 // Max retry attempts before permanent failure
 
 /**
  * Get state file path from temp file path
@@ -219,9 +219,15 @@ function classifyDownloadError(error: any): { isRetriable: boolean; reason: stri
   // 4. Network error codes from Node.js/Axios
   if (error.code && typeof error.code === 'string') {
     const retriableCodes = new Set([
-      'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED',
-      'ENETUNREACH', 'EADDRNOTAVAIL', 'EPIPE',
-      'ERR_NETWORK', 'ERR_CONNECTION_RESET',
+      'ECONNRESET',
+      'ETIMEDOUT',
+      'ENOTFOUND',
+      'ECONNREFUSED',
+      'ENETUNREACH',
+      'EADDRNOTAVAIL',
+      'EPIPE',
+      'ERR_NETWORK',
+      'ERR_CONNECTION_RESET',
     ])
     if (retriableCodes.has(error.code)) {
       return { isRetriable: true, reason: `network_${error.code}` }
@@ -248,10 +254,7 @@ function classifyDownloadError(error: any): { isRetriable: boolean; reason: stri
  * Example delays: attempt 1 -> 0-2s, attempt 2 -> 0-4s, attempt 3 -> 0-8s
  */
 function calculateBackoff(attempt: number): number {
-  const exponential = Math.min(
-    BACKOFF_BASE_MS * Math.pow(2, attempt - 1),
-    BACKOFF_MAX_MS,
-  )
+  const exponential = Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt - 1), BACKOFF_MAX_MS)
   // Full jitter: random(0, exponential)
   return Math.random() * exponential
 }
@@ -472,11 +475,7 @@ export async function executeDownload(
         const download = activeDownloads.get(taskId)
         if (
           download &&
-          shouldPersistState(
-            download.lastPersistTime,
-            download.lastPersistOffset,
-            downloadedSize,
-          )
+          shouldPersistState(download.lastPersistTime, download.lastPersistOffset, downloadedSize)
         ) {
           const statePath = getStateFilePath(tempPath)
           const state: PendingDownload = {
@@ -548,8 +547,12 @@ export async function executeDownload(
       const windows = BrowserWindow.getAllWindows()
       if (windows.length > 0) {
         windows[0].webContents.send('download-progress', {
-          taskId, progress: 0, offset: 0, speed: 0,
-          state: 'failed', error: '未知错误',
+          taskId,
+          progress: 0,
+          offset: 0,
+          speed: 0,
+          state: 'failed',
+          error: '未知错误',
         })
       }
       throw new Error('Unknown download error')
@@ -565,11 +568,7 @@ export async function executeDownload(
     const entry = activeDownloads.get(taskId)
 
     // Retriable with retries remaining: skip cleanup, let executeWithRetry handle it
-    if (
-      classification.isRetriable &&
-      entry &&
-      (entry.retryCount ?? 0) < MAX_RETRIES
-    ) {
+    if (classification.isRetriable && entry && (entry.retryCount ?? 0) < MAX_RETRIES) {
       logHandler(
         'executeDownload',
         `Retriable error for ${taskId} (attempt ${(entry.retryCount ?? 0) + 1}/${MAX_RETRIES}): ${error.message}`,
