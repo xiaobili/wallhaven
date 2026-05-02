@@ -6,7 +6,7 @@ export { useAlert, type AlertType, type AlertState, type UseAlertReturn } from '
 
 // Wallpaper
 export { useWallpaperList, type UseWallpaperListReturn } from './wallpaper/useWallpaperList'
-export { useWallpaperSetter, type UseWallpaperSetterReturn } from './wallpaper/useWallpaperSetter'
+export { useWallpaperSetter, type UseWallpaperSetterReturn, type DownloadResult } from './wallpaper/useWallpaperSetter'
 
 // Download
 export { useDownload, type UseDownloadReturn } from './download/useDownload'
