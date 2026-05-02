@@ -4,20 +4,20 @@ milestone: v4.2
 status: planning
 stopped_at: ''
 last_updated: "2026-05-02T14:30:00.000Z"
-last_activity: 2026-05-02 -- Phase 37 context gathered
+last_activity: 2026-05-02 -- Phase 37 planned
 progress:
   total_phases: 37
   completed_phases: 36
-  total_plans: 10
+  total_plans: 12
   completed_plans: 10
-  percent: 97
+  percent: 83
 ---
 
 # Project State
 
-> Updated: 2026-05-01
-> Current: All milestones shipped — ready for next milestone
-> Status: v4.0 and v4.1 complete
+> Updated: 2026-05-02
+> Current: Phase 37 planned — ready for execution
+> Status: 2 plans in 2 waves
 
 ---
 
@@ -26,11 +26,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** 收藏管理，分类随心 -- 将喜欢的壁纸添加到自定义收藏夹，按主题分类管理
-**Current focus:** Planning next milestone
+**Current focus:** Phase 37 execution — composable extraction
 
 ---
 
 ## Current Position
+
+**Phase 37:** Composable extraction (2 plans, 0/2 complete)
+Progress: [##################..] 83%
 
 Milestones: v4.0 (Phases 33-35, 9 plans) and v4.1 (Phase 36, 1 plan)
 Status: Both milestones shipped 2026-05-01
