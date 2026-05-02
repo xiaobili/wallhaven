@@ -18,7 +18,7 @@
 - ✅ **v4.0 多线程下载与重试退避机制** -- Phases 33-35 (shipped 2026-05-01)
 - ✅ **v4.1 壁纸列表全选功能** -- Phase 36 (shipped 2026-05-01)
 - ✅ **v4.2 Composable 提取** -- Phase 37 (shipped 2026-05-02)
-- 🚧 **v4.3 downloadWallpaperFile 分层重构** -- Phase 38 (in progress)
+- ✅ **v4.3 downloadWallpaperFile 分层重构** -- Phase 38 (shipped 2026-05-02)
 
 ---
 
@@ -50,13 +50,13 @@
 ---
 
 <details>
-<summary>🚧 v4.3 downloadWallpaperFile 分层重构 (Phase 38) — IN PROGRESS</summary>
+<summary>🚧 v4.3 downloadWallpaperFile 分层重构 (Phase 38) — SHIPPED 2026-05-02</summary>
 
-- [ ] Phase 38: downloadWallpaperFile 分层重构与重复下载检测 (2/0 plans) — in progress
+- [x] Phase 38: downloadWallpaperFile 分层重构与重复下载检测 (2/2 plans) — completed 2026-05-02
 
 Plans:
-- [ ] 38-01-PLAN.md — Add fileExists IPC infrastructure (IPC channel, preload bridge, electron client)
-- [ ] 38-02-PLAN.md — Add simpleDownload to service + refactor composable to delegate
+- [x] 38-01-PLAN.md — Add fileExists IPC infrastructure (IPC channel, preload bridge, electron client)
+- [x] 38-02-PLAN.md — Add simpleDownload to service + refactor composable to delegate
 
 </details>
 
@@ -71,7 +71,7 @@ Plans:
 | 35. 重试状态展示与UI集成 | v4.0 | 3/3 | Complete | 2026-05-01 |
 | 36. 壁纸列表全选功能 | v4.1 | 1/1 | Complete | 2026-05-01 |
 | 37. Composable 提取 | v4.2 | 2/2 | Complete | 2026-05-02 |
-| 38. downloadWallpaperFile 分层重构 | v4.3 | 0/2 | In Progress | — |
+| 38. downloadWallpaperFile 分层重构 | v4.3 | 2/2 | Complete | 2026-05-02 |
 
 ---
 
