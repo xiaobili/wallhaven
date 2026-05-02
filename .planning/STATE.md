@@ -1,22 +1,22 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.4
-milestone_name: 收藏状态小红心与取消收藏
-status: planning
-last_updated: "2026-05-02T13:00:00.000Z"
+milestone: v4.5
+milestone_name: 在线壁纸页面小红心状态
+status: in_progress
+last_updated: "2026-05-02T13:30:00.000Z"
 progress:
-  total_phases: 39
-  completed_phases: 38
-  total_plans: 48
-  completed_plans: 86
-  percent: 97
+  total_phases: 40
+  completed_phases: 40
+  total_plans: 51
+  completed_plans: 91
+  percent: 100
 ---
 
 # Project State
 
 > Updated: 2026-05-02
-> Current: Phase 39 planned (2 plans) — ready for execution
-> Status: 38/39 phases complete
+> Current: Phase 40 complete
+> Status: 40/40 phases complete — All phases done
 
 ---
 
@@ -36,11 +36,14 @@ Progress: [####################] 100%
 **Phase 38:** downloadWallpaperFile 分层重构与重复下载检测 (2 plans, 2/2 complete)
 Progress: [####################] 100%
 
-**Phase 39:** 收藏状态小红心逻辑与取消收藏功能 (2 plans, 0/2 complete)
-Progress: [                    ] 0%
+**Phase 39:** 收藏状态小红心逻辑与取消收藏功能 (2 plans, 2/2 complete)
+Progress: [####################] 100%
 
-Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans), v4.3 (Phase 38, 2 plans), v4.4 (Phase 39)
-Status: 38/39 phases complete — Phase 39 in planning
+**Phase 40:** 在线壁纸页面小红心多收藏夹状态区分 (3 plans, 3/3 complete)
+Progress: [####################] 100%
+
+Milestones: v4.0 (Phases 33-35, 9 plans), v4.1 (Phase 36, 1 plan), v4.2 (Phase 37, 2 plans), v4.3 (Phase 38, 2 plans), v4.4 (Phase 39, 2 plans), v4.5 (Phase 40, 3 plans)
+Status: 40/40 phases complete
 
 ---
 
@@ -51,6 +54,8 @@ Status: 38/39 phases complete — Phase 39 in planning
 - Phase 37 added: 将 FavoritesPage.vue 和 OnlineWallpaper.vue 中的 handleSetBg/setBg 与 downloadWallpaperFile 提取为可复用组合函数
 - Phase 38 added: downloadWallpaperFile 分层重构与重复下载检测
 - Phase 39 added: 收藏状态小红心逻辑与取消收藏功能
+- Phase 40 added: 在线壁纸页面小红心多收藏夹状态区分 — WallpaperList/ImagePreview 组件颜色逻辑
+- Phase 40 context gathered
 
 ## Completed Plans
 
@@ -69,8 +74,12 @@ Status: 38/39 phases complete — Phase 39 in planning
 | 37-01 useWallpaperSetter Extension | DownloadResult, downloadWallpaperFile, setBgFromUrl | 477263e, 2f11072 |
 | 37-02 View Integration | FavoritesPage/OnlineWallpaper delegate to composable, ~75 lines removed | 120d65f, f55f207 |
 | 38-01 fileExists IPC Channel | FILE_EXISTS channel, preload bridge, electronClient wrapper | fb737a8 |
+| 38-01 fileExists IPC Channel | FILE_EXISTS channel, preload bridge, electronClient wrapper | fb737a8 |
 | 38-02 simpleDownload + Composable refactor | simpleDownload() in service, composable delegation | 49cf9fd |
+| 40-01 Heart utility + OnlineWallpaper data flow | HeartState type, getHeartState(), wallpaperCollectionMap/defaultCollectionId computeds | c5fa3d6 |
+| 40-02 Three-state heart in WallpaperList | heartState() method, three-state CSS with blue hover override | 83d8f55 |
+| 40-03 Three-state heart in ImagePreview | heartState computed with fallback, three-state CSS with blue hover override | 89cec1d |
 
 ---
 
-*Updated: 2026-05-01*
+*Updated: 2026-05-02*
