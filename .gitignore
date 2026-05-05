@@ -46,3 +46,4 @@ build/*.dmg
 build/*.AppImage
 build/*.snap
 build/*.deb
+.gitnexus
