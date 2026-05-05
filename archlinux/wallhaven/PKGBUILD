@@ -43,12 +43,8 @@ build() {
 package() {
     cd "$srcdir/$pkgname-$pkgver"
 
-    # 创建临时目录用于解压 pacman 包
-    local extract_dir="$srcdir/extract"
-    mkdir -p "$extract_dir"
-
     # 找到生成的 pacman 包并解压
-    local pacman_file=$(find release -name "wallhaven-*.pacman" -type f | head -n1)
+    local pacman_file=$(find dist -name "wallhaven-*.pacman" -type f | head -n1)
 
     if [[ -z "$pacman_file" ]]; then
         error "无法找到生成的 pacman 包"
