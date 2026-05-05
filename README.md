@@ -189,13 +189,26 @@ npm run build:linux
 
 Arch Linux 用户可以通过以下方式安装：
 
-```bash
-# 方式一：从源码构建
-cd archlinux
-makepkg -si
+#### 从 AUR 安装（推荐）
 
-# 方式二：使用构建脚本
-./archlinux/build-arch-package.sh --install
+```bash
+# 使用 yay
+yay -S wallhaven
+
+# 或使用 paru
+paru -S wallhaven
+```
+
+#### 从源码构建
+
+```bash
+# 方式一：使用构建脚本
+cd archlinux
+./build-arch-package.sh --local --install
+
+# 方式二：手动构建
+cd archlinux/wallhaven
+makepkg -si
 ```
 
 详细说明请参见 [archlinux/README.md](archlinux/README.md)。
