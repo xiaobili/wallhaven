@@ -1,10 +1,11 @@
 # Wallhaven 壁纸浏览器 - 项目指导
 
+> **注意：** 该项目下所有的AI输出使用中文，语言偏好为中文
+
 行为准则，用于减少常见的 LLM 编码错误。可根据项目特定说明进行合并。
 
 **权衡：** 这些准则偏向谨慎而非速度。对于简单的任务，请自行判断。
 
-**注意：** 所有的输出使用中文
 
 ## 1. 编码前先思考
 
@@ -74,6 +75,8 @@
 <!-- gsd:start -->
 # GSD 工作流强制执行
 
+> 该项目知识图谱由gitnexus提供，工作流使用过程中注意结合gitnexus
+
 此项目使用 GSD (Get Shit Done) 工作流管理。以下规则必须遵守：
 
 ### 阶段执行流程
@@ -93,6 +96,45 @@
 - **不跳过阶段**：必须按顺序完成讨论→规划→执行→验证
 - **原子提交**：每个逻辑变更独立提交
 - **保持约束**：不改变任何用户操作逻辑、界面布局、UI 显示
+- **修改前必检查**：任何代码修改前必须运行 `gitnexus_impact` 分析影响范围
+- **提交前必验证**：提交前必须运行 `gitnexus_detect_changes` 确认修改范围符合预期
+
+### GitNexus 集成准则
+
+在使用 GSD 工作流的各个阶段，必须主动结合 GitNexus 的能力：
+
+#### 1. 讨论阶段（Discuss Phase）
+
+- **探索代码结构**：使用 `gitnexus_query({query: "概念"})` 查找相关执行流程
+- **理解依赖关系**：使用 `gitnexus_context({name: "符号名"})` 了解符号的调用者和被调用者
+- **查看执行流程**：读取 `gitnexus://repo/wallhaven/process/{name}` 了解完整执行路径
+
+#### 2. 规划阶段（Plan Phase）
+
+- **评估修改影响**：对计划修改的符号运行 `gitnexus_impact({target: "符号名", direction: "upstream"})`
+- **识别高风险修改**：标记影响范围大（HIGH/CRITICAL）的修改点，在计划中特别说明
+- **确认模块边界**：使用 `gitnexus_query` 确认修改是否涉及多个功能模块
+
+#### 3. 执行阶段（Execute Phase）
+
+- **修改前必做**：
+  ```typescript
+  // 任何代码修改前，先运行影响分析
+  gitnexus_impact({target: "symbolName", direction: "upstream"})
+  ```
+- **高风险警告**：如果 impact 返回 HIGH 或 CRITICAL，必须先向用户确认
+- **原子提交验证**：每次提交前运行 `gitnexus_detect_changes()` 确认修改范围
+
+#### 4. 验证阶段（Verify Phase）
+
+- **确认修改范围**：使用 `gitnexus_detect_changes()` 验证实际修改与计划一致
+- **检查副作用**：确认没有意外影响到其他执行流程
+- **回归测试指引**：根据 impact 分析结果，确定需要测试的功能模块
+
+#### 5. 代码审查阶段（Code Review）
+
+- **调用链分析**：使用 `gitnexus_context` 检查修改的符号是否影响关键路径
+- **执行流验证**：读取相关的 process 资源，确认修改不会破坏现有流程
 
 ## 参考文档
 
@@ -106,7 +148,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **wallhaven** (1910 symbols, 3506 relationships, 151 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **wallhaven** (2102 symbols, 3815 relationships, 166 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -127,32 +169,33 @@ This project is indexed by GitNexus as **wallhaven** (1910 symbols, 3506 relatio
 
 ## Resources
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/wallhaven/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/wallhaven/clusters` | All functional areas |
-| `gitnexus://repo/wallhaven/processes` | All execution flows |
-| `gitnexus://repo/wallhaven/process/{name}` | Step-by-step execution trace |
+| Resource                                   | Use for                                  |
+| ------------------------------------------ | ---------------------------------------- |
+| `gitnexus://repo/wallhaven/context`        | Codebase overview, check index freshness |
+| `gitnexus://repo/wallhaven/clusters`       | All functional areas                     |
+| `gitnexus://repo/wallhaven/processes`      | All execution flows                      |
+| `gitnexus://repo/wallhaven/process/{name}` | Step-by-step execution trace             |
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-| Work in the Clients area (56 symbols) | `.claude/skills/generated/clients/SKILL.md` |
-| Work in the Services area (47 symbols) | `.claude/skills/generated/services/SKILL.md` |
-| Work in the Wallpaper area (43 symbols) | `.claude/skills/generated/wallpaper/SKILL.md` |
-| Work in the Handlers area (38 symbols) | `.claude/skills/generated/handlers/SKILL.md` |
-| Work in the Favorites area (31 symbols) | `.claude/skills/generated/favorites/SKILL.md` |
-| Work in the Download area (17 symbols) | `.claude/skills/generated/download/SKILL.md` |
-| Work in the Errors area (8 symbols) | `.claude/skills/generated/errors/SKILL.md` |
-| Work in the Main area (6 symbols) | `.claude/skills/generated/main/SKILL.md` |
-| Work in the Scripts area (5 symbols) | `.claude/skills/generated/scripts/SKILL.md` |
-| Work in the Settings area (4 symbols) | `.claude/skills/generated/settings/SKILL.md` |
+| Task                                         | Read this skill file                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md`       |
+| Blast radius / "What breaks if I change X?"  | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?"             | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md`       |
+| Rename / extract / split / refactor          | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md`     |
+| Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
+| Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
+| Work in the Clients area (95 symbols)        | `.claude/skills/generated/clients/SKILL.md`                 |
+| Work in the Services area (80 symbols)       | `.claude/skills/generated/services/SKILL.md`                |
+| Work in the Handlers area (38 symbols)       | `.claude/skills/generated/handlers/SKILL.md`                |
+| Work in the Favorites area (27 symbols)      | `.claude/skills/generated/favorites/SKILL.md`               |
+| Work in the Wallpaper area (26 symbols)      | `.claude/skills/generated/wallpaper/SKILL.md`               |
+| Work in the Repositories area (13 symbols)   | `.claude/skills/generated/repositories/SKILL.md`            |
+| Work in the Errors area (8 symbols)          | `.claude/skills/generated/errors/SKILL.md`                  |
+| Work in the Download area (7 symbols)        | `.claude/skills/generated/download/SKILL.md`                |
+| Work in the Main area (6 symbols)            | `.claude/skills/generated/main/SKILL.md`                    |
+| Work in the Show area (5 symbols)            | `.claude/skills/generated/show/SKILL.md`                    |
+| Work in the Scripts area (5 symbols)         | `.claude/skills/generated/scripts/SKILL.md`                 |
 
 <!-- gitnexus:end -->
