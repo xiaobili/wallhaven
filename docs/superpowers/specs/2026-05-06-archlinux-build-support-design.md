@@ -57,7 +57,7 @@ pkgver=2.7.0  # 从 package.json 自动提取
 pkgrel=1
 pkgdesc="一款优雅的跨平台桌面壁纸浏览与下载应用"
 arch=('x86_64')
-url="https://github.com/BillyJR/wallhaven"
+url="https://github.com/xiaobili/wallhaven"
 license=('MIT')
 ```
 
@@ -152,7 +152,7 @@ pkgbase = wallhaven
     license = MIT
     makedepends = git npm nodejs libsecret python gcc make
     depends = gtk3 libnotify nss libxss at-spi2-core libdrm libxkbcommon mesa
-    source = wallhaven-v2.7.0.tar.gz::https://github.com/BillyJR/wallhaven/archive/v2.7.0.tar.gz
+    source = wallhaven-v2.7.0.tar.gz::https://github.com/xiaobili/wallhaven/archive/v2.7.0.tar.gz
     sha256sums = SKIP
 
 pkgname = wallhaven
