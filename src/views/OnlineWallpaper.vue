@@ -16,9 +16,9 @@
     />
 
     <ImagePreview
-      v-show="imgShow"
-      :showing="imgShow"
-      :img-info="imgInfo"
+      v-show="preview.visible.value"
+      :showing="preview.visible.value"
+      :img-info="preview.current.value"
       :is-local="false"
       :wallpaper-list="wallpaperList"
       :current-index="previewIndex"
@@ -27,7 +27,7 @@
       :default-collection-id="defaultCollectionId"
       @download-img="downloadImg"
       @set-bg="setBg"
-      @close="closePreview"
+      @close="preview.close"
       @navigate="handleNavigate"
       @toggle-favorite="handleToggleFavorite"
       @show-favorite-dropdown="handleShowFavoriteDropdown"
@@ -38,12 +38,12 @@
       :api-key="apiKey"
       :desktop-info="desktopInfo"
       :saving="saving"
-      :selected-count="selectedWallpapers.length"
-      :downloading="downloading"
+      :selected-count="selection.selectedCount.value"
+      :downloading="selection.downloading.value"
       @change-params="handleChangeParams"
       @save-params="saveParams"
       @download-selected="downloadSelected"
-      @clear-selection="clearSelection"
+      @clear-selection="selection.clear"
     />
 
     <!-- 显示错误信息 -->
@@ -75,18 +75,18 @@
       :page-data="wallpapers"
       :loading="loading"
       :error="error"
-      :selected-ids="selectedWallpapers"
+      :selected-ids="selection.selectedIds.value"
       :favorite-ids="favoriteIds"
       :wallpaper-collection-map="wallpaperCollectionMap"
       :default-collection-id="defaultCollectionId"
       @set-bg="setBg"
-      @preview="preview"
+      @preview="openPreview"
       @download-img="downloadImg"
-      @select-wallpaper="toggleSelection"
+      @select-wallpaper="selection.toggle"
       @close-search-modal="closeSearchModal"
       @toggle-favorite="handleToggleFavorite"
       @show-favorite-dropdown="handleShowFavoriteDropdown"
-      @select-all="handleSelectAll"
+      @select-all="selection.selectAll"
     />
 
     <!-- 分页条 -->
@@ -101,12 +101,12 @@
 
     <!-- Collection Dropdown -->
     <CollectionDropdown
-      v-if="dropdownWallpaper"
-      :wallpaper-id="dropdownWallpaper.id"
-      :wallpaper-data="dropdownWallpaper"
-      :visible="showFavoriteDropdown"
-      :position="dropdownPosition"
-      @close="closeFavoriteDropdown"
+      v-if="dropdown.wallpaper.value"
+      :wallpaper-id="dropdown.wallpaper.value.id"
+      :wallpaper-data="dropdown.wallpaper.value"
+      :visible="dropdown.visible.value"
+      :position="dropdown.position.value"
+      @close="dropdown.close"
     />
   </div>
 </template>
@@ -122,16 +122,21 @@ import CollectionDropdown from '@/components/favorites/CollectionDropdown.vue'
 import PaginationBar from '@/components/PaginationBar.vue'
 import {
   useWallpaperList,
-  useDownload,
+  useWallpaperSelection,
+  useWallpaperDownload,
   useSettings,
   useAlert,
   useWallpaperSetter,
   useFavorites,
   useCollections,
+  useFavoriteDropdown,
+  flattenWallpapers,
 } from '@/composables'
 import type { WallpaperItem, GetParams, CustomParams } from '@/types'
 
-// Composables
+// ==================== Composables ====================
+
+// 壁纸列表
 const {
   wallpapers,
   currentPageData,
@@ -144,12 +149,21 @@ const {
   saveCustomParams,
   updateItemFavoriteStatus,
 } = useWallpaperList()
-const { addTask, startDownload, isDownloading } = useDownload()
+
+// 设置
 const { settings } = useSettings()
+const apiKey = computed(() => settings.value.apiKey)
+
+// 下载
+const wallpaperDownload = useWallpaperDownload()
+
+// 提示
 const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert()
+
+// 壁纸设置
 const { setBgFromUrl } = useWallpaperSetter()
 
-// Favorites composable
+// 收藏
 const {
   favorites,
   favoriteIds,
@@ -157,46 +171,49 @@ const {
   remove: removeFavorite,
   isInCollection,
 } = useFavorites()
-
-// Collections composable for getDefault
 const { getDefault } = useCollections()
 
-// Refs - 使用 shallowRef 优化大型对象
+// 选择管理
+const selection = useWallpaperSelection()
+
+// 收藏下拉菜单
+const dropdown = useFavoriteDropdown()
+
+// ==================== 预览状态 ====================
+
+const preview = {
+  visible: ref<boolean>(false),
+  current: shallowRef<WallpaperItem | null>(null),
+  open(item: WallpaperItem) {
+    dropdown.close()
+    this.current.value = item
+    this.visible.value = true
+  },
+  close() {
+    this.visible.value = false
+    this.current.value = null
+  },
+}
+
+// ==================== 其他状态 ====================
+
 const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 const desktopInfo = ref<string>('')
 const saving = ref<boolean>(false)
-const imgInfo = shallowRef<WallpaperItem | null>(null) // 使用 shallowRef
-const imgShow = ref<boolean>(false)
-const selectedWallpapers = ref<string[]>([])
-const downloading = ref<boolean>(false)
-const showLoadingOverlay = ref<boolean>(false) // 控制加载遮罩层显示
+const showLoadingOverlay = ref<boolean>(false)
 
-// Favorite dropdown state
-const showFavoriteDropdown = ref<boolean>(false)
-const dropdownPosition = ref<{ x: number; y: number }>({ x: 0, y: 0 })
-const dropdownWallpaper = ref<WallpaperItem | null>(null)
+// ==================== 计算属性 ====================
 
-// Computed - 使用计算属性使 apiKey 响应式跟随 store 变化
-const apiKey = computed(() => settings.value.apiKey)
-
-// 从 wallpapers 中提取扁平化的壁纸列表
-const wallpaperList = computed<WallpaperItem[]>(() => {
-  const allWallpapers: WallpaperItem[] = []
-  wallpapers.value.sections.forEach((section) => {
-    allWallpapers.push(...section.data)
-  })
-  return allWallpapers
-})
+// 扁平化的壁纸列表
+const wallpaperList = computed<WallpaperItem[]>(() => flattenWallpapers(wallpapers.value))
 
 // 当前预览索引
 const previewIndex = computed(() => {
-  if (!imgInfo.value) return -1
-  return wallpaperList.value.findIndex((wp) => wp.id === imgInfo.value?.id)
+  if (!preview.current.value) return -1
+  return wallpaperList.value.findIndex((wp) => wp.id === preview.current.value?.id)
 })
 
-// Computed: wallpaperId → collectionId[] mapping for three-state heart
-// Groups FavoriteItem[] by wallpaperId. Used by child components to
-// determine heart color (red for default, blue for other).
+// 收藏夹映射
 const wallpaperCollectionMap = computed(() => {
   const map = new Map<string, string[]>()
   for (const fav of favorites.value) {
@@ -210,45 +227,39 @@ const wallpaperCollectionMap = computed(() => {
   return map
 })
 
-// Computed: default collection ID for heart state determination.
-// Must be computed to track Pinia store reactivity per RESEARCH.md Pitfall 4.
-// When no default is set, returns null (causes getHeartState to treat ANY
-// collection membership as 'non-default' per D-05 edge case).
+// 默认收藏夹 ID
 const defaultCollectionId = computed(() => getDefault()?.id ?? null)
 
-// Lifecycle hooks
+// ==================== 生命周期 ====================
+
 onMounted(() => {
-  // 添加点击外部关闭下拉菜单
-  document.addEventListener('click', handleClickOutside)
-  // 添加键盘导航
+  document.addEventListener('click', dropdown.handleClickOutside)
   window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
-  // 组件卸载时，清理监听器
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('click', dropdown.handleClickOutside)
   window.removeEventListener('keydown', handleKeydown)
 })
 
-// 监听页码变化，触发滚动
+// ==================== 监听器 ====================
+
+// 页码变化时滚动
 watch(
   () => currentPageData.value.currentPage,
   (newPage, oldPage) => {
-    // 仅在页码实际变化时滚动（排除初始化）
     if (oldPage !== undefined && oldPage !== 0 && newPage !== oldPage) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 )
 
-// 监听 favorites 变化，同步更新 currentPageData 中的 is_favorite
+// 收藏变化时更新壁纸状态
 watch(
   () => favorites.value,
   (newFavorites) => {
-    // 仅在当前页面有数据时处理
     if (currentPageData.value.data.length === 0) return
 
-    // 遍历当前页的壁纸，检查收藏状态是否需要更新
     for (const item of currentPageData.value.data) {
       const favRecords = newFavorites.filter((f) => f.wallpaperId === item.id)
       let newStatus: 0 | 1 | 2 = 0
@@ -259,7 +270,6 @@ watch(
         newStatus = inDefault ? 1 : 2
       }
 
-      // 仅在状态变化时更新
       if (item.is_favorite !== newStatus) {
         updateItemFavoriteStatus(item.id, newStatus)
       }
@@ -268,23 +278,23 @@ watch(
   { deep: true }
 )
 
+// ==================== 事件处理 ====================
+
 /**
- * 分页导航处理
+ * 分页导航
  */
 const handleGoToPage = async (page: number): Promise<void> => {
   await goToPage(page)
 }
 
 /**
- * 键盘导航处理（与 ImagePreview 互斥）
+ * 键盘导航
  */
 const handleKeydown = (event: KeyboardEvent): void => {
-  // 只在 ImagePreview 关闭时响应
-  if (imgShow.value) return
+  if (preview.visible.value) return
 
   const { currentPage, totalPage } = currentPageData.value
 
-  // 边界检查 + 导航
   if (event.key === 'ArrowLeft' && currentPage > 1) {
     event.preventDefault()
     goToPage(currentPage - 1)
@@ -294,14 +304,19 @@ const handleKeydown = (event: KeyboardEvent): void => {
   }
 }
 
-// Methods
+/**
+ * 搜索参数变更
+ */
 const handleChangeParams = (customParams: GetParams | null): void => {
-  showLoadingOverlay.value = true // 点击搜索按钮时显示遮罩
+  showLoadingOverlay.value = true
   fetchWallpapers(customParams).finally(() => {
-    showLoadingOverlay.value = false // 加载完成后隐藏遮罩
+    showLoadingOverlay.value = false
   })
 }
 
+/**
+ * 保存搜索参数
+ */
 const saveParams = async (params: CustomParams): Promise<void> => {
   const success = await saveCustomParams(params)
   if (success) {
@@ -310,126 +325,39 @@ const saveParams = async (params: CustomParams): Promise<void> => {
 }
 
 /**
- * 切换壁纸选择状态
- */
-const toggleSelection = (wallpaperId: string): void => {
-  const index = selectedWallpapers.value.indexOf(wallpaperId)
-  if (index > -1) {
-    // 已选中，取消选择
-    selectedWallpapers.value.splice(index, 1)
-  } else {
-    // 未选中，添加选择
-    selectedWallpapers.value.push(wallpaperId)
-  }
-}
-
-/**
- * Handle select-all event from WallpaperList: batch add or remove all IDs in a section.
- * Per D-04: payload contains { sectionIndex, ids[], selected }.
- * - selected=true: add any IDs not already in selectedWallpapers
- * - selected=false: remove all IDs in the payload from selectedWallpapers
- */
-const handleSelectAll = (payload: {
-  sectionIndex: number
-  ids: string[]
-  selected: boolean
-}): void => {
-  if (payload.selected) {
-    // Add all IDs not already selected
-    for (const id of payload.ids) {
-      if (!selectedWallpapers.value.includes(id)) {
-        selectedWallpapers.value.push(id)
-      }
-    }
-  } else {
-    // Remove all IDs in this section from selection
-    selectedWallpapers.value = selectedWallpapers.value.filter((id) => !payload.ids.includes(id))
-  }
-}
-
-/**
- * 清空选择
- */
-const clearSelection = (): void => {
-  selectedWallpapers.value = []
-}
-
-/**
- * 下载选中的壁纸
+ * 批量下载
  */
 const downloadSelected = async (): Promise<void> => {
-  if (selectedWallpapers.value.length === 0) {
-    showWarning('请先选择要下载的壁纸')
-    return
-  }
-
-  downloading.value = true
-
-  try {
-    // 获取所有选中的壁纸信息
-    const allSections = wallpapers.value.sections
-    const allWallpapers: WallpaperItem[] = []
-
-    // 从所有section中收集壁纸
-    allSections.forEach((section) => {
-      allWallpapers.push(...section.data)
-    })
-
-    const selectedItems = allWallpapers.filter((wp: WallpaperItem) =>
-      selectedWallpapers.value.includes(wp.id),
-    )
-
-    if (selectedItems.length === 0) {
-      showError('未找到选中的壁纸信息')
-      return
-    }
-
-    // 批量添加到下载队列并启动下载
-    for (const item of selectedItems) {
-      const taskId = addTask({
-        url: item.path,
-        filename: generateFilename(item),
-        small: item.thumbs.small,
-        resolution: item.resolution,
-        size: item.file_size,
-        wallpaperId: item.id,
-      })
-      await startDownload(taskId)
-    }
-
-    showSuccess(`已添加 ${selectedItems.length} 个下载任务到下载中心`)
-
-    // 清空选择
-    clearSelection()
-  } catch (error: any) {
-    console.error('批量下载失败:', error)
-    showError('批量下载失败: ' + error.message)
-  } finally {
-    downloading.value = false
-  }
+  await selection.downloadSelected(wallpapers.value)
 }
 
+/**
+ * 关闭搜索模态框
+ */
 const closeSearchModal = (): void => {
-  // 调用 SearchBar 组件暴露的 closeModal 方法
-  if (searchBarRef.value) {
-    searchBarRef.value.closeModal()
-  }
+  searchBarRef.value?.closeModal()
 }
 
-const preview = (imgItem: WallpaperItem): void => {
-  closeFavoriteDropdown()
-  imgInfo.value = imgItem
-  imgShow.value = true
+/**
+ * 打开预览
+ */
+const openPreview = (item: WallpaperItem): void => {
+  preview.open(item)
 }
 
-const setBg = async (imgItem: WallpaperItem): Promise<void> => {
-  return setBgFromUrl(imgItem)
+/**
+ * 设置壁纸
+ */
+const setBg = async (item: WallpaperItem): Promise<void> => {
+  return setBgFromUrl(item)
 }
 
-const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
+/**
+ * 下载壁纸
+ */
+const downloadImg = async (item: WallpaperItem): Promise<void> => {
   try {
-    // 添加到下载队列
-    await addToDownloadQueue(imgItem)
+    await wallpaperDownload.download(item)
     showSuccess('已添加到下载队列，请在下载中心查看进度')
   } catch (error: any) {
     console.error('添加下载任务失败:', error)
@@ -437,18 +365,16 @@ const downloadImg = async (imgItem: WallpaperItem): Promise<void> => {
   }
 }
 
-const closePreview = (): void => {
-  imgShow.value = false
-  imgInfo.value = null
-}
-
+/**
+ * 预览导航
+ */
 const handleNavigate = (direction: 'prev' | 'next'): void => {
   const newIndex = direction === 'prev' ? previewIndex.value - 1 : previewIndex.value + 1
 
   if (newIndex >= 0 && newIndex < wallpaperList.value.length) {
     const wallpaper = wallpaperList.value[newIndex]
     if (wallpaper) {
-      preview(wallpaper)
+      preview.open(wallpaper)
     }
   }
 }
@@ -464,49 +390,7 @@ const retryFetch = (): void => {
 }
 
 /**
- * 添加到下载队列（单个）
- */
-const addToDownloadQueue = async (imgItem: WallpaperItem): Promise<void> => {
-  // 检查是否已在下载队列中
-  if (isDownloading(imgItem.id)) {
-    throw new Error('该壁纸已在下载队列中')
-  }
-
-  // 生成文件名
-  const filename = generateFilename(imgItem)
-
-  // 创建下载任务
-  const taskId = addTask({
-    url: imgItem.path,
-    filename,
-    small: imgItem.thumbs.small,
-    resolution: imgItem.resolution,
-    size: Number(imgItem.file_size) || 0,
-    wallpaperId: imgItem.id,
-  })
-
-  // 自动开始下载
-  await startDownload(taskId)
-
-  console.log('[OnlineWallpaper] 已添加下载任务:', taskId)
-}
-
-/**
- * 生成文件名
- */
-const generateFilename = (imgItem: WallpaperItem): string => {
-  let ext = '.jpg'
-  if (imgItem.path) {
-    const match = imgItem.path.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i)
-    if (match) {
-      ext = match[0]
-    }
-  }
-  return `wallhaven-${imgItem.id}${ext}`
-}
-
-/**
- * 处理收藏按钮左键点击 - 快速添加/移除默认收藏夹
+ * 切换收藏状态
  */
 const handleToggleFavorite = async (item: WallpaperItem): Promise<void> => {
   const defaultCollection = getDefault()
@@ -515,74 +399,22 @@ const handleToggleFavorite = async (item: WallpaperItem): Promise<void> => {
     return
   }
 
-  // 检查是否已在默认收藏夹中
   if (isInCollection(item.id, defaultCollection.id)) {
-    // 已在默认收藏夹中，移除
     await removeFavorite(item.id, defaultCollection.id)
-    // 更新 is_favorite 为 0（未收藏）
     updateItemFavoriteStatus(item.id, 0)
     showSuccess(`已从"${defaultCollection.name}"移除`)
   } else {
-    // 不在默认收藏夹中，添加
     await addFavorite(item.id, defaultCollection.id, item)
-    // 更新 is_favorite 为 1（收藏到默认收藏夹）
     updateItemFavoriteStatus(item.id, 1)
     showSuccess(`已添加到"${defaultCollection.name}"`)
   }
 }
 
 /**
- * 处理收藏按钮右键点击 - 显示收藏夹下拉菜单
+ * 显示收藏下拉菜单
  */
 const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): void => {
-  if (showFavoriteDropdown.value && dropdownWallpaper.value?.id === item.id) {
-    // 点击同一张图片，关闭下拉菜单
-    closeFavoriteDropdown()
-  } else if (showFavoriteDropdown.value) {
-    // 点击不同图片，先关闭再打开（触发动画）
-    showFavoriteDropdown.value = false
-    // 使用 requestAnimationFrame 确保 leave 动画开始后再触发 enter
-    requestAnimationFrame(() => {
-      dropdownWallpaper.value = item
-      const rect = (event.target as HTMLElement).getBoundingClientRect()
-      dropdownPosition.value = {
-        x: rect.left,
-        y: rect.bottom + 4,
-      }
-      showFavoriteDropdown.value = true
-    })
-  } else {
-    // 首次打开 - 需要让组件先挂载，再触发 visible 变化以播放动画
-    dropdownWallpaper.value = item
-    const rect = (event.target as HTMLElement).getBoundingClientRect()
-    dropdownPosition.value = {
-      x: rect.left,
-      y: rect.bottom + 4,
-    }
-    // 延迟设置 visible，让 Transition 检测到 false → true 的变化
-    requestAnimationFrame(() => {
-      showFavoriteDropdown.value = true
-    })
-  }
-}
-
-/**
- * 关闭收藏下拉菜单
- */
-const closeFavoriteDropdown = (): void => {
-  showFavoriteDropdown.value = false
-}
-
-/**
- * 点击外部关闭下拉菜单
- */
-const handleClickOutside = (event: MouseEvent): void => {
-  if (showFavoriteDropdown.value) {
-    const target = event.target as HTMLElement
-    if (!target.closest('.collection-dropdown') && !target.closest('.thumb-favorite-btn')) {
-      closeFavoriteDropdown()
-    }
-  }
+  dropdown.show(item, event)
 }
 </script>
 

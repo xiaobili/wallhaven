@@ -1,11 +1,11 @@
 ---
 name: favorites
-description: "Skill for the Favorites area of wallhaven. 30 symbols across 7 files."
+description: "Skill for the Favorites area of wallhaven. 31 symbols across 7 files."
 ---
 
 # Favorites
 
-30 symbols | 7 files | Cohesion: 57%
+31 symbols | 7 files | Cohesion: 67%
 
 ## When to Use
 
@@ -17,12 +17,12 @@ description: "Skill for the Favorites area of wallhaven. 30 symbols across 7 fil
 
 | File | Symbols |
 |------|---------|
-| `src/stores/modules/favorites/index.ts` | clearPageCache, getCachedPage, setCachedPage, loadFavorites, addFavorite (+6) |
+| `src/stores/modules/favorites/index.ts` | clearPageCache, getCachedPage, loadFavorites, addFavorite, removeFavorite (+5) |
 | `src/composables/favorites/useFavorites.ts` | goToPage, refresh, clearCache, load, loadCounts (+4) |
-| `src/composables/favorites/useCollections.ts` | load, create, rename, deleteCollection, setDefault |
-| `src/repositories/favorites.repository.ts` | getFavoritesPaginated, getCounts |
-| `src/services/collections.service.ts` | delete |
-| `electron/main/ipc/handlers/download.handler.ts` | cancelRetryTimer |
+| `src/composables/favorites/useCollections.ts` | load, create, rename, setDefault, deleteCollection |
+| `src/composables/favorites/useFavoriteDropdown.ts` | show, openDropdown, close, handleClickOutside |
+| `src/repositories/favorites.repository.ts` | getFavoritesPaginated |
+| `src/views/OnlineWallpaper.vue` | open |
 | `src/composables/core/useAlert.ts` | showSuccess |
 
 ## Entry Points
@@ -44,46 +44,44 @@ Start here when exploring this area:
 | `clearCache` | Function | `src/composables/favorites/useFavorites.ts` | 145 |
 | `clearPageCache` | Function | `src/stores/modules/favorites/index.ts` | 205 |
 | `getCachedPage` | Function | `src/stores/modules/favorites/index.ts` | 212 |
-| `setCachedPage` | Function | `src/stores/modules/favorites/index.ts` | 219 |
-| `load` | Function | `src/composables/favorites/useCollections.ts` | 33 |
-| `create` | Function | `src/composables/favorites/useCollections.ts` | 40 |
-| `rename` | Function | `src/composables/favorites/useCollections.ts` | 51 |
-| `deleteCollection` | Function | `src/composables/favorites/useCollections.ts` | 62 |
-| `setDefault` | Function | `src/composables/favorites/useCollections.ts` | 81 |
-| `showSuccess` | Function | `src/composables/core/useAlert.ts` | 96 |
+| `show` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 74 |
+| `openDropdown` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 97 |
+| `close` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 114 |
+| `handleClickOutside` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 121 |
 | `load` | Function | `src/composables/favorites/useFavorites.ts` | 52 |
 | `loadFavorites` | Function | `src/stores/modules/favorites/index.ts` | 63 |
 | `addFavorite` | Function | `src/stores/modules/favorites/index.ts` | 144 |
 | `removeFavorite` | Function | `src/stores/modules/favorites/index.ts` | 160 |
 | `moveFavorite` | Function | `src/stores/modules/favorites/index.ts` | 172 |
-| `loadCollections` | Function | `src/stores/modules/favorites/index.ts` | 78 |
-| `loadAll` | Function | `src/stores/modules/favorites/index.ts` | 88 |
-| `loadCounts` | Function | `src/stores/modules/favorites/index.ts` | 95 |
+| `loadCounts` | Function | `src/composables/favorites/useFavorites.ts` | 152 |
+| `add` | Function | `src/composables/favorites/useFavorites.ts` | 156 |
+| `remove` | Function | `src/composables/favorites/useFavorites.ts` | 172 |
+| `move` | Function | `src/composables/favorites/useFavorites.ts` | 184 |
+| `showSuccess` | Function | `src/composables/core/useAlert.ts` | 96 |
+| `load` | Function | `src/composables/favorites/useCollections.ts` | 33 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Refresh → CreateErrorResponse` | cross_community | 7 |
-| `RegisterDownloadHandlers → CreateErrorResponse` | cross_community | 6 |
-| `Refresh → IsAvailable` | cross_community | 6 |
-| `RegisterDownloadHandlers → IsAvailable` | cross_community | 5 |
-| `RegisterAllHandlers → IsProduction` | cross_community | 5 |
-| `Refresh → IsProduction` | cross_community | 5 |
-| `Refresh → GetErrorCode` | cross_community | 5 |
-| `RegisterDownloadHandlers → GetErrorCode` | cross_community | 4 |
-| `RegisterDownloadHandlers → ClearCache` | cross_community | 4 |
-| `RegisterDownloadHandlers → ClearCache` | cross_community | 4 |
+| `DeleteCollection → ShowAlert` | cross_community | 4 |
+| `Create → ShowAlert` | cross_community | 4 |
+| `Rename → ShowAlert` | cross_community | 4 |
+| `Refresh → ShowAlert` | cross_community | 4 |
+| `SetDefault → ShowAlert` | cross_community | 4 |
+| `DeleteCollection → LoadCollections` | cross_community | 3 |
+| `Add → ShowAlert` | cross_community | 3 |
+| `Remove → ShowAlert` | cross_community | 3 |
+| `Move → ShowAlert` | cross_community | 3 |
+| `Load → ShowAlert` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
 | Wallpaper | 10 calls |
-| Services | 2 calls |
-| Clients | 2 calls |
-| Download | 1 calls |
 | Handlers | 1 calls |
+| Download | 1 calls |
 
 ## How to Explore
 

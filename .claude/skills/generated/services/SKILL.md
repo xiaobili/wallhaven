@@ -1,11 +1,11 @@
 ---
 name: services
-description: "Skill for the Services area of wallhaven. 46 symbols across 9 files."
+description: "Skill for the Services area of wallhaven. 47 symbols across 10 files."
 ---
 
 # Services
 
-46 symbols | 9 files | Cohesion: 88%
+47 symbols | 10 files | Cohesion: 89%
 
 ## When to Use
 
@@ -17,15 +17,16 @@ description: "Skill for the Services area of wallhaven. 46 symbols across 9 file
 
 | File | Symbols |
 |------|---------|
+| `src/services/collections.service.ts` | create, rename, delete, setDefault, clearCache (+3) |
 | `src/services/wallpaperApi.ts` | generateCacheKey, getFromCache, setCache, isProduction, callWallhavenAPIViaIPC (+2) |
-| `src/repositories/favorites.repository.ts` | getFavoriteStatusMap, createCollection, renameCollection, setDefaultCollection, addFavorite (+2) |
-| `src/services/collections.service.ts` | create, rename, setDefault, clearCache, getAll (+2) |
+| `src/services/download.service.ts` | getDownloadPath, startDownload, cleanupOrphanFiles, constructor, registerProgressListener (+2) |
 | `src/services/wallpaper.service.ts` | generateCacheKey, getFromCache, setCache, getApiKey, search (+1) |
 | `src/services/favorites.service.ts` | add, remove, move, clearCache, getAll (+1) |
 | `src/services/settings.service.ts` | get, set, update, getDefaults, reset |
-| `src/services/download.service.ts` | getDownloadPath, startDownload, cleanupOrphanFiles, removeFinishedRecord, clearFinishedRecords |
+| `src/repositories/favorites.repository.ts` | getFavoriteStatusMap, addFavorite, getFavorites |
+| `electron/main/ipc/handlers/download.handler.ts` | scheduleRetryTimer, waitWithBackoff |
 | `src/composables/download/useDownload.ts` | removeFinished, clearFinished |
-| `src/clients/electron.client.ts` | startDownloadTask |
+| `src/clients/store.client.ts` | set |
 
 ## Entry Points
 
@@ -46,43 +47,42 @@ Start here when exploring this area:
 | `removeFinished` | Function | `src/composables/download/useDownload.ts` | 384 |
 | `clearFinished` | Function | `src/composables/download/useDownload.ts` | 399 |
 | `getFavoriteStatusMap` | Method | `src/repositories/favorites.repository.ts` | 272 |
-| `createCollection` | Method | `src/repositories/favorites.repository.ts` | 47 |
-| `renameCollection` | Method | `src/repositories/favorites.repository.ts` | 61 |
-| `setDefaultCollection` | Method | `src/repositories/favorites.repository.ts` | 97 |
 | `addFavorite` | Method | `src/repositories/favorites.repository.ts` | 131 |
-| `getCollections` | Method | `src/repositories/favorites.repository.ts` | 29 |
 | `getFavorites` | Method | `src/repositories/favorites.repository.ts` | 116 |
 | `generateCacheKey` | Function | `src/services/wallpaperApi.ts` | 32 |
 | `getFromCache` | Function | `src/services/wallpaperApi.ts` | 39 |
 | `setCache` | Function | `src/services/wallpaperApi.ts` | 55 |
 | `isProduction` | Function | `src/services/wallpaperApi.ts` | 79 |
 | `callWallhavenAPIViaIPC` | Function | `src/services/wallpaperApi.ts` | 91 |
+| `scheduleRetryTimer` | Function | `electron/main/ipc/handlers/download.handler.ts` | 266 |
+| `waitWithBackoff` | Function | `electron/main/ipc/handlers/download.handler.ts` | 296 |
+| `set` | Method | `src/clients/store.client.ts` | 46 |
 | `generateCacheKey` | Method | `src/services/wallpaper.service.ts` | 45 |
 | `getFromCache` | Method | `src/services/wallpaper.service.ts` | 54 |
 | `setCache` | Method | `src/services/wallpaper.service.ts` | 72 |
 | `getApiKey` | Method | `src/services/wallpaper.service.ts` | 91 |
+| `search` | Method | `src/services/wallpaper.service.ts` | 104 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `SearchWallpapers → CreateErrorResponse` | cross_community | 6 |
-| `Fetch → CreateErrorResponse` | cross_community | 6 |
-| `LoadMore → CreateErrorResponse` | cross_community | 6 |
-| `GetWallpaperDetail → CreateErrorResponse` | cross_community | 6 |
-| `SearchWallpapers → IsAvailable` | cross_community | 5 |
-| `Fetch → IsAvailable` | cross_community | 5 |
-| `LoadMore → IsAvailable` | cross_community | 5 |
-| `GoToPage → IsAvailable` | cross_community | 5 |
-| `GetWallpaperDetail → IsAvailable` | cross_community | 5 |
-| `GetDetail → CreateErrorResponse` | cross_community | 5 |
+| `ExecuteWithRetry → CreateErrorResponse` | cross_community | 5 |
+| `Refresh → IsProduction` | cross_community | 5 |
+| `Refresh → GetErrorCode` | cross_community | 5 |
+| `Refresh → GetErrorMessage` | cross_community | 5 |
+| `UpdateItemFavoriteStatus → CreateErrorResponse` | cross_community | 5 |
+| `WaitWithBackoff → CreateErrorResponse` | cross_community | 5 |
+| `ExecuteWithRetry → IsAvailable` | cross_community | 4 |
+| `Fetch → IsProduction` | cross_community | 4 |
+| `Fetch → GetErrorCode` | cross_community | 4 |
+| `Fetch → GetErrorMessage` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Clients | 8 calls |
-| Favorites | 2 calls |
+| Clients | 5 calls |
 
 ## How to Explore
 

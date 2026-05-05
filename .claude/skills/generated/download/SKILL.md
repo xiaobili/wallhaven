@@ -5,7 +5,7 @@ description: "Skill for the Download area of wallhaven. 17 symbols across 7 file
 
 # Download
 
-17 symbols | 7 files | Cohesion: 76%
+17 symbols | 7 files | Cohesion: 74%
 
 ## When to Use
 
@@ -62,15 +62,15 @@ Start here when exploring this area:
 | Flow | Type | Steps |
 |------|------|-------|
 | `DeleteCollection → ShowAlert` | cross_community | 4 |
-| `Refresh → ShowAlert` | cross_community | 4 |
-| `Refresh → ShowAlert` | cross_community | 4 |
 | `Create → ShowAlert` | cross_community | 4 |
 | `Rename → ShowAlert` | cross_community | 4 |
+| `Download → ShowAlert` | cross_community | 4 |
+| `Refresh → ShowAlert` | cross_community | 4 |
+| `Refresh → ShowAlert` | cross_community | 4 |
 | `SetDefault → ShowAlert` | cross_community | 4 |
 | `SaveChanges → ShowAlert` | cross_community | 4 |
 | `SetBgFromUrl → ShowAlert` | cross_community | 4 |
 | `HandleProgress → ShowAlert` | cross_community | 3 |
-| `Fetch → ShowAlert` | cross_community | 3 |
 
 ## Connected Areas
 
