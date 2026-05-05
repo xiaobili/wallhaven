@@ -16,9 +16,9 @@
     />
 
     <ImagePreview
-      v-show="preview.visible.value"
-      :showing="preview.visible.value"
-      :img-info="preview.current.value"
+      v-show="previewVisible"
+      :showing="previewVisible"
+      :img-info="previewCurrent"
       :is-local="false"
       :wallpaper-list="wallpaperList"
       :current-index="previewIndex"
@@ -27,7 +27,7 @@
       :default-collection-id="defaultCollectionId"
       @download-img="downloadImg"
       @set-bg="setBg"
-      @close="preview.close"
+      @close="closePreviewState"
       @navigate="handleNavigate"
       @toggle-favorite="handleToggleFavorite"
       @show-favorite-dropdown="handleShowFavoriteDropdown"
@@ -181,18 +181,18 @@ const dropdown = useFavoriteDropdown()
 
 // ==================== 预览状态 ====================
 
-const preview = {
-  visible: ref<boolean>(false),
-  current: shallowRef<WallpaperItem | null>(null),
-  open(item: WallpaperItem) {
-    dropdown.close()
-    this.current.value = item
-    this.visible.value = true
-  },
-  close() {
-    this.visible.value = false
-    this.current.value = null
-  },
+const previewVisible = ref<boolean>(false)
+const previewCurrent = shallowRef<WallpaperItem | null>(null)
+
+const openPreviewState = (item: WallpaperItem) => {
+  dropdown.close()
+  previewCurrent.value = item
+  previewVisible.value = true
+}
+
+const closePreviewState = () => {
+  previewVisible.value = false
+  previewCurrent.value = null
 }
 
 // ==================== 其他状态 ====================
@@ -209,8 +209,8 @@ const wallpaperList = computed<WallpaperItem[]>(() => flattenWallpapers(wallpape
 
 // 当前预览索引
 const previewIndex = computed(() => {
-  if (!preview.current.value) return -1
-  return wallpaperList.value.findIndex((wp) => wp.id === preview.current.value?.id)
+  if (!previewCurrent.value) return -1
+  return wallpaperList.value.findIndex((wp) => wp.id === previewCurrent.value?.id)
 })
 
 // 收藏夹映射
@@ -291,7 +291,7 @@ const handleGoToPage = async (page: number): Promise<void> => {
  * 键盘导航
  */
 const handleKeydown = (event: KeyboardEvent): void => {
-  if (preview.visible.value) return
+  if (previewVisible.value) return
 
   const { currentPage, totalPage } = currentPageData.value
 
@@ -342,7 +342,7 @@ const closeSearchModal = (): void => {
  * 打开预览
  */
 const openPreview = (item: WallpaperItem): void => {
-  preview.open(item)
+  openPreviewState(item)
 }
 
 /**
@@ -374,7 +374,7 @@ const handleNavigate = (direction: 'prev' | 'next'): void => {
   if (newIndex >= 0 && newIndex < wallpaperList.value.length) {
     const wallpaper = wallpaperList.value[newIndex]
     if (wallpaper) {
-      preview.open(wallpaper)
+      openPreviewState(wallpaper)
     }
   }
 }

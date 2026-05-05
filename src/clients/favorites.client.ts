@@ -3,11 +3,7 @@
  * 封装收藏夹和收藏项的 IPC 操作
  */
 
-import type {
-  IpcResponse,
-  FavoritesGetPaginatedRequest,
-  FavoritesCountsResponse,
-} from '@/types/ipc'
+import type { IpcResponse } from '@/types/ipc'
 import type {
   Collection,
   FavoriteItem,

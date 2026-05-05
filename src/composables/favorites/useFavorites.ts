@@ -163,6 +163,8 @@ export function useFavorites(): UseFavoritesReturn {
     if (result.success) {
       await store.loadFavorites()
       await loadCounts()
+      // 清除页面缓存，确保 FavoritesPage 刷新数据
+      store.clearPageCache()
       showSuccess('已添加到收藏')
       return true
     }
@@ -175,6 +177,8 @@ export function useFavorites(): UseFavoritesReturn {
     if (result.success) {
       await store.loadFavorites()
       await loadCounts()
+      // 清除页面缓存，确保 FavoritesPage 刷新数据
+      store.clearPageCache()
       showSuccess('已从收藏移除')
       return true
     }
@@ -191,6 +195,8 @@ export function useFavorites(): UseFavoritesReturn {
     if (result.success) {
       await store.loadFavorites()
       await loadCounts()
+      // 清除页面缓存，确保 FavoritesPage 刷新数据
+      store.clearPageCache()
       showSuccess('已移动到其他收藏夹')
       return true
     }

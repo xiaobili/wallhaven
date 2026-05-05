@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+ 
 /**
  * SQLite-backed store IPC handlers — routes 3 known keys (appSettings,
  * wallpaperQueryParams, downloadFinishedList) to dedicated

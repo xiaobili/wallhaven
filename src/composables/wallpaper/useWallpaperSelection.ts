@@ -82,7 +82,7 @@ export function flattenWallpapers(data: TotalPageData): WallpaperItem[] {
  * ```
  */
 export function useWallpaperSelection(): UseWallpaperSelectionReturn {
-  const { addTask, startDownload, isDownloading } = useDownload()
+  const { addTask, startDownload } = useDownload()
   const { showSuccess, showError, showWarning } = useAlert()
 
   // 状态

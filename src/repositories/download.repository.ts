@@ -7,18 +7,17 @@ import type { IpcResponse } from '@/types/ipc'
 import type { FinishedDownloadItem } from '@/types'
 import { electronClient, STORAGE_KEYS } from '@/clients'
 
-
 /**
  * Promise-based mutex to serialize concurrent add() / remove() calls.
  * Each caller chains behind the previous one, preventing the
  * read-modify-write race: concurrent get+set interleaving would
  * silently lose data (CR-02).
  */
-let serialMutex: Promise<void> = Promise.resolve()
+const serialMutex: Promise<void> = Promise.resolve()
 
 function withSerialAccess<T>(fn: () => Promise<T>): Promise<T> {
   let release: () => void
-  const next = new Promise<void>((resolve) => {
+  new Promise<void>((resolve) => {
     release = resolve
   })
   return serialMutex.then(() => fn()).finally(() => release!())

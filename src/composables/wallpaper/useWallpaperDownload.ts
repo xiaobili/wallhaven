@@ -4,10 +4,8 @@
  * 封装单个壁纸下载逻辑，提供更高级的 API
  */
 
-import { type Ref } from 'vue'
 import type { WallpaperItem } from '@/types'
 import { useDownload } from '../download/useDownload'
-import { useAlert } from '../core/useAlert'
 
 /**
  * useWallpaperDownload 返回值
@@ -53,7 +51,6 @@ function generateFilename(item: WallpaperItem): string {
  */
 export function useWallpaperDownload(): UseWallpaperDownloadReturn {
   const { addTask, startDownload, isDownloading: checkIsDownloading } = useDownload()
-  const { showSuccess, showError } = useAlert()
 
   /**
    * 下载单个壁纸
