@@ -3,6 +3,7 @@
   "author": "BillyJR",
   "version": "v2.7.0",
   "description": "This is a wallhaven client, Build By electron",
+  "homepage": "https://github.com/xiaobili/wallhaven",
   "private": true,
   "type": "module",
   "main": "./out/main/index.js",
