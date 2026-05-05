@@ -24,6 +24,7 @@
     "format": "prettier --write --experimental-cli src/",
     "postinstall": "electron-builder install-app-deps",
     "prebuild:mac": "npm rebuild sharp --platform=darwin --arch=x64",
+    "prebuild:linux": "npm rebuild sharp --platform=linux --arch=x64",
     "build:win": "npm run build && electron-builder --win --config",
     "build:mac": "npm run build && electron-builder --mac --config",
     "build:linux": "npm run build && electron-builder --linux --config",
