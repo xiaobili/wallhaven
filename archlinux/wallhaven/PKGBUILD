@@ -51,9 +51,16 @@ package() {
         return 1
     fi
 
-    # 解压 pacman 包到目标目录
-    # pacman 包实际上是 tar.xz 格式
-    tar -xJf "$pacman_file" -C "$pkgdir"
+    # 创建临时目录用于解压
+    local temp_dir="$srcdir/temp_extract"
+    mkdir -p "$temp_dir"
+
+    # 解压 pacman 包到临时目录
+    tar -xJf "$pacman_file" -C "$temp_dir"
+
+    # 复制所有文件，排除 pacman 的元数据文件
+    # 这些文件以 . 开头，会被 makepkg 拒绝
+    find "$temp_dir" -mindepth 1 -maxdepth 1 ! -name '.*' -exec cp -r {} "$pkgdir/" \;
 
     # 安装许可证文件
     install -Dm644 "$srcdir/$pkgname-$pkgver/LICENSE" \
