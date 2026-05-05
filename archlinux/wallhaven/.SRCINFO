@@ -1,0 +1,26 @@
+pkgbase = wallhaven
+	pkgdesc = 一款优雅的跨平台桌面壁纸浏览与下载应用
+	pkgver = 2.7.0
+	pkgrel = 1
+	url = https://github.com/xiaobili/wallhaven
+	arch = x86_64
+	license = MIT
+	makedepends = git
+	makedepends = npm
+	makedepends = nodejs
+	makedepends = libsecret
+	makedepends = python
+	makedepends = gcc
+	makedepends = make
+	depends = gtk3
+	depends = libnotify
+	depends = nss
+	depends = libxss
+	depends = at-spi2-core
+	depends = libdrm
+	depends = libxkbcommon
+	depends = mesa
+	source = wallhaven-2.7.0.tar.gz::https://github.com/xiaobili/wallhaven/archive/v2.7.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = wallhaven
