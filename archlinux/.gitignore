@@ -1,0 +1,11 @@
+# 构建产物
+pkg/
+src/
+*.pkg.tar.zst
+*.tar.gz
+
+# npm 缓存
+npm-cache/
+
+# 本地构建目录
+build-local/
