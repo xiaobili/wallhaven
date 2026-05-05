@@ -1,147 +1,238 @@
-# Arch Linux 安装指南
+# Wallhaven Arch Linux 构建指南
 
-本目录包含用于在 Arch Linux 及其衍生发行版（如 Manjaro、EndeavourOS）上构建和安装 Wallhaven 的文件。
+本文档说明如何在 Arch Linux 上构建和安装 Wallhaven 壁纸浏览器。
 
-## 文件说明
+## 目录
 
-| 文件 | 说明 |
-|------|------|
-| `PKGBUILD` | Arch Linux 包构建脚本 |
-| `wallhaven.desktop` | XDG 桌面入口文件 |
-| `wallhaven.install` | 安装/卸载钩子脚本 |
-| `build-arch-package.sh` | 辅助构建脚本 |
+- [快速开始](#快速开始)
+- [构建方式](#构建方式)
+- [从 AUR 安装](#从-aur-安装)
+- [发布到 AUR](#发布到-aur)
+- [常见问题](#常见问题)
 
-## 安装方式
+---
 
-### 方式一：使用 AUR（推荐）
+## 快速开始
 
-如果此包已发布到 AUR（Arch User Repository），可以使用 AUR 助手安装：
+### 前置要求
 
-```bash
-# 使用 yay
-yay -S wallhaven-app
-
-# 或使用 paru
-paru -S wallhaven-app
-```
-
-### 方式二：从源码构建
-
-#### 1. 安装依赖
+确保已安装基本构建工具：
 
 ```bash
-sudo pacman -S --needed base-devel nodejs npm git
+sudo pacman -S --needed base-devel git npm nodejs
 ```
 
-#### 2. 克隆仓库
+### 本地构建（推荐用于开发）
 
 ```bash
-git clone https://github.com/BillyJR/wallhaven.git
-cd wallhaven
+# 进入 archlinux 目录
+cd archlinux
+
+# 使用本地源码构建并安装
+./build-arch-package.sh --local --install
 ```
 
-#### 3. 构建包
+---
 
-**选项 A：使用构建脚本（推荐）**
+## 构建方式
 
-```bash
-# 仅构建
-./archlinux/build-arch-package.sh
+### 方式一：使用本地源码
 
-# 构建并安装
-./archlinux/build-arch-package.sh --install
-```
-
-**选项 B：手动构建**
+适合开发测试，使用当前目录的源码进行构建：
 
 ```bash
 cd archlinux
-
-# 构建包
-makepkg -s
-
-# 安装包
-sudo pacman -U wallhaven-app-*.pkg.tar.zst
+./build-arch-package.sh --local --install
 ```
 
-### 方式三：使用已发布的二进制包
+### 方式二：从 GitHub 下载源码
 
-从 [Releases](https://github.com/BillyJR/wallhaven/releases) 页面下载 `.pkg.tar.zst` 文件：
+适合构建特定版本，从 GitHub Release 下载源码：
 
 ```bash
-sudo pacman -U wallhaven-app-*.pkg.tar.zst
+cd archlinux
+./build-arch-package.sh --install
 ```
 
-## 使用方法
-
-安装后，可以通过以下方式启动应用：
-
-1. **从应用菜单启动**: 在应用菜单中搜索 "Wallhaven"
-2. **从终端启动**: 运行 `wallhaven` 命令
-
-## 卸载
+### 方式三：手动构建
 
 ```bash
-sudo pacman -Rns wallhaven-app
+cd archlinux/wallhaven
+makepkg -si
 ```
 
-> 注意：卸载后，您的配置文件和下载的壁纸仍保存在 `~/.config/wallhaven/` 目录中。
+### 构建脚本选项
 
-## 故障排除
+| 选项 | 说明 |
+|------|------|
+| `-l, --local` | 使用本地源码构建 |
+| `-i, --install` | 构建完成后安装 |
+| `-c, --clean` | 清理后重新构建 |
+| `-h, --help` | 显示帮助信息 |
 
-### 问题：构建时提示缺少依赖
+---
 
-确保已安装所有构建依赖：
+## 从 AUR 安装
+
+Wallhaven 已发布到 AUR，可以使用 AUR 助手安装：
+
+### 使用 yay
 
 ```bash
-sudo pacman -S --needed base-devel nodejs npm
+yay -S wallhaven
 ```
 
-### 问题：应用启动失败
-
-检查 Electron 依赖是否正确安装：
+### 使用 paru
 
 ```bash
-sudo pacman -S electron gtk3 libnotify libsecret libxtst nss alsa-lib libcups libxss nspr at-spi2-core
+paru -S wallhaven
 ```
 
-### 问题：图标不显示
-
-更新图标缓存：
+### 手动安装
 
 ```bash
-sudo gtk-update-icon-cache /usr/share/icons/hicolor
+git clone https://aur.archlinux.org/wallhaven.git
+cd wallhaven
+makepkg -si
 ```
 
-### 问题：Wayland 支持问题
+---
 
-如果使用 Wayland 显示服务器，可能需要设置环境变量：
+## 发布到 AUR
+
+### 前置条件
+
+1. 拥有 AUR 账户
+2. 已配置 SSH 密钥
+
+### 发布流程
+
+1. **生成 .SRCINFO**
+
+   确保 `.SRCINFO` 与 `PKGBUILD` 同步：
+
+   ```bash
+   cd archlinux/wallhaven
+   makepkg --printsrcinfo > .SRCINFO
+   ```
+
+2. **首次提交**
+
+   ```bash
+   # 克隆 AUR 仓库
+   git clone ssh://aur@aur.archlinux.org/wallhaven.git aur-wallhaven
+   cd aur-wallhaven
+
+   # 复制文件
+   cp ../archlinux/wallhaven/PKGBUILD .
+   cp ../archlinux/wallhaven/.SRCINFO .
+
+   # 添加并提交
+   git add PKGBUILD .SRCINFO
+   git commit -m "Initial upload: wallhaven 2.7.0"
+   git push origin master
+   ```
+
+3. **更新版本**
+
+   ```bash
+   # 更新 PKGBUILD 和 .SRCINFO 中的版本号
+   # 更新 sha256sums
+
+   git add PKGBUILD .SRCINFO
+   git commit -m "Update to 2.8.0"
+   git push origin master
+   ```
+
+### 验证发布
+
+发布后，检查 AUR 页面：
+https://aur.archlinux.org/packages/wallhaven
+
+---
+
+## 常见问题
+
+### 构建失败：缺少依赖
+
+**问题：** `error: cannot find module 'xxx'`
+
+**解决：** 确保已安装所有构建依赖：
 
 ```bash
-export ELECTRON_OZONE_PLATFORM_HINT=auto
+sudo pacman -S --needed base-devel git npm nodejs libsecret python gcc make
 ```
 
-或在 `/etc/environment` 中添加此行。
+### 构建失败：node-gyp 错误
 
-## 开发构建
+**问题：** `gyp ERR! stack Error: not found: make`
 
-如果您想修改代码并测试：
+**解决：** 安装编译工具链：
 
 ```bash
-# 安装 Node.js 依赖
-npm install
-
-# 开发模式运行
-npm run dev
-
-# 构建 Linux 版本
-npm run build:linux
+sudo pacman -S --needed make gcc python
 ```
 
-## 贡献
+### 运行时错误：找不到共享库
 
-欢迎贡献！如果您改进了 PKGBUILD 或添加了新功能，请提交 Pull Request。
+**问题：** `error while loading shared libraries: libxxx.so`
 
-## 许可证
+**解决：** 安装运行时依赖：
 
-本项目采用 MIT 许可证。详见项目根目录的 LICENSE 文件。
+```bash
+sudo pacman -S gtk3 libnotify nss libxss at-spi2-core
+```
+
+### npm 缓存问题
+
+**问题：** 构建过程中 npm 报错
+
+**解决：** 清理 npm 缓存：
+
+```bash
+npm cache clean --force
+```
+
+### 权限问题
+
+**问题：** `makepkg` 不应以 root 运行
+
+**解决：** 使用普通用户运行 `makepkg`，需要安装依赖时使用 `-s` 选项自动处理。
+
+---
+
+## 依赖说明
+
+### 构建依赖 (makedepends)
+
+| 包名 | 用途 |
+|------|------|
+| `git` | 克隆源码 |
+| `npm` | Node.js 包管理器 |
+| `nodejs` | Node.js 运行时 |
+| `libsecret` | keytar 原生依赖 |
+| `python` | node-gyp 构建工具 |
+| `gcc` | 编译原生模块 |
+| `make` | 构建工具 |
+
+### 运行时依赖 (depends)
+
+| 包名 | 用途 |
+|------|------|
+| `gtk3` | GUI 工具包 |
+| `libnotify` | 桌面通知 |
+| `nss` | 网络安全服务 |
+| `libxss` | X Screen Saver 扩展 |
+| `at-spi2-core` | 辅助技术支持 |
+| `libdrm` | Direct Rendering Manager |
+| `libxkbcommon` | 键盘处理 |
+| `mesa` | 图形驱动 |
+
+---
+
+## 相关链接
+
+- [Arch Linux PKGBUILD 指南](https://wiki.archlinux.org/title/PKGBUILD)
+- [Arch Linux 打包规范](https://wiki.archlinux.org/title/Arch_package_guidelines)
+- [AUR 提交指南](https://wiki.archlinux.org/title/AUR_submission_guidelines)
+- [Wallhaven GitHub](https://github.com/xiaobili/wallhaven)
