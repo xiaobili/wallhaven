@@ -1,0 +1,65 @@
+# Maintainer: BillyJR <your-email@example.com>
+# Contributor: BillyJR <your-email@example.com>
+
+pkgname=wallhaven
+pkgver=2.7.0
+pkgrel=1
+pkgdesc="一款优雅的跨平台桌面壁纸浏览与下载应用"
+arch=('x86_64')
+url="https://github.com/xiaobili/wallhaven"
+license=('MIT')
+depends=(
+    'gtk3'
+    'libnotify'
+    'nss'
+    'libxss'
+    'at-spi2-core'
+    'libdrm'
+    'libxkbcommon'
+    'mesa'
+)
+makedepends=(
+    'git'
+    'npm'
+    'nodejs'
+    'libsecret'
+    'python'
+    'gcc'
+    'make'
+)
+source=("$pkgname-$pkgver.tar.gz::https://github.com/xiaobili/wallhaven/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+
+    # 设置 npm 缓存目录
+    npm install --cache="$srcdir/npm-cache"
+
+    # 构建应用（生成 pacman 包）
+    npm run build:linux
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+
+    # 创建临时目录用于解压 pacman 包
+    local extract_dir="$srcdir/extract"
+    mkdir -p "$extract_dir"
+
+    # 找到生成的 pacman 包并解压
+    local pacman_file=$(find release -name "wallhaven-*.pacman" -type f | head -n1)
+
+    if [[ -z "$pacman_file" ]]; then
+        error "无法找到生成的 pacman 包"
+        return 1
+    fi
+
+    # 解压 pacman 包到目标目录
+    # pacman 包实际上是 tar.xz 格式
+    tar -xJf "$pacman_file" -C "$pkgdir"
+
+    # 安装许可证文件
+    install -Dm644 "$srcdir/$pkgname-$pkgver/LICENSE" \
+        "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
