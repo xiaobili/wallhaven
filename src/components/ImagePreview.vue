@@ -262,9 +262,17 @@ const handleKeydown = (event: KeyboardEvent) => {
   // 只在预览显示时响应
   if (!props.showing) return
 
-  if (event.key === 'ArrowLeft') {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    close()
+  } else if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    event.stopPropagation()
     navigatePrev()
   } else if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    event.stopPropagation()
     navigateNext()
   }
 }

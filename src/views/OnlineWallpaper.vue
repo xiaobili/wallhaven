@@ -112,7 +112,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, onActivated, onDeactivated, ref, shallowRef, watch } from 'vue'
 import SearchBar from '@/components/SearchBar.vue'
 import WallpaperList from '@/components/WallpaperList.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
@@ -232,12 +232,12 @@ const defaultCollectionId = computed(() => getDefault()?.id ?? null)
 
 // ==================== 生命周期 ====================
 
-onMounted(() => {
+onActivated(() => {
   document.addEventListener('click', dropdown.handleClickOutside)
   window.addEventListener('keydown', handleKeydown)
 })
 
-onUnmounted(() => {
+onDeactivated(() => {
   document.removeEventListener('click', dropdown.handleClickOutside)
   window.removeEventListener('keydown', handleKeydown)
 })

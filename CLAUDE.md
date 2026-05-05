@@ -75,7 +75,6 @@
 <!-- gsd:start -->
 # GSD 工作流强制执行
 
-> 该项目知识图谱由gitnexus提供，工作流使用过程中注意结合gitnexus
 
 此项目使用 GSD (Get Shit Done) 工作流管理。以下规则必须遵守：
 

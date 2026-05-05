@@ -1,0 +1,12 @@
+{
+  "project": "wallhaven-code-cleanup",
+  "granularity": "phase",
+  "git": {
+    "autoCommit": false,
+    "atomicCommits": true
+  },
+  "agents": {
+    "enabled": false
+  },
+  "yolo": false
+}

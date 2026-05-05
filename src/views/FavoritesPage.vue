@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, shallowRef, onActivated, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, shallowRef, onActivated, onDeactivated, watch } from 'vue'
 import CollectionSidebar from '@/components/favorites/CollectionSidebar.vue'
 import FavoriteWallpaperCard from '@/components/favorites/FavoriteWallpaperCard.vue'
 import ImagePreview from '@/components/ImagePreview.vue'
@@ -278,11 +278,11 @@ const handleKeydown = (event: KeyboardEvent): void => {
   }
 }
 
-onMounted(() => {
+onActivated(() => {
   window.addEventListener('keydown', handleKeydown)
 })
 
-onUnmounted(() => {
+onDeactivated(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 

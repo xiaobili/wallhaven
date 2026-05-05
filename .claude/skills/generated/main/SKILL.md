@@ -42,16 +42,16 @@ Start here when exploring this area:
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `RegisterDownloadHandlers → GetDbPath` | cross_community | 7 |
-| `RegisterDownloadHandlers → InitializeSchema` | cross_community | 7 |
-| `RegisterDownloadHandlers → RunMigration` | cross_community | 7 |
-| `RegisterDownloadHandlers → StartPeriodicCheckpoint` | cross_community | 7 |
-| `RegisterStoreHandlers → GetDbPath` | cross_community | 4 |
-| `RegisterStoreHandlers → InitializeSchema` | cross_community | 4 |
-| `RegisterStoreHandlers → RunMigration` | cross_community | 4 |
-| `RegisterStoreHandlers → StartPeriodicCheckpoint` | cross_community | 4 |
 | `RegisterFavoritesHandlers → GetDbPath` | cross_community | 4 |
 | `RegisterFavoritesHandlers → InitializeSchema` | cross_community | 4 |
+| `RegisterFavoritesHandlers → RunMigration` | cross_community | 4 |
+| `RegisterFavoritesHandlers → StartPeriodicCheckpoint` | cross_community | 4 |
+| `RegisterStoreHandlers → GetDbPath` | cross_community | 3 |
+| `RegisterStoreHandlers → InitializeSchema` | cross_community | 3 |
+| `RegisterStoreHandlers → RunMigration` | cross_community | 3 |
+| `RegisterStoreHandlers → StartPeriodicCheckpoint` | cross_community | 3 |
+| `StartPeriodicCheckpoint → GetDbPath` | intra_community | 3 |
+| `StartPeriodicCheckpoint → InitializeSchema` | intra_community | 3 |
 
 ## How to Explore
 
