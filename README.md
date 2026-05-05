@@ -185,6 +185,21 @@ npm run build:linux
 
 构建产物将输出到 `release/` 目录。
 
+### Arch Linux 安装
+
+Arch Linux 用户可以通过以下方式安装：
+
+```bash
+# 方式一：从源码构建
+cd archlinux
+makepkg -si
+
+# 方式二：使用构建脚本
+./archlinux/build-arch-package.sh --install
+```
+
+详细说明请参见 [archlinux/README.md](archlinux/README.md)。
+
 ### 其他命令
 
 ```bash

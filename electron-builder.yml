@@ -39,6 +39,7 @@ linux:
     - AppImage
     - snap
     - deb
+    - pacman
   maintainer: wallhaven.app
   category: Utility
   icon: build/icon.png

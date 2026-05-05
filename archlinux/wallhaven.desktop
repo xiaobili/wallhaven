@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Wallhaven
+Name[zh_CN]=Wallhaven 壁纸浏览器
+Comment=Elegant cross-platform wallpaper browser and downloader
+Comment[zh_CN]=一款优雅的跨平台桌面壁纸浏览与下载应用
+Exec=/usr/bin/wallhaven %U
+Icon=wallhaven
+Type=Application
+Categories=Utility;Graphics;
+Keywords=wallpaper;wallhaven;image;download;desktop;
+Keywords[zh_CN]=壁纸;图片;下载;桌面;
+StartupNotify=true
+StartupWMClass=Wallhaven
+MimeType=x-scheme-handler/wallhaven;
