@@ -1,12 +1,23 @@
-# Wallhaven 壁纸浏览器 - 代码清理优化
+# Wallhaven 壁纸浏览器
 
 ## What This Is
 
-Wallhaven 是一款基于 Electron + Vue 3 + TypeScript 构建的跨平台桌面壁纸浏览与下载应用。本次优化目标是清理项目中未使用的代码，减小打包体积，提高代码可维护性。
+Wallhaven 是一款基于 Electron + Vue 3 + TypeScript 构建的跨平台桌面壁纸浏览与下载应用。用户可以搜索、浏览、下载和收藏来自 Wallhaven 的精美壁纸。
 
 ## Core Value
 
-保守清理：只移除确定无用的代码，保留可能在未来使用的类型和工具函数，确保不影响现有功能。
+流畅体验：通过虚拟列表技术实现大量壁纸数据的流畅渲染，确保用户在浏览数千张壁纸时依然享受丝滑的滚动体验。
+
+## Current Milestone: v1.1 虚拟列表优化
+
+**Goal:** 将在线壁纸页面和收藏页面从传统分页改为虚拟列表滚动加载，提升大数据量渲染性能
+
+**Target features:**
+- 在线壁纸页面实现虚拟列表 + 无限滚动
+- 收藏页面实现虚拟列表 + 无限滚动
+- 使用 vue-virtual-scroller 库
+- 保留所有现有功能（多选、hover交互、搜索筛选）
+- 不保持滚动位置状态
 
 ## Requirements
 
@@ -19,21 +30,23 @@ Wallhaven 是一款基于 Electron + Vue 3 + TypeScript 构建的跨平台桌面
 - ✓ 下载管理（断点续传）
 - ✓ 收藏夹功能
 - ✓ 应用设置
+- ✓ 壁纸多选功能
+- ✓ 卡片hover交互
+- ✓ 搜索筛选功能
 
 ### Active
 
-- [ ] 分析并识别真正未使用的代码
-- [ ] 清理未使用的类型守卫函数
-- [ ] 清理未使用的 wallpaperApi 导出
-- [ ] 清理 barrel 文件中未使用的函数/值导出
-- [ ] 验证清理后应用正常运行
+- [ ] 集成 vue-virtual-scroller 库
+- [ ] 在线壁纸页面改造为虚拟列表 + 无限滚动
+- [ ] 收藏页面改造为虚拟列表 + 无限滚动
+- [ ] 确保现有功能在虚拟列表中正常工作
+- [ ] 性能测试和优化
 
 ### Out of Scope
 
-- ❌ 移除工具函数 — 通用工具函数保留以备将来使用
-- ❌ 移除 Store 文件 — 正被 Composables 使用，非未使用代码
-- ❌ 移除类型定义 — 保留公共 API 类型定义
-- ❌ 移除 electronClient 兼容层 — 正被 Repository 层使用
+- ❌ 滚动位置保持 — 刷新后回到第一页
+- ❌ 虚拟列表外的其他性能优化 — 专注于渲染性能
+- ❌ 改变现有数据获取逻辑 — 只改变渲染方式
 
 ## Context
 
@@ -45,51 +58,51 @@ Wallhaven 是一款基于 Electron + Vue 3 + TypeScript 构建的跨平台桌面
 View Layer → Composable Layer → Service Layer → Repository Layer → Client Layer
 ```
 
-### ts-prune 分析结果
+### 当前分页实现
 
-通过 ts-prune 分析发现 148 个未使用的导出，经深入分析后：
+- **在线壁纸页**：传统分页，每次加载一页数据
+- **收藏页**：传统分页，每次加载一页数据
+- **问题**：大量壁纸时DOM节点过多，滚动卡顿
 
-**误报（实际被使用）：**
-- `STORAGE_KEYS` - 被 Repository 层使用
-- `StorageKey` - 类型定义，与 STORAGE_KEYS 配套
-- `apiClient` - 被 WallpaperService 使用
-- `electronClient` - 被 Repository 层使用
-- `useDownloadStore/useFavoritesStore/useWallpaperStore` - 被 Composables 使用
-- `router default export` - 被 main.ts 使用
-- `flattenWallpapers` - 被 OnlineWallpaper.vue 使用
-- `getHeartState` - 被 WallpaperList.vue 和 ImagePreview.vue 使用
-- `IPC_CHANNELS` - 被主进程和预加载脚本使用
-- `AppError` - 被 main.ts 全局错误处理器使用
+### 技术栈
 
-**真正未使用的代码：**
-- `isIpcErrorInfo` - 类型守卫函数
-- `isResumeDownloadParams` - 类型守卫函数
-- `isPendingDownload` - 类型守卫函数
-- `clearApiCache` - wallpaperApi 导出
-- `searchWallpapers` - wallpaperApi 导出
-- `getWallpaperDetail` - wallpaperApi 导出
-
-### 分析方法论
-
-1. ts-prune 静态分析找出潜在未使用导出
-2. grep 搜索确认实际使用情况
-3. 区分：Pinia Store（依赖注入）、barrel 文件重导出、公共 API 类型
+- Vue 3 + TypeScript
+- Pinia（状态管理）
+- vue-virtual-scroller（虚拟列表）
+- Wallhaven API（数据源）
 
 ## Constraints
 
-- **保守原则**: 不确定时保留代码
-- **类型保留**: 公共 API 类型定义必须保留
-- **功能完整**: 清理后所有现有功能必须正常工作
-- **测试验证**: 清理后运行测试确保无回归
+- **功能保留**: 所有现有功能必须正常工作
+- **用户体验**: 滚动流畅度优先
+- **兼容性**: 与现有 Composable 层兼容
+- **性能**: 支持数千张壁纸的流畅滚动
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| 保留工具函数 | debounce, throttle 等是通用函数，未来可能需要 | ✓ 保留 |
-| 保留 Store 文件 | 被 Composables 通过 Pinia 依赖注入使用 | ✓ 保留 |
-| 区分对待类型 | 公共 API 类型保留，内部未使用类型守卫可清理 | — 待执行 |
-| 清理 barrel 文件 | 移除未使用的函数/值导出，保留类型导出 | — 待执行 |
+| 使用 vue-virtual-scroller | Vue 生态最成熟的虚拟列表库，社区活跃 | — 待执行 |
+| 无限滚动加载 | 用户体验更流畅，符合现代应用习惯 | — 待执行 |
+| 不保持滚动位置 | 简化实现，避免状态管理复杂性 | — 待执行 |
+| 保留现有功能 | 不影响用户已习惯的功能 | — 待执行 |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
 
 ---
-*Last updated: 2026-05-05 after 项目初始化分析*
+*Last updated: 2026-05-06 after starting milestone v1.1*
