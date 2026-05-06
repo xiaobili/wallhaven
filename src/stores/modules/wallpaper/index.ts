@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, reactive, shallowRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams, AppSettings, WallpaperFit, PageData, PageCache } from '@/types'
+import { LRUCache } from 'lru-cache'
 import { settingsService } from '@/services'
+import { CACHE_CONFIG } from '@/config/constants'
 
 /**
  * 创建默认设置
@@ -13,6 +15,14 @@ function createDefaultSettings(): AppSettings {
     apiKey: '',
     wallpaperFit: 'fill' as WallpaperFit,
   }
+}
+
+/**
+ * 搜索缓存项 (ARCH-02)
+ */
+interface SearchCacheItem {
+  data: unknown
+  timestamp: number
 }
 
 export const useWallpaperStore = defineStore('wallpaper', () => {
@@ -52,6 +62,17 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
 
   /** 应用设置 */
   const settings = reactive<AppSettings>(createDefaultSettings())
+
+  // ==================== 搜索缓存 (ARCH-02) ====================
+
+  /** 搜索结果缓存 */
+  const searchCache = new LRUCache<string, SearchCacheItem>({
+    maxSize: CACHE_CONFIG.SEARCH_MAX_SIZE_BYTES,
+    ttl: CACHE_CONFIG.SEARCH_TTL_MS,
+    sizeCalculation: (value: SearchCacheItem) => {
+      return JSON.stringify(value.data).length
+    },
+  })
 
   // ==================== 方法（由 Composable 调用） ====================
 
@@ -120,6 +141,47 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     }
   }
 
+  // ==================== 搜索缓存方法 (ARCH-02) ====================
+
+  /**
+   * 获取缓存的搜索结果
+   */
+  function getCachedSearch<T>(key: string): T | null {
+    const item = searchCache.get(key)
+    return item ? (item.data as T) : null
+  }
+
+  /**
+   * 设置搜索缓存
+   */
+  function setCachedSearch(key: string, data: unknown): void {
+    searchCache.set(key, { data, timestamp: Date.now() })
+  }
+
+  /**
+   * 清除搜索缓存
+   */
+  function clearSearchCache(): void {
+    searchCache.clear()
+  }
+
+  /**
+   * 生成缓存键
+   */
+  function generateCacheKey(url: string, params?: unknown): string {
+    return `${url}:${JSON.stringify(params || {})}`
+  }
+
+  /**
+   * 获取搜索缓存统计信息
+   */
+  function getSearchCacheStats(): { size: number; calculatedSize: number } {
+    return {
+      size: searchCache.size,
+      calculatedSize: searchCache.calculatedSize ?? 0,
+    }
+  }
+
   return {
     // 状态
     totalPageData,
@@ -139,5 +201,12 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     clearPageCache,
     getCachedPage,
     setCachedPage,
+
+    // 搜索缓存 (ARCH-02)
+    getCachedSearch,
+    setCachedSearch,
+    clearSearchCache,
+    generateCacheKey,
+    getSearchCacheStats,
   }
 })

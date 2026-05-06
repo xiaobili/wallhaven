@@ -1,40 +1,22 @@
 /**
  * 收藏项服务
- * 封装收藏项业务逻辑，提供内存缓存优化
+ * 封装收藏项业务逻辑（ARCH-02: 无状态服务）
  */
 
 import type { IpcResponse } from '@/types/ipc'
-import type { Collection, FavoriteItem, FavoritesData, WallpaperItem } from '@/types'
+import type { Collection, FavoriteItem, WallpaperItem } from '@/types'
 import { favoritesRepository } from '@/repositories'
 
 /**
  * 收藏项服务实现类
+ * ARCH-02: 转为无状态服务，缓存已迁移到 Store
  */
 class FavoritesServiceImpl {
-  /** 内存缓存的收藏项列表 */
-  private cachedFavorites: FavoriteItem[] | null = null
-  /** 内存缓存的完整数据 */
-  private cachedData: FavoritesData | null = null
-
   /**
    * 获取所有收藏项
-   * 优先返回内存缓存，避免重复 IPC 调用
    */
   async getAll(): Promise<IpcResponse<FavoriteItem[]>> {
-    // 优先返回缓存
-    if (this.cachedFavorites) {
-      return { success: true, data: this.cachedFavorites }
-    }
-
-    // 从 Repository 获取
-    const result = await favoritesRepository.getFavorites()
-
-    // 成功时更新缓存
-    if (result.success && result.data) {
-      this.cachedFavorites = result.data
-    }
-
-    return result
+    return favoritesRepository.getFavorites()
   }
 
   /**
@@ -64,7 +46,6 @@ class FavoritesServiceImpl {
 
   /**
    * 添加收藏项
-   * 添加后清除缓存
    * @param wallpaperId - 壁纸 ID
    * @param collectionId - 收藏夹 ID
    * @param wallpaperData - 壁纸数据快照
@@ -81,36 +62,20 @@ class FavoritesServiceImpl {
       wallpaperData,
     }
 
-    const result = await favoritesRepository.addFavorite(item)
-
-    // 成功时清除缓存
-    if (result.success) {
-      this.clearCache()
-    }
-
-    return result
+    return favoritesRepository.addFavorite(item)
   }
 
   /**
    * 移除收藏项
-   * 移除后清除缓存
    * @param wallpaperId - 壁纸 ID
    * @param collectionId - 收藏夹 ID
    */
   async remove(wallpaperId: string, collectionId: string): Promise<IpcResponse<void>> {
-    const result = await favoritesRepository.removeFavorite(wallpaperId, collectionId)
-
-    // 成功时清除缓存
-    if (result.success) {
-      this.clearCache()
-    }
-
-    return result
+    return favoritesRepository.removeFavorite(wallpaperId, collectionId)
   }
 
   /**
    * 移动收藏项到其他收藏夹
-   * 移动后清除缓存
    * @param wallpaperId - 壁纸 ID
    * @param fromCollectionId - 源收藏夹 ID
    * @param toCollectionId - 目标收藏夹 ID
@@ -120,27 +85,11 @@ class FavoritesServiceImpl {
     fromCollectionId: string,
     toCollectionId: string,
   ): Promise<IpcResponse<FavoriteItem>> {
-    const result = await favoritesRepository.moveFavorite(
+    return favoritesRepository.moveFavorite(
       wallpaperId,
       fromCollectionId,
       toCollectionId,
     )
-
-    // 成功时清除缓存
-    if (result.success) {
-      this.clearCache()
-    }
-
-    return result
-  }
-
-  /**
-   * 清除内存缓存
-   * 下次获取收藏项时将从 Repository 重新加载
-   */
-  clearCache(): void {
-    this.cachedFavorites = null
-    this.cachedData = null
   }
 }
 

@@ -1,17 +1,16 @@
 /**
  * 下载服务
  * 封装下载业务逻辑，包括进度订阅、下载目录管理、已完成记录管理
+ * ARCH-01: 通过 Repository 层访问 IPC，不再直接使用 Client
  */
 
 import type {
   IpcResponse,
   PendingDownload,
-  ResumeDownloadParams,
   DownloadProgressData,
 } from '@/types/ipc'
 import type { FinishedDownloadItem } from '@/types'
-import { electronClient } from '@/clients'
-import { settingsRepository, downloadRepository } from '@/repositories'
+import { settingsRepository, downloadRepository, downloadTaskRepository } from '@/repositories'
 
 /**
  * 进度回调函数类型
@@ -20,13 +19,14 @@ export type ProgressCallback = (data: DownloadProgressData) => void
 
 /**
  * 下载服务实现类
+ * ARCH-01: 无状态服务，通过 Repository 访问 IPC
  */
 class DownloadServiceImpl {
   private progressCallbacks = new Set<ProgressCallback>()
   private isListenerRegistered = false
 
   constructor() {
-    // 检查 electronClient 是否可用后再注册监听
+    // 检查环境是否可用后再注册监听
     if (typeof window !== 'undefined' && window.electronAPI) {
       this.registerProgressListener()
     }
@@ -34,13 +34,14 @@ class DownloadServiceImpl {
 
   /**
    * 注册 Electron 进度监听
+   * ARCH-01: 通过 Repository 注册监听
    */
   private registerProgressListener(): void {
     if (this.isListenerRegistered) {
       return
     }
 
-    electronClient.onDownloadProgress((data) => {
+    downloadTaskRepository.onDownloadProgress((data) => {
       // 遍历所有回调，使用 try-catch 保护每个回调
       this.progressCallbacks.forEach((callback) => {
         try {
@@ -81,7 +82,7 @@ class DownloadServiceImpl {
     }
 
     // 未设置下载路径，提示用户选择
-    const selectResult = await electronClient.selectFolder()
+    const selectResult = await downloadTaskRepository.selectFolder()
 
     if (!selectResult.success || !selectResult.data) {
       return {
@@ -94,7 +95,6 @@ class DownloadServiceImpl {
     }
 
     // 保存用户选择的路径到设置
-    //const newSettings = { downloadPath: selectResult.data }
     const saveResult = await settingsRepository.set({
       downloadPath: selectResult.data,
       maxConcurrentDownloads: 3,
@@ -133,12 +133,12 @@ class DownloadServiceImpl {
     const saveDir = pathResult.data
 
     const fullPath = `${saveDir}/${filename}`
-    const existsResult = await electronClient.fileExists(fullPath)
+    const existsResult = await downloadTaskRepository.fileExists(fullPath)
     if (existsResult.success && existsResult.data) {
       return { success: true, data: fullPath }
     }
 
-    return electronClient.downloadWallpaper({ url, filename, saveDir })
+    return downloadTaskRepository.downloadWallpaper({ url, filename, saveDir })
   }
 
   /**
@@ -162,7 +162,7 @@ class DownloadServiceImpl {
     }
 
     // 启动下载任务
-    return electronClient.startDownloadTask({
+    return downloadTaskRepository.startDownloadTask({
       taskId,
       url,
       filename,
@@ -175,7 +175,7 @@ class DownloadServiceImpl {
    * @param taskId - 任务 ID
    */
   async pauseDownload(taskId: string): Promise<IpcResponse<void>> {
-    return electronClient.pauseDownloadTask(taskId)
+    return downloadTaskRepository.pauseDownloadTask(taskId)
   }
 
   /**
@@ -183,7 +183,7 @@ class DownloadServiceImpl {
    * @param taskId - 任务 ID
    */
   async cancelDownload(taskId: string): Promise<IpcResponse<void>> {
-    return electronClient.cancelDownloadTask(taskId)
+    return downloadTaskRepository.cancelDownloadTask(taskId)
   }
 
   /**
@@ -195,15 +195,13 @@ class DownloadServiceImpl {
     taskId: string,
     pendingDownload: PendingDownload,
   ): Promise<IpcResponse<string>> {
-    const params: ResumeDownloadParams = {
+    return downloadTaskRepository.resumeDownloadTask({
       taskId,
       url: pendingDownload.url,
       filename: pendingDownload.filename,
       saveDir: pendingDownload.saveDir,
       offset: pendingDownload.offset,
-    }
-
-    return electronClient.resumeDownloadTask(params)
+    })
   }
 
   /**
@@ -211,7 +209,7 @@ class DownloadServiceImpl {
    * 返回所有未完成的下载任务（暂停状态）
    */
   async getPendingDownloads(): Promise<IpcResponse<PendingDownload[]>> {
-    return electronClient.getPendingDownloads()
+    return downloadTaskRepository.getPendingDownloads()
   }
 
   /**
@@ -259,7 +257,7 @@ class DownloadServiceImpl {
       return { success: true, data: { filesDeleted: 0, stateFilesDeleted: 0 } }
     }
 
-    return electronClient.cleanupOrphanFiles(pathResult.data)
+    return downloadTaskRepository.cleanupOrphanFiles(pathResult.data)
   }
 }
 

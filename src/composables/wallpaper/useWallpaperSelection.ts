@@ -22,12 +22,24 @@ export interface SelectionState {
 }
 
 /**
+ * 选择操作选项
+ */
+export interface SelectionOptions {
+  /** 成功提示函数（可选，由调用者提供以使用正确的 Alert 实例） */
+  showSuccess?: (message: string) => void
+  /** 错误提示函数 */
+  showError?: (message: string) => void
+  /** 警告提示函数 */
+  showWarning?: (message: string) => void
+}
+
+/**
  * 选择操作
  */
 export interface SelectionActions {
   /** 切换单个壁纸选择状态 */
   toggle: (wallpaperId: string) => void
-  /** 全选/取消全选某个分区的壁纸 */
+  /** 全选/取消全选某个分区的的壁纸 */
   selectAll: (payload: { ids: string[]; selected: boolean }) => void
   /** 清空选择 */
   clear: () => void
@@ -70,9 +82,12 @@ export function flattenWallpapers(data: TotalPageData): WallpaperItem[] {
 /**
  * 壁纸选择管理 composable
  *
+ * @param options 可选的提示函数（传入以使用正确的 Alert 实例）
+ *
  * @example
  * ```typescript
- * const selection = useWallpaperSelection()
+ * const { showSuccess, showError, showWarning } = useAlert()
+ * const selection = useWallpaperSelection({ showSuccess, showError, showWarning })
  *
  * // 切换选择
  * selection.toggle('wallpaper-123')
@@ -81,9 +96,13 @@ export function flattenWallpapers(data: TotalPageData): WallpaperItem[] {
  * await selection.downloadSelected(wallpapers)
  * ```
  */
-export function useWallpaperSelection(): UseWallpaperSelectionReturn {
+export function useWallpaperSelection(options?: SelectionOptions): UseWallpaperSelectionReturn {
   const { addTask, startDownload } = useDownload()
-  const { showSuccess, showError, showWarning } = useAlert()
+
+  // 使用传入的提示函数，或创建默认的（仅 console.log）
+  const showSuccess = options?.showSuccess ?? ((msg: string) => console.log('[Success]', msg))
+  const showError = options?.showError ?? ((msg: string) => console.error('[Error]', msg))
+  const showWarning = options?.showWarning ?? ((msg: string) => console.warn('[Warning]', msg))
 
   // 状态
   const selectedIds = ref<string[]>([])

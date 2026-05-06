@@ -5,6 +5,12 @@ import { favoritesService, collectionsService } from '@/services'
 import { favoritesRepository } from '@/repositories'
 
 /**
+ * 收藏状态类型
+ * 0 = 未收藏, 1 = 已收藏(单收藏夹), 2 = 已收藏(多收藏夹)
+ */
+export type FavoriteStatus = 0 | 1 | 2
+
+/**
  * 收藏数据 Store
  *
  * 使用 Pinia 管理收藏项和收藏夹的共享状态，
@@ -24,6 +30,11 @@ export const useFavoritesStore = defineStore('favorites', () => {
 
   /** 错误信息 */
   const error = ref<string | null>(null)
+
+  // ==================== 收藏状态缓存 ====================
+
+  /** 收藏状态缓存 (wallpaperId -> 0|1|2) - ARCH-02 */
+  const favoriteStatusCache = ref<Map<string, FavoriteStatus>>(new Map())
 
   // ==================== 分页状态 ====================
 
@@ -189,6 +200,48 @@ export const useFavoritesStore = defineStore('favorites', () => {
   function clearCache(): void {
     favorites.value = []
     collections.value = []
+    favoriteStatusCache.value.clear()
+  }
+
+  // ==================== 收藏状态缓存方法 (ARCH-02) ====================
+
+  /**
+   * 获取收藏状态
+   * @param wallpaperId - 壁纸 ID
+   * @returns 收藏状态，未缓存返回 undefined
+   */
+  function getFavoriteStatus(wallpaperId: string): FavoriteStatus | undefined {
+    return favoriteStatusCache.value.get(wallpaperId)
+  }
+
+  /**
+   * 设置收藏状态
+   * @param wallpaperId - 壁纸 ID
+   * @param status - 收藏状态
+   */
+  function setFavoriteStatus(wallpaperId: string, status: FavoriteStatus): void {
+    favoriteStatusCache.value.set(wallpaperId, status)
+  }
+
+  /**
+   * 清除收藏状态缓存
+   */
+  function clearFavoriteStatusCache(): void {
+    favoriteStatusCache.value.clear()
+  }
+
+  /**
+   * 批量加载收藏状态
+   * @param ids - 壁纸 ID 列表
+   */
+  async function loadFavoriteStatusMap(ids: string[]): Promise<void> {
+    if (ids.length === 0) return
+    const result = await favoritesRepository.getFavoriteStatusMap(ids)
+    if (result.success && result.data) {
+      for (const [id, status] of Object.entries(result.data)) {
+        favoriteStatusCache.value.set(id, status)
+      }
+    }
   }
 
   // ==================== 分页辅助方法 ====================
@@ -269,5 +322,12 @@ export const useFavoritesStore = defineStore('favorites', () => {
     clearPageCache,
     getCachedPage,
     setCachedPage,
+
+    // 收藏状态缓存 (ARCH-02)
+    favoriteStatusCache,
+    getFavoriteStatus,
+    setFavoriteStatus,
+    clearFavoriteStatusCache,
+    loadFavoriteStatusMap,
   }
 })

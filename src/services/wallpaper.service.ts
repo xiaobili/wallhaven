@@ -1,14 +1,12 @@
 /**
  * 壁纸服务
- * 封装壁纸相关的业务逻辑
+ * 封装壁纸相关的业务逻辑（ARCH-02: 无状态服务）
  */
 
 import type { IpcResponse } from '@/types/ipc'
 import type { GetParams, CustomParams, WallpaperItem, WallpaperMeta } from '@/types'
-import { LRUCache } from 'lru-cache'
 import { apiClient } from '@/clients'
-import { favoritesRepository, settingsRepository, wallpaperRepository } from '@/repositories'
-import { CACHE_CONFIG } from '@/config/constants'
+import { settingsRepository, wallpaperRepository } from '@/repositories'
 
 /**
  * 壁纸搜索结果
@@ -19,71 +17,10 @@ export interface WallpaperSearchResult {
 }
 
 /**
- * 缓存项
- */
-interface CacheItem {
-  data: unknown
-  timestamp: number
-}
-
-/**
  * 壁纸服务实现类
+ * ARCH-02: 转为无状态服务，缓存已迁移到 Store
  */
 class WallpaperServiceImpl {
-  /** 缓存存储 (PERF-02: 使用 lru-cache) */
-  private cache = new LRUCache<string, CacheItem>({
-    maxSize: CACHE_CONFIG.SEARCH_MAX_SIZE_BYTES,
-    ttl: CACHE_CONFIG.SEARCH_TTL_MS,
-    sizeCalculation: (value: CacheItem) => {
-      // 估算缓存项大小
-      return JSON.stringify(value.data).length
-    },
-  })
-
-  /** 缓存命中统计 */
-  private hits = 0
-  private misses = 0
-
-  /** 收藏状态缓存 (PERF-03) */
-  private favoriteStatusCache = new Map<string, 0 | 1 | 2>()
-
-  /**
-   * 生成缓存键
-   * @param url - 请求 URL
-   * @param params - 请求参数
-   * @returns 缓存键
-   */
-  private generateCacheKey(url: string, params?: unknown): string {
-    return `${url}:${JSON.stringify(params || {})}`
-  }
-
-  /**
-   * 从缓存获取数据
-   * @param key - 缓存键
-   * @returns 缓存数据，不存在或已过期返回 null
-   */
-  private getFromCache<T>(key: string): T | null {
-    const item = this.cache.get(key)
-    if (item) {
-      this.hits++
-      return item.data as T
-    }
-    this.misses++
-    return null
-  }
-
-  /**
-   * 设置缓存
-   * @param key - 缓存键
-   * @param data - 缓存数据
-   */
-  private setCache(key: string, data: unknown): void {
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    })
-  }
-
   /**
    * 获取 API Key
    * @returns API Key，未设置返回 undefined
@@ -117,9 +54,15 @@ class WallpaperServiceImpl {
         })
       }
 
+      // 动态导入 Store 避免循环依赖
+      const { useFavoritesStore } = await import('@/stores')
+      const { useWallpaperStore } = await import('@/stores')
+      const favoritesStore = useFavoritesStore()
+      const wallpaperStore = useWallpaperStore()
+
       // 检查缓存
-      const cacheKey = this.generateCacheKey('/search', filteredParams)
-      const cachedData = this.getFromCache<WallpaperSearchResult>(cacheKey)
+      const cacheKey = wallpaperStore.generateCacheKey('/search', filteredParams)
+      const cachedData = wallpaperStore.getCachedSearch<WallpaperSearchResult>(cacheKey)
       if (cachedData) {
         return { success: true, data: cachedData }
       }
@@ -147,7 +90,7 @@ class WallpaperServiceImpl {
 
       // 成功时注入 is_favorite 字段并缓存结果
       if (result.success && result.data) {
-        // 注入收藏状态 (PERF-03: 使用缓存)
+        // 注入收藏状态 (ARCH-02: 使用 Store 缓存)
         if (result.data.data.length > 0) {
           const wallpaperIds = result.data.data.map((item) => item.id)
 
@@ -156,8 +99,9 @@ class WallpaperServiceImpl {
           const uncachedIds: string[] = []
 
           for (const id of wallpaperIds) {
-            if (this.favoriteStatusCache.has(id)) {
-              cachedStatus[id] = this.favoriteStatusCache.get(id)!
+            const cached = favoritesStore.getFavoriteStatus(id)
+            if (cached !== undefined) {
+              cachedStatus[id] = cached
             } else {
               uncachedIds.push(id)
             }
@@ -165,19 +109,14 @@ class WallpaperServiceImpl {
 
           // 只查询未缓存的 ID
           if (uncachedIds.length > 0) {
-            const statusMapResult = await favoritesRepository.getFavoriteStatusMap(uncachedIds)
-            if (statusMapResult.success && statusMapResult.data) {
-              // 更新缓存
-              for (const [id, status] of Object.entries(statusMapResult.data)) {
-                this.favoriteStatusCache.set(id, status)
-              }
-            }
+            await favoritesStore.loadFavoriteStatusMap(uncachedIds)
           }
 
-          // 合并缓存和查询结果
-          const statusMap = { ...cachedStatus }
-          for (const [id, status] of this.favoriteStatusCache) {
-            if (wallpaperIds.includes(id)) {
+          // 构建最终状态映射
+          const statusMap: Record<string, 0 | 1 | 2> = { ...cachedStatus }
+          for (const id of wallpaperIds) {
+            const status = favoritesStore.getFavoriteStatus(id)
+            if (status !== undefined) {
               statusMap[id] = status
             }
           }
@@ -188,7 +127,8 @@ class WallpaperServiceImpl {
           }))
         }
 
-        this.setCache(cacheKey, result.data)
+        // 设置搜索缓存
+        wallpaperStore.setCachedSearch(cacheKey, result.data)
       }
 
       return result
@@ -210,9 +150,13 @@ class WallpaperServiceImpl {
    */
   async getDetail(id: string): Promise<IpcResponse<WallpaperItem>> {
     try {
+      // 动态导入 Store
+      const { useWallpaperStore } = await import('@/stores')
+      const wallpaperStore = useWallpaperStore()
+
       // 检查缓存
-      const cacheKey = this.generateCacheKey(`/w/${id}`)
-      const cachedData = this.getFromCache<WallpaperItem>(cacheKey)
+      const cacheKey = wallpaperStore.generateCacheKey(`/w/${id}`)
+      const cachedData = wallpaperStore.getCachedSearch<WallpaperItem>(cacheKey)
       if (cachedData) {
         return { success: true, data: cachedData }
       }
@@ -225,7 +169,7 @@ class WallpaperServiceImpl {
 
       // 成功时缓存结果
       if (result.success && result.data) {
-        this.setCache(cacheKey, result.data)
+        wallpaperStore.setCachedSearch(cacheKey, result.data)
       }
 
       return result
@@ -259,31 +203,19 @@ class WallpaperServiceImpl {
   }
 
   /**
-   * 清空缓存
+   * 清空缓存（已迁移到 Store，此方法保留用于兼容）
    */
   clearCache(): void {
-    this.cache.clear()
+    // 缓存已迁移到 Store，此方法保留用于 API 兼容
+    // 调用方应使用 useWallpaperStore().clearSearchCache()
   }
 
   /**
-   * 清除收藏状态缓存 (PERF-03)
+   * 清除收藏状态缓存（已迁移到 Store，此方法保留用于兼容）
    */
   clearFavoriteStatusCache(): void {
-    this.favoriteStatusCache.clear()
-  }
-
-  /**
-   * 获取缓存统计信息 (PERF-02)
-   * @returns 缓存命中率和大小信息
-   */
-  getCacheStats(): { hits: number; misses: number; hitRate: number; size: number; calculatedSize: number } {
-    return {
-      hits: this.hits,
-      misses: this.misses,
-      hitRate: this.hits + this.misses > 0 ? this.hits / (this.hits + this.misses) : 0,
-      size: this.cache.size,
-      calculatedSize: this.cache.calculatedSize ?? 0,
-    }
+    // 缓存已迁移到 Store，此方法保留用于 API 兼容
+    // 调用方应使用 useFavoritesStore().clearFavoriteStatusCache()
   }
 
   /**

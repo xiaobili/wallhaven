@@ -175,8 +175,8 @@ const {
 } = useFavorites()
 const { getDefault } = useCollections()
 
-// 选择管理
-const selection = useWallpaperSelection()
+// 选择管理（传入 alert 函数以确保提示显示在正确的 Alert 组件中）
+const selection = useWallpaperSelection({ showSuccess, showError, showWarning })
 
 // 收藏下拉菜单
 const dropdown = useFavoriteDropdown()
