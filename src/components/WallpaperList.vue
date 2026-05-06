@@ -3,7 +3,19 @@
     id="main"
     @click="emit('close-search-modal')"
   >
+    <!-- 空状态UI -->
     <div
+      v-if="isEmpty"
+      class="empty-result"
+    >
+      <i class="fas fa-search" />
+      <p>没有找到匹配的壁纸</p>
+      <p class="hint">尝试调整搜索条件或关键词</p>
+    </div>
+
+    <!-- 壁纸列表 -->
+    <div
+      v-else
       id="thumbs"
       class="thumbs-container"
     >
@@ -170,7 +182,7 @@ import type { WallpaperItem, TotalPageData } from '@/types'
 import { formatResolution, formatFileSize } from '@/utils/helpers'
 import { getHeartState } from '@/utils/heart'
 import type { HeartState } from '@/utils/heart'
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   pageData: TotalPageData
@@ -191,6 +203,14 @@ const emit = defineEmits<{
   'toggle-favorite': [item: WallpaperItem, event: MouseEvent] // left click - quick add
   'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent] // right click - show dropdown
 }>()
+
+/**
+ * 判断是否显示空状态UI
+ * 条件：无数据 && 非加载中 && 无错误
+ */
+const isEmpty = computed(() => {
+  return props.pageData.sections.length === 0 && !props.loading && !props.error
+})
 
 /**
  * 检查是否已选中
@@ -521,5 +541,32 @@ onUnmounted(() => {
   border-radius: 50%;
   z-index: 160;
   pointer-events: none;
+}
+
+/* 空状态样式 */
+.empty-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4em;
+  color: #888;
+  text-align: center;
+  min-height: 400px;
+}
+
+.empty-result i {
+  font-size: 3em;
+  margin-bottom: 1em;
+  opacity: 0.3;
+}
+
+.empty-result p {
+  margin: 0.25em 0;
+}
+
+.empty-result .hint {
+  font-size: 0.85em;
+  opacity: 0.7;
 }
 </style>
