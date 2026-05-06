@@ -51,7 +51,10 @@ jobs:
         run: |
           cd archlinux/wallhaven-bin
           docker run --rm -v $(pwd):/src archlinux:latest \
-            sh -c "pacman -Sy --noconfirm pacman-contrib && cd /src && makepkg --printsrcinfo > .SRCINFO"
+            sh -c "pacman -Sy --noconfirm pacman-contrib && \
+                   useradd -m builder && \
+                   chown -R builder:builder /src && \
+                   su builder -c 'cd /src && makepkg --printsrcinfo > .SRCINFO'"
           echo "Generated .SRCINFO:"
           cat .SRCINFO
 
