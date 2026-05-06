@@ -203,6 +203,7 @@ const emit = defineEmits<{
   'select-all': [payload: { sectionIndex: number; ids: string[]; selected: boolean }]
   'toggle-favorite': [item: WallpaperItem, event: MouseEvent] // left click - quick add
   'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent] // right click - show dropdown
+  'close-dropdown': [] // 关闭下拉菜单
 }>()
 
 /**
@@ -280,10 +281,11 @@ const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): vo
 
 /**
  * 处理预览点击
- * 如果下拉菜单打开，则不触发预览（只关闭下拉菜单）
+ * 如果下拉菜单打开，则关闭下拉菜单而不触发预览
  */
 const handlePreview = (item: WallpaperItem): void => {
   if (props.dropdownOpen) {
+    emit('close-dropdown')
     return
   }
   emit('preview', item)

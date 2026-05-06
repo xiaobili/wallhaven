@@ -1,6 +1,7 @@
 <template>
   <nav class="pagination">
-    <ul>
+    <!-- 分页按钮组 -->
+    <ul class="pagination-buttons">
       <!-- 上一页按钮 -->
       <li :class="{ disabled: props.currentPage <= 1 || props.loading }">
         <a
@@ -25,7 +26,10 @@
       </li>
 
       <!-- 左侧省略号 -->
-      <li v-if="showStartEllipsis">
+      <li
+        v-if="showStartEllipsis"
+        class="ellipsis"
+      >
         <span>...</span>
       </li>
 
@@ -43,7 +47,10 @@
       </li>
 
       <!-- 右侧省略号 -->
-      <li v-if="showEndEllipsis">
+      <li
+        v-if="showEndEllipsis"
+        class="ellipsis"
+      >
         <span>...</span>
       </li>
 
@@ -73,6 +80,21 @@
       </li>
     </ul>
 
+    <!-- 页码跳转 -->
+    <div class="pagination-jump">
+      <label for="page-input">跳转</label>
+      <input
+        id="page-input"
+        v-model.number="inputPage"
+        type="number"
+        :min="1"
+        :max="props.totalPages"
+        :disabled="props.loading"
+        @keyup.enter="handleJumpToPage"
+        @blur="handleInputBlur"
+      >
+    </div>
+
     <!-- 总条目数 -->
     <span class="pagination-notice">
       共 {{ formatCount(props.totalCount) }} 张
@@ -81,13 +103,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 /**
  * PaginationBar 组件
  *
- * 分页导航组件，复用 list.css 的 .pagination 样式
+ * 分页导航组件，采用毛玻璃极简风格
  * 显示 5 个页码按钮（当前页左右各 2 个），支持省略号显示
+ * 支持页码输入框快速跳转
  */
 
 interface Props {
@@ -106,6 +129,17 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+
+// 页码输入框的值
+const inputPage = ref<number>(props.currentPage)
+
+// 监听 currentPage 变化，同步更新输入框
+watch(
+  () => props.currentPage,
+  (newPage) => {
+    inputPage.value = newPage
+  }
+)
 
 /**
  * 计算可见的页码列表
@@ -160,97 +194,194 @@ function handlePageClick(page: number): void {
   if (props.loading || page === props.currentPage) return
   emit('go-to-page', page)
 }
+
+/**
+ * 处理页码跳转（Enter键触发）
+ */
+function handleJumpToPage(): void {
+  const page = inputPage.value
+
+  // 验证页码范围
+  if (!page || page < 1 || page > props.totalPages) {
+    // 超出范围，重置为当前页
+    inputPage.value = props.currentPage
+    return
+  }
+
+  // 如果输入的是当前页，不做跳转
+  if (page === props.currentPage) return
+
+  // 触发跳转
+  emit('go-to-page', page)
+}
+
+/**
+ * 处理输入框失焦
+ * 验证并修正输入值
+ */
+function handleInputBlur(): void {
+  const page = inputPage.value
+
+  // 如果输入无效，重置为当前页
+  if (!page || page < 1 || page > props.totalPages) {
+    inputPage.value = props.currentPage
+  }
+}
 </script>
 
 <style scoped>
-/* 分页容器 - 去掉背景，让按钮直接浮在页面背景上 */
+/* ===== 分页容器 - 毛玻璃效果 ===== */
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5em;
-  padding: 0.5em;
-  margin: 1em auto;
+  gap: 12px;
+  padding: 12px 20px;
+  margin: 1.5em auto;
+  max-width: fit-content;
+  background-color: rgba(40, 40, 40, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.pagination ul {
+/* ===== 分页按钮组 ===== */
+.pagination-buttons {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
-  box-shadow: none;
 }
 
-.pagination li {
+.pagination-buttons li {
   display: inline-block;
 }
 
-.pagination li a,
-.pagination li span {
-  display: inline-block;
-  line-height: 2em;
-  min-width: 2.5em;
-  padding: 0 0.5em;
+.pagination-buttons li a,
+.pagination-buttons li span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 40px;
+  padding: 0 12px;
   color: #ddd;
-  text-shadow: -1px -1px 0 #000;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   text-align: center;
-  border-radius: 3px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  font-weight: 500;
+  user-select: none;
 }
 
-/* 普通按钮 - 与 SearchBar .button 风格一致 */
-.pagination li a {
-  background-color: #204650;
-  background-image: linear-gradient(to bottom, #275660 0, #183640 100%);
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
+/* 普通按钮 - 半透明纯色 */
+.pagination-buttons li a {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
-.pagination li a:hover {
-  background-image: linear-gradient(to bottom, #2a6470 0, #1a4050 100%);
+.pagination-buttons li a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.pagination li a:active {
-  background-image: linear-gradient(to bottom, #183640 0, #275660 100%);
+.pagination-buttons li a:active {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: scale(0.98);
 }
 
-/* 激活状态 - 使用高亮渐变 */
-.pagination li.active a,
-.pagination li.active span {
-  background-color: #4a8050;
-  background-image: linear-gradient(to bottom, #5a9060 0, #3a7040 100%);
-  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.33);
+/* 激活状态 - 青绿色半透明 */
+.pagination-buttons li.active a,
+.pagination-buttons li.active span {
+  background-color: rgba(100, 200, 180, 0.25);
+  border: 1px solid rgba(100, 200, 180, 0.4);
   color: #fff;
+  font-weight: 600;
   cursor: default;
 }
 
 /* 禁用状态 */
-.pagination li.disabled a,
-.pagination li.disabled span {
-  background-color: rgba(40, 40, 40, 0.5);
-  background-image: none;
+.pagination-buttons li.disabled a,
+.pagination-buttons li.disabled span {
+  background-color: rgba(255, 255, 255, 0.03);
   color: #666;
   cursor: default;
-  opacity: 0.6;
-  box-shadow: none;
+  opacity: 0.5;
 }
 
 /* 省略号 */
-.pagination li span {
+.pagination-buttons li.ellipsis span {
   background: transparent;
   color: #888;
   cursor: default;
-  box-shadow: none;
+  min-width: 40px;
 }
 
-/* 总条目数 - 与分页器风格统一 */
+/* ===== 页码跳转 ===== */
+.pagination-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+}
+
+.pagination-jump label {
+  color: #aaa;
+  font-size: 0.9em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pagination-jump input[type='number'] {
+  width: 50px;
+  height: 36px;
+  padding: 0 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ddd;
+  font-size: 0.95em;
+  text-align: center;
+  transition: all 0.2s ease;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.pagination-jump input[type='number']::-webkit-outer-spin-button,
+.pagination-jump input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pagination-jump input[type='number']:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.pagination-jump input[type='number']:focus {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(100, 200, 180, 0.4);
+  box-shadow: 0 0 0 2px rgba(100, 200, 180, 0.1);
+}
+
+.pagination-jump input[type='number']:disabled {
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #666;
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ===== 总条目数 ===== */
 .pagination-notice {
   color: #aaa;
   font-weight: 500;
-  font-size: 0.9em;
-  margin-left: 1em;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  font-size: 0.95em;
+  margin-left: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
 }
 </style>

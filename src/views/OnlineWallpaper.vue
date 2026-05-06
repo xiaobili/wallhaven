@@ -88,6 +88,7 @@
       @toggle-favorite="handleToggleFavorite"
       @show-favorite-dropdown="handleShowFavoriteDropdown"
       @select-all="selection.selectAll"
+      @close-dropdown="dropdown.close"
     />
 
     <!-- 分页条 -->

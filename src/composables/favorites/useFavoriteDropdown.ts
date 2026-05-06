@@ -126,8 +126,6 @@ export function useFavoriteDropdown(): UseFavoriteDropdownReturn {
     // 检查是否点击在下拉菜单或收藏按钮外部
     if (!target.closest('.collection-dropdown') && !target.closest('.thumb-favorite-btn')) {
       close()
-      // 阻止事件继续传播，避免触发页面其他点击事件
-      event.stopPropagation()
     }
   }
 
