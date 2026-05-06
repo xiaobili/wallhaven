@@ -7,7 +7,6 @@
 import { ref, computed, type ComputedRef, type Ref } from 'vue'
 import type { WallpaperItem, TotalPageData } from '@/types'
 import { useDownload } from '../download/useDownload'
-import { useAlert } from '../core/useAlert'
 
 /**
  * 选择状态
