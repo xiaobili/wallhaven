@@ -136,7 +136,7 @@
               >
               <a
                 class="preview"
-                @click.stop="emit('preview', liItem)"
+                @click.stop="handlePreview(liItem)"
               />
               <div class="thumb-info">
                 <span class="wall-res">{{ formatResolution(liItem.resolution) }}</span>
@@ -191,6 +191,7 @@ const props = defineProps<{
   selectedIds?: string[] // 选中的壁纸ID列表
   wallpaperCollectionMap: Map<string, string[]> // 壁纸收藏关系
   defaultCollectionId: string | null
+  dropdownOpen?: boolean // 下拉菜单是否打开
 }>()
 
 const emit = defineEmits<{
@@ -275,6 +276,17 @@ const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): vo
   const selectAll = state !== 'all' // toggle: if all selected → deselect; otherwise → select
   const ids = sectionData.map((item) => item.id)
   emit('select-all', { sectionIndex, ids, selected: selectAll })
+}
+
+/**
+ * 处理预览点击
+ * 如果下拉菜单打开，则不触发预览（只关闭下拉菜单）
+ */
+const handlePreview = (item: WallpaperItem): void => {
+  if (props.dropdownOpen) {
+    return
+  }
+  emit('preview', item)
 }
 
 /**

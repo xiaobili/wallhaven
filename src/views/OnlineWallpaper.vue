@@ -79,6 +79,7 @@
       :favorite-ids="favoriteIds"
       :wallpaper-collection-map="wallpaperCollectionMap"
       :default-collection-id="defaultCollectionId"
+      :dropdown-open="dropdown.visible.value"
       @set-bg="setBg"
       @preview="openPreview"
       @download-img="downloadImg"
