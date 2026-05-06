@@ -8,6 +8,7 @@
 import { ipcMain } from 'electron'
 import axios from 'axios'
 import { logHandler } from './base'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 export function registerApiHandlers(): void {
   /**
@@ -95,8 +96,10 @@ export function registerApiHandlers(): void {
       logHandler('wallhaven-api-request', `All attempts failed: ${lastError?.message}`, 'error')
 
       return {
-        success: false,
-        error: lastError?.message || 'Unknown error',
+        ...createErrorResponse(
+          IPC_ERROR_CODES.INTERNAL_ERROR,
+          lastError?.message || 'Unknown error',
+        ),
         status: lastError?.response?.status,
         data: null,
       }

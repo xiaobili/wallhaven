@@ -7,6 +7,7 @@ import { ipcMain, dialog, shell } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { getImageDimensions, generateThumbnail, logHandler } from './base'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 export function registerFileHandlers(): void {
   /**
@@ -89,14 +90,14 @@ export function registerFileHandlers(): void {
   ipcMain.handle('delete-file', async (_event, filePath: string) => {
     try {
       if (!fs.existsSync(filePath)) {
-        return { success: false, error: '文件不存在' }
+        return createErrorResponse(IPC_ERROR_CODES.FILE_NOT_FOUND, '文件不存在')
       }
 
       fs.unlinkSync(filePath)
       return { success: true, error: null }
     } catch (error: any) {
       logHandler('delete-file', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message }
+      return createErrorResponse(IPC_ERROR_CODES.FILE_DELETE_FAILED, error.message)
     }
   })
 

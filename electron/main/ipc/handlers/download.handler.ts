@@ -18,6 +18,7 @@ import {
   isResumeDownloadParams,
   isPendingDownload,
 } from '../../../../src/types/ipc'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 // /**
 //  * IPC Channel names (duplicated from src/types/ipc.ts to avoid cross-directory imports)
@@ -77,7 +78,7 @@ function getStateFilePath(tempPath: string): string {
  */
 type StateFileResult =
   | { success: true; data: PendingDownload }
-  | { success: false; error: 'NOT_FOUND' | 'PARSE_ERROR' | 'VALIDATION_ERROR' }
+  | { success: false; error: IpcErrorInfo }
 
 /**
  * Error codes with Chinese messages for resume failures
@@ -116,19 +117,19 @@ function writeStateFile(statePath: string, state: PendingDownload): void {
 function readStateFile(statePath: string): StateFileResult {
   try {
     if (!fs.existsSync(statePath)) {
-      return { success: false, error: 'NOT_FOUND' }
+      return createErrorResponse(IPC_ERROR_CODES.NOT_FOUND, '下载状态文件不存在')
     }
 
     const content = fs.readFileSync(statePath, 'utf-8')
     const state = JSON.parse(content)
 
     if (!isPendingDownload(state)) {
-      return { success: false, error: 'VALIDATION_ERROR' }
+      return createErrorResponse(IPC_ERROR_CODES.VALIDATION_ERROR, '下载状态文件格式无效')
     }
 
     return { success: true, data: state }
   } catch {
-    return { success: false, error: 'PARSE_ERROR' }
+    return createErrorResponse(IPC_ERROR_CODES.PARSE_ERROR, '下载状态文件解析失败')
   }
 }
 

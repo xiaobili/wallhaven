@@ -3,15 +3,9 @@
  * 管理应用设置的持久化存储
  */
 
-import type { IpcResponse, LocalFile } from '@/types/ipc'
+import type { IpcResponse, LocalFile, CacheInfo } from '@/types/ipc'
 import type { AppSettings } from '@/types'
 import { electronClient, STORAGE_KEYS } from '@/clients'
-
-/** 缓存信息类型 */
-export interface CacheInfo {
-  thumbnailsCount: number
-  tempFilesCount: number
-}
 
 /** 清理缓存结果类型 */
 export interface ClearCacheResult {

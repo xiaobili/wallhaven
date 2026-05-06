@@ -1,4 +1,4 @@
- 
+
 /**
  * SQLite-backed store IPC handlers — routes 3 known keys (appSettings,
  * wallpaperQueryParams, downloadFinishedList) to dedicated
@@ -9,6 +9,7 @@ import { ipcMain } from 'electron'
 import { getDatabase, withTransaction } from '../../database'
 import { logHandler } from './base'
 import { getQueueInstance } from './download-queue'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 /** Describes which SQLite table and access pattern a store key maps to. */
 interface TableRoute {
@@ -84,7 +85,7 @@ export function registerStoreHandlers(): void {
       return { success: true, value }
     } catch (error: any) {
       logHandler('store-get', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message, value: null }
+      return { ...createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message), value: null }
     }
   })
 
@@ -140,7 +141,7 @@ export function registerStoreHandlers(): void {
       return { success: true }
     } catch (error: any) {
       logHandler('store-set', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message }
+      return createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message)
     }
   })
 
@@ -170,7 +171,7 @@ export function registerStoreHandlers(): void {
       return { success: true }
     } catch (error: any) {
       logHandler('store-delete', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message }
+      return createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message)
     }
   })
 
@@ -190,7 +191,7 @@ export function registerStoreHandlers(): void {
       return { success: true }
     } catch (error: any) {
       logHandler('store-clear', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message }
+      return createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message)
     }
   })
 }

@@ -8,6 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { logHandler } from './base'
 import { IPC_CHANNELS } from '../../../../src/types/ipc'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 export function registerCacheHandlers(): void {
   /**
@@ -86,8 +87,7 @@ export function registerCacheHandlers(): void {
     } catch (error: any) {
       logHandler('clear-app-cache', `Clear failed: ${error.message}`, 'error')
       return {
-        success: false,
-        error: error.message,
+        ...createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message),
         thumbnailsDeleted: 0,
         tempFilesDeleted: 0,
         errors: [error.message],
@@ -136,8 +136,7 @@ export function registerCacheHandlers(): void {
     } catch (error: any) {
       logHandler('get-cache-info', `Get failed: ${error.message}`, 'error')
       return {
-        success: false,
-        error: error.message,
+        ...createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message),
         info: { thumbnailsCount: 0, tempFilesCount: 0 },
       }
     }
@@ -218,7 +217,7 @@ export function registerCacheHandlers(): void {
     } catch (error: any) {
       logHandler('cleanup-orphan-files', `Cleanup failed: ${error.message}`, 'error')
       return {
-        success: false,
+        ...createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message),
         filesDeleted: 0,
         stateFilesDeleted: 0,
         errors: [error.message],

@@ -5,6 +5,7 @@
 import { ipcMain } from 'electron'
 import * as fs from 'fs'
 import { logHandler } from './base'
+import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
 export function registerWallpaperHandlers(): void {
   /**
@@ -14,7 +15,7 @@ export function registerWallpaperHandlers(): void {
   ipcMain.handle('set-wallpaper', async (_event, imagePath: string) => {
     try {
       if (!fs.existsSync(imagePath)) {
-        return { success: false, error: '图片文件不存在' }
+        return createErrorResponse(IPC_ERROR_CODES.WALLPAPER_FILE_NOT_FOUND, '图片文件不存在')
       }
 
       // 动态导入 wallpaper 包（使用命名导出）
@@ -28,7 +29,10 @@ export function registerWallpaperHandlers(): void {
         }
       } catch (importError: any) {
         logHandler('set-wallpaper', `Import error: ${importError.message}`, 'error')
-        return { success: false, error: `wallpaper 模块加载失败: ${importError.message}` }
+        return createErrorResponse(
+          IPC_ERROR_CODES.WALLPAPER_MODULE_ERROR,
+          `wallpaper 模块加载失败: ${importError.message}`,
+        )
       }
 
       await setWallpaper(imagePath)
@@ -36,7 +40,7 @@ export function registerWallpaperHandlers(): void {
       return { success: true, error: null }
     } catch (error: any) {
       logHandler('set-wallpaper', `Error: ${error.message}`, 'error')
-      return { success: false, error: error.message }
+      return createErrorResponse(IPC_ERROR_CODES.INTERNAL_ERROR, error.message)
     }
   })
 }

@@ -3,30 +3,15 @@
  * 封装下载业务逻辑，包括进度订阅、下载目录管理、已完成记录管理
  */
 
-import type { IpcResponse, PendingDownload, ResumeDownloadParams } from '@/types/ipc'
+import type {
+  IpcResponse,
+  PendingDownload,
+  ResumeDownloadParams,
+  DownloadProgressData,
+} from '@/types/ipc'
 import type { FinishedDownloadItem } from '@/types'
 import { electronClient } from '@/clients'
 import { settingsRepository, downloadRepository } from '@/repositories'
-
-/**
- * 下载进度数据
- */
-export interface DownloadProgressData {
-  taskId: string
-  progress: number
-  offset: number
-  speed: number
-  state: 'downloading' | 'paused' | 'waiting' | 'completed' | 'failed' | 'retrying'
-  filePath?: string
-  error?: string
-  totalSize?: number
-  /** 服务器不支持断点续传，已重新开始下载 */
-  resumeNotSupported?: boolean
-  /** Current retry attempt (1-based). Present when state='retrying' */
-  retryCount?: number
-  /** Backoff delay in ms for current retry attempt. Present when state='retrying' */
-  retryDelay?: number
-}
 
 /**
  * 进度回调函数类型
