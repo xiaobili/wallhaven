@@ -65,10 +65,10 @@
   - 实现单一数据源原则
   - 简化状态同步逻辑
 
-- [ ] **ARCH-03**: IPC 通道命名规范化
+- [x] **ARCH-03**: IPC 通道命名规范化 ✅
   - 统一使用 kebab-case 命名
   - 更新所有 IPC 通道定义
-  - 保持向后兼容（或迁移计划）
+  - 保持向后兼容（已统一，无需迁移）
 
 ---
 
@@ -127,7 +127,7 @@
 | QUAL-04 | Phase 4 | Pending |
 | ARCH-01 | Phase 5 | Pending |
 | ARCH-02 | Phase 5 | Pending |
-| ARCH-03 | Phase 6 | Pending |
+| ARCH-03 | Phase 6 | Completed |
 
 **覆盖率:**
 - v1 需求: 11 总计

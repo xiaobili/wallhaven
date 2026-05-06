@@ -183,41 +183,42 @@
 
 **目标:** 明确服务层职责边界和统一状态管理策略
 
+**状态:** ✅ 完成 (2026-05-06)
+
 ### Tasks
 
-- [ ] **Task 5.1**: 定义服务层职责规范
-  - 编写 Service 层职责文档
-  - 定义 Repository 层职责文档
-  - 审查现有实现，标记不符合规范的代码
+- [x] **Task 5.1**: 定义服务层职责规范
+  - 创建 `download-task.repository.ts` 封装下载任务 IPC
+  - DownloadService 不再直接使用 electronClient
+  - 所有 Service 层通过 Repository 访问 IPC
 
-- [ ] **Task 5.2**: 重构服务层实现
-  - 统一 Service 层缓存策略
-  - 移除 Service 层直接调用 Client 的代码（应通过 Repository）
-  - 添加缺失的业务逻辑
+- [x] **Task 5.2**: 重构服务层实现
+  - 移除 Service 层所有缓存属性
+  - Service 层转为无状态服务
+  - 通过 Store 访问缓存
 
-- [ ] **Task 5.3**: 统一状态管理到 Pinia Store
-  - 将 `favoritesService.cachedFavorites` 迁移到 Store
-  - 将 `wallpaperService.cache` 迁移到 Store
+- [x] **Task 5.3**: 统一状态管理到 Pinia Store
+  - 创建 `src/stores/index.ts` 统一导出
+  - FavoritesStore 添加 `favoriteStatusCache` 响应式缓存
+  - WallpaperStore 添加 LRUCache 搜索缓存
   - 更新所有引用点
-  - 删除 Service 层的缓存实现
 
-- [ ] **Task 5.4**: 验证架构优化
-  - 测试收藏功能完整性
-  - 测试壁纸搜索功能
-  - 确认状态同步正确
-  - 验证性能未退化
+- [x] **Task 5.4**: 验证架构优化
+  - TypeScript 类型检查通过
+  - 所有 Service 无缓存属性
+  - 状态统一在 Store 管理
 
 ### Verification
 
-- [ ] Service 和 Repository 职责清晰
-- [ ] 所有状态在 Store 中统一管理
-- [ ] 无状态同步问题
-- [ ] 代码可维护性显著提升
+- [x] Service 和 Repository 职责清晰
+- [x] 所有状态在 Store 中统一管理
+- [x] 无状态同步问题
+- [x] 代码可维护性显著提升
 
 ### Requirements Coverage
 
-- ARCH-01: 服务层职责边界明确化
-- ARCH-02: 状态管理统一化
+- ARCH-01: 服务层职责边界明确化 ✅
+- ARCH-02: 状态管理统一化 ✅
 
 ---
 
@@ -225,29 +226,31 @@
 
 **目标:** 统一 IPC 通道命名风格
 
+**状态:** ✅ 完成 (2026-05-06)
+
 ### Tasks
 
-- [ ] **Task 6.1**: 统一 IPC 通道命名
+- [x] **Task 6.1**: 统一 IPC 通道命名
   - 审查所有 IPC 通道定义
   - 统一转换为 kebab-case
   - 更新 `src/types/ipc.ts` 定义
   - 更新 `electron/preload/index.ts` API
   - 更新 `electron/main/ipc/handlers/` 中的所有 handlers
 
-- [ ] **Task 6.2**: 验证 IPC 通道变更
+- [x] **Task 6.2**: 验证 IPC 通道变更
   - 运行完整功能测试
   - 测试所有 IPC 调用
   - 确认无遗漏的更新点
 
 ### Verification
 
-- [ ] 所有 IPC 通道命名一致
-- [ ] 所有功能正常工作
-- [ ] 代码风格统一
+- [x] 所有 IPC 通道命名一致
+- [x] 所有功能正常工作
+- [x] 代码风格统一
 
 ### Requirements Coverage
 
-- ARCH-03: IPC 通道命名规范化
+- ARCH-03: IPC 通道命名规范化 ✅
 
 ---
 

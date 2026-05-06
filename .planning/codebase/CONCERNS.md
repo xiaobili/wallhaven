@@ -281,52 +281,27 @@ const WAL_SIZE_THRESHOLD_BYTES = 10 * 1024 * 1024
 
 ## 架构债务
 
-### MEDIUM-06: 服务层职责边界模糊
+### MEDIUM-06: 服务层职责边界模糊 ✅ 已解决
 
-**描述**: `Repository` 和 `Service` 层职责重叠：
+**状态**: 已于 Phase 5 解决 (2026-05-06)
 
-```typescript
-// favorites.service.ts 调用 favoritesRepository
-// 但 download.service.ts 直接调用 electronClient
-
-// 有的 service 有缓存
-private cachedFavorites: FavoriteItem[] | null = null
-
-// 有的 service 没有缓存，直接透传
-async getByCollection(collectionId: string) {
-  return favoritesRepository.getFavorites(collectionId)
-}
-```
-
-**问题**:
-- 职责划分不清晰
-- 缓存策略不一致
-- 难以统一测试
-
-**建议**:
-- 明确 Service 职责：业务逻辑 + 缓存 + 错误转换
-- Repository 职责：数据访问 + 持久化
-- 统一缓存策略
+**解决方案**:
+- 创建 `download-task.repository.ts` 封装所有下载任务 IPC 调用
+- DownloadService 不再直接使用 electronClient，通过 Repository 访问
+- 所有 Service 层转为无状态服务，缓存迁移到 Store
 
 ---
 
-### MEDIUM-07: 状态管理分散
+### MEDIUM-07: 状态管理分散 ✅ 已解决
 
-**描述**: 应用状态分散在多处：
+**状态**: 已于 Phase 5 解决 (2026-05-06)
 
-1. **Pinia Store**: `useDownloadStore`, `useWallpaperStore`
-2. **Service 缓存**: `favoritesService.cachedFavorites`, `wallpaperService.cache`
-3. **组件本地状态**: 各 Vue 组件
-
-**问题**:
-- 状态同步困难
-- 缓存失效逻辑分散
-- 调试复杂
-
-**建议**:
-- 统一状态管理策略
-- 考虑所有缓存放入 Store
-- 或使用单一数据源原则
+**解决方案**:
+- 创建 `src/stores/index.ts` 统一导出所有 Store
+- FavoritesStore 添加 `favoriteStatusCache` 响应式缓存
+- WallpaperStore 添加 LRUCache 搜索缓存
+- 移除 Service 层所有缓存属性（cachedFavorites, cachedSettings, cache 等）
+- 收藏状态、搜索缓存统一由 Store 管理
 
 ---
 
