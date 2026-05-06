@@ -2,22 +2,22 @@ name: Build and Release
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main, master]
-  #   paths-ignore:
-  #     - 'README.md'
-  #     - '*.md'
-  #     - '.gitignore'
-  #     - '.github/workflows/build.yml'
-  #     - 'img/**'
-  # pull_request:
-  #   branches: [main, master]
-  #   paths-ignore:
-  #     - 'README.md'
-  #     - '*.md'
-  #     - '.gitignore'
-  #     - '.github/workflows/build.yml'
-  #     - 'img/**'
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - 'README.md'
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/build.yml'
+      - 'img/**'
+  pull_request:
+    branches: [main, master]
+    paths-ignore:
+      - 'README.md'
+      - '*.md'
+      - '.gitignore'
+      - '.github/workflows/build.yml'
+      - 'img/**'
 
 # 设置权限
 permissions:

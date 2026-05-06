@@ -1,11 +1,11 @@
 ---
 name: services
-description: "Skill for the Services area of wallhaven. 81 symbols across 14 files."
+description: "Skill for the Services area of wallhaven. 79 symbols across 14 files."
 ---
 
 # Services
 
-81 symbols | 14 files | Cohesion: 96%
+79 symbols | 14 files | Cohesion: 95%
 
 ## When to Use
 
@@ -20,11 +20,11 @@ description: "Skill for the Services area of wallhaven. 81 symbols across 14 fil
 | `src/services/download.service.ts` | getDownloadPath, startDownload, resumeDownload, cleanupOrphanFiles, constructor (+7) |
 | `src/services/settings.service.ts` | get, set, update, getDefaults, reset (+4) |
 | `src/composables/download/useDownload.ts` | startDownload, resumeDownload, cleanupOrphanFiles, pauseDownload, cancelDownload (+4) |
-| `src/services/collections.service.ts` | create, rename, delete, setDefault, clearCache (+3) |
 | `src/services/wallpaperApi.ts` | generateCacheKey, getFromCache, setCache, isProduction, callWallhavenAPIViaIPC (+3) |
 | `src/services/wallpaper.service.ts` | generateCacheKey, getFromCache, setCache, getApiKey, search (+3) |
+| `src/services/collections.service.ts` | create, rename, setDefault, clearCache, getAll (+2) |
 | `src/composables/settings/useSettings.ts` | load, update, reset, saveChanges, selectFolder |
-| `src/composables/favorites/useCollections.ts` | load, create, rename, deleteCollection, setDefault |
+| `src/composables/favorites/useCollections.ts` | load, create, rename, setDefault |
 | `src/services/window.service.ts` | minimize, maximize, close, isMaximized |
 | `src/repositories/window.repository.ts` | minimize, maximize, close, isMaximized |
 
@@ -47,14 +47,13 @@ Start here when exploring this area:
 | `reset` | Function | `src/composables/settings/useSettings.ts` | 104 |
 | `saveChanges` | Function | `src/composables/settings/useSettings.ts` | 154 |
 | `loadSettings` | Function | `src/stores/modules/wallpaper/index.ts` | 110 |
-| `load` | Function | `src/composables/favorites/useCollections.ts` | 33 |
-| `create` | Function | `src/composables/favorites/useCollections.ts` | 40 |
-| `rename` | Function | `src/composables/favorites/useCollections.ts` | 51 |
-| `deleteCollection` | Function | `src/composables/favorites/useCollections.ts` | 62 |
-| `setDefault` | Function | `src/composables/favorites/useCollections.ts` | 81 |
 | `cancelCurrentRequest` | Function | `src/services/wallpaperApi.ts` | 188 |
 | `searchWallpapers` | Function | `src/services/wallpaperApi.ts` | 200 |
 | `getWallpaperDetail` | Function | `src/services/wallpaperApi.ts` | 249 |
+| `load` | Function | `src/composables/favorites/useCollections.ts` | 33 |
+| `create` | Function | `src/composables/favorites/useCollections.ts` | 40 |
+| `rename` | Function | `src/composables/favorites/useCollections.ts` | 51 |
+| `setDefault` | Function | `src/composables/favorites/useCollections.ts` | 81 |
 | `startDownload` | Function | `src/composables/download/useDownload.ts` | 222 |
 | `resumeDownload` | Function | `src/composables/download/useDownload.ts` | 271 |
 | `cleanupOrphanFiles` | Function | `src/composables/download/useDownload.ts` | 484 |
@@ -62,6 +61,7 @@ Start here when exploring this area:
 | `loadAll` | Function | `src/stores/modules/favorites/index.ts` | 88 |
 | `loadCounts` | Function | `src/stores/modules/favorites/index.ts` | 95 |
 | `saveCustomParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 259 |
+| `loadSavedParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 275 |
 
 ## Execution Flows
 
@@ -83,8 +83,8 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Clients | 2 calls |
-| Favorites | 2 calls |
 | Wallpaper | 1 calls |
+| Favorites | 1 calls |
 
 ## How to Explore
 
