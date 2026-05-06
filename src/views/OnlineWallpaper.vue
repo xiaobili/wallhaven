@@ -91,7 +91,7 @@
 
     <!-- 分页条 -->
     <PaginationBar
-      v-if="!error && currentPageData.totalPage > 0"
+      v-if="!error && currentPageData.totalPage > 0 && wallpaperList.length > 0"
       :current-page="currentPageData.currentPage"
       :total-pages="currentPageData.totalPage"
       :total-count="totalCount"
@@ -421,6 +421,7 @@ const handleShowFavoriteDropdown = (item: WallpaperItem, event: MouseEvent): voi
 <style scoped>
 .online-wallpaper-page {
   min-height: calc(100vh - 60px);
+  padding-bottom: 2em;
 }
 
 .error-container {
