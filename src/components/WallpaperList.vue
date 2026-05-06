@@ -209,7 +209,9 @@ const emit = defineEmits<{
  * 条件：无数据 && 非加载中 && 无错误
  */
 const isEmpty = computed(() => {
-  return props.pageData.sections.length === 0 && !props.loading && !props.error
+  // 检查所有 section 是否都为空
+  const hasNoData = props.pageData.sections.every(section => section.data.length === 0)
+  return hasNoData && !props.loading && !props.error
 })
 
 /**
