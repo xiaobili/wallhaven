@@ -65,6 +65,10 @@
 
 **目标:** 优化收藏状态批量查询和图片尺寸解析
 
+**状态:** ◆ 已规划 (2026-05-06)
+
+**详细计划:** `.planning/phases/02-performance-query-parse/02-PLAN.md`
+
 ### Tasks
 
 - [ ] **Task 2.1**: 实现前端收藏状态缓存

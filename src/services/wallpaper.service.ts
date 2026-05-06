@@ -43,6 +43,9 @@ class WallpaperServiceImpl {
   private hits = 0
   private misses = 0
 
+  /** 收藏状态缓存 (PERF-03) */
+  private favoriteStatusCache = new Map<string, 0 | 1 | 2>()
+
   /**
    * 生成缓存键
    * @param url - 请求 URL
@@ -123,18 +126,45 @@ class WallpaperServiceImpl {
 
       // 成功时注入 is_favorite 字段并缓存结果
       if (result.success && result.data) {
-        // 注入收藏状态
+        // 注入收藏状态 (PERF-03: 使用缓存)
         if (result.data.data.length > 0) {
           const wallpaperIds = result.data.data.map((item) => item.id)
-          const statusMapResult = await favoritesRepository.getFavoriteStatusMap(wallpaperIds)
 
-          if (statusMapResult.success && statusMapResult.data) {
-            const statusMap = statusMapResult.data
-            result.data.data = result.data.data.map((item) => ({
-              ...item,
-              is_favorite: statusMap[item.id] ?? 0,
-            }))
+          // 分离已缓存和未缓存的 ID
+          const cachedStatus: Record<string, 0 | 1 | 2> = {}
+          const uncachedIds: string[] = []
+
+          for (const id of wallpaperIds) {
+            if (this.favoriteStatusCache.has(id)) {
+              cachedStatus[id] = this.favoriteStatusCache.get(id)!
+            } else {
+              uncachedIds.push(id)
+            }
           }
+
+          // 只查询未缓存的 ID
+          if (uncachedIds.length > 0) {
+            const statusMapResult = await favoritesRepository.getFavoriteStatusMap(uncachedIds)
+            if (statusMapResult.success && statusMapResult.data) {
+              // 更新缓存
+              for (const [id, status] of Object.entries(statusMapResult.data)) {
+                this.favoriteStatusCache.set(id, status)
+              }
+            }
+          }
+
+          // 合并缓存和查询结果
+          const statusMap = { ...cachedStatus }
+          for (const [id, status] of this.favoriteStatusCache) {
+            if (wallpaperIds.includes(id)) {
+              statusMap[id] = status
+            }
+          }
+
+          result.data.data = result.data.data.map((item) => ({
+            ...item,
+            is_favorite: statusMap[item.id] ?? 0,
+          }))
         }
 
         this.setCache(cacheKey, result.data)
@@ -212,6 +242,13 @@ class WallpaperServiceImpl {
    */
   clearCache(): void {
     this.cache.clear()
+  }
+
+  /**
+   * 清除收藏状态缓存 (PERF-03)
+   */
+  clearFavoriteStatusCache(): void {
+    this.favoriteStatusCache.clear()
   }
 
   /**

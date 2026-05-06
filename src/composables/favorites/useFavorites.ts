@@ -7,7 +7,7 @@
 
 import { computed, type ComputedRef } from 'vue'
 import { useFavoritesStore } from '@/stores/modules/favorites'
-import { favoritesService } from '@/services'
+import { favoritesService, wallpaperService } from '@/services'
 import { favoritesRepository } from '@/repositories'
 import { useAlert } from '@/composables'
 import type { FavoriteItem, WallpaperItem, PageData } from '@/types'
@@ -165,6 +165,8 @@ export function useFavorites(): UseFavoritesReturn {
       await loadCounts()
       // 清除页面缓存，确保 FavoritesPage 刷新数据
       store.clearPageCache()
+      // PERF-03: 清除收藏状态缓存
+      wallpaperService.clearFavoriteStatusCache()
       showSuccess('已添加到收藏')
       return true
     }
@@ -179,6 +181,8 @@ export function useFavorites(): UseFavoritesReturn {
       await loadCounts()
       // 清除页面缓存，确保 FavoritesPage 刷新数据
       store.clearPageCache()
+      // PERF-03: 清除收藏状态缓存
+      wallpaperService.clearFavoriteStatusCache()
       showSuccess('已从收藏移除')
       return true
     }
@@ -197,6 +201,8 @@ export function useFavorites(): UseFavoritesReturn {
       await loadCounts()
       // 清除页面缓存，确保 FavoritesPage 刷新数据
       store.clearPageCache()
+      // PERF-03: 清除收藏状态缓存
+      wallpaperService.clearFavoriteStatusCache()
       showSuccess('已移动到其他收藏夹')
       return true
     }
