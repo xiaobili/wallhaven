@@ -5,6 +5,7 @@
 
 import type { IpcResponse } from '@/types/ipc'
 import type { GetParams, CustomParams, WallpaperItem, WallpaperMeta } from '@/types'
+import { LRUCache } from 'lru-cache'
 import { apiClient } from '@/clients'
 import { favoritesRepository, settingsRepository, wallpaperRepository } from '@/repositories'
 
@@ -28,14 +29,19 @@ interface CacheItem {
  * 壁纸服务实现类
  */
 class WallpaperServiceImpl {
-  /** 缓存存储 */
-  private cache = new Map<string, CacheItem>()
+  /** 缓存存储 (PERF-02: 使用 lru-cache) */
+  private cache = new LRUCache<string, CacheItem>({
+    max: 50 * 1024 * 1024, // 50MB 内存限制
+    ttl: 5 * 60 * 1000, // 5 分钟 TTL
+    sizeCalculation: (value: CacheItem) => {
+      // 估算缓存项大小
+      return JSON.stringify(value.data).length
+    },
+  })
 
-  /** 缓存有效期：5分钟 */
-  private readonly CACHE_TTL = 5 * 60 * 1000
-
-  /** 最大缓存条数 */
-  private readonly MAX_CACHE_SIZE = 50
+  /** 缓存命中统计 */
+  private hits = 0
+  private misses = 0
 
   /**
    * 生成缓存键
@@ -54,15 +60,12 @@ class WallpaperServiceImpl {
    */
   private getFromCache<T>(key: string): T | null {
     const item = this.cache.get(key)
-    if (!item) return null
-
-    // 检查是否过期
-    if (Date.now() - item.timestamp > this.CACHE_TTL) {
-      this.cache.delete(key)
-      return null
+    if (item) {
+      this.hits++
+      return item.data as T
     }
-
-    return item.data as T
+    this.misses++
+    return null
   }
 
   /**
@@ -71,14 +74,6 @@ class WallpaperServiceImpl {
    * @param data - 缓存数据
    */
   private setCache(key: string, data: unknown): void {
-    // 限制缓存大小，超过限制时删除最旧条目
-    if (this.cache.size >= this.MAX_CACHE_SIZE) {
-      const firstKey = this.cache.keys().next().value
-      if (firstKey) {
-        this.cache.delete(firstKey)
-      }
-    }
-
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -217,6 +212,20 @@ class WallpaperServiceImpl {
    */
   clearCache(): void {
     this.cache.clear()
+  }
+
+  /**
+   * 获取缓存统计信息 (PERF-02)
+   * @returns 缓存命中率和大小信息
+   */
+  getCacheStats(): { hits: number; misses: number; hitRate: number; size: number; calculatedSize: number } {
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRate: this.hits + this.misses > 0 ? this.hits / (this.hits + this.misses) : 0,
+      size: this.cache.size,
+      calculatedSize: this.cache.calculatedSize ?? 0,
+    }
   }
 
   /**

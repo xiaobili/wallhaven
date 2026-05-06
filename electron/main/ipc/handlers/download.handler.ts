@@ -452,9 +452,9 @@ export async function executeDownload(
         activeDownload.downloadedSize = downloadedSize
       }
 
-      // Every 100ms update progress
+      // Every 300ms update progress (PERF-01 optimization)
       const now = Date.now()
-      if (now - lastTime >= 100) {
+      if (now - lastTime >= 300) {
         const speed = (downloadedSize - lastSize) / ((now - lastTime) / 1000)
         const progress = totalSize > 0 ? (downloadedSize / totalSize) * 100 : 0
 
