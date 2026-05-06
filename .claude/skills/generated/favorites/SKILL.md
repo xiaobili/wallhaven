@@ -1,11 +1,11 @@
 ---
 name: favorites
-description: "Skill for the Favorites area of wallhaven. 27 symbols across 9 files."
+description: "Skill for the Favorites area of wallhaven. 25 symbols across 8 files."
 ---
 
 # Favorites
 
-27 symbols | 9 files | Cohesion: 90%
+25 symbols | 8 files | Cohesion: 91%
 
 ## When to Use
 
@@ -21,10 +21,9 @@ description: "Skill for the Favorites area of wallhaven. 27 symbols across 9 fil
 | `src/services/favorites.service.ts` | getAll, add, remove, move, clearCache |
 | `src/stores/modules/favorites/index.ts` | loadFavorites, addFavorite, removeFavorite, moveFavorite, useFavoritesStore |
 | `src/composables/favorites/useFavoriteDropdown.ts` | show, openDropdown, close, handleClickOutside |
-| `src/composables/favorites/useCollections.ts` | deleteCollection, useCollections |
-| `src/services/collections.service.ts` | delete |
 | `src/composables/wallpaper/useWallpaperSetter.ts` | useWallpaperSetter |
 | `src/composables/local/useLocalFiles.ts` | useLocalFiles |
+| `src/composables/favorites/useCollections.ts` | useCollections |
 | `src/composables/core/useAlert.ts` | useAlert |
 
 ## Entry Points
@@ -35,7 +34,7 @@ Start here when exploring this area:
 - **`add`** (Function) — `src/composables/favorites/useFavorites.ts:156`
 - **`remove`** (Function) — `src/composables/favorites/useFavorites.ts:174`
 - **`move`** (Function) — `src/composables/favorites/useFavorites.ts:188`
-- **`deleteCollection`** (Function) — `src/composables/favorites/useCollections.ts:62`
+- **`loadFavorites`** (Function) — `src/stores/modules/favorites/index.ts:63`
 
 ## Key Symbols
 
@@ -45,7 +44,6 @@ Start here when exploring this area:
 | `add` | Function | `src/composables/favorites/useFavorites.ts` | 156 |
 | `remove` | Function | `src/composables/favorites/useFavorites.ts` | 174 |
 | `move` | Function | `src/composables/favorites/useFavorites.ts` | 188 |
-| `deleteCollection` | Function | `src/composables/favorites/useCollections.ts` | 62 |
 | `loadFavorites` | Function | `src/stores/modules/favorites/index.ts` | 63 |
 | `addFavorite` | Function | `src/stores/modules/favorites/index.ts` | 144 |
 | `removeFavorite` | Function | `src/stores/modules/favorites/index.ts` | 160 |
@@ -61,6 +59,7 @@ Start here when exploring this area:
 | `close` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 114 |
 | `handleClickOutside` | Function | `src/composables/favorites/useFavoriteDropdown.ts` | 121 |
 | `goToPage` | Function | `src/composables/favorites/useFavorites.ts` | 70 |
+| `refresh` | Function | `src/composables/favorites/useFavorites.ts` | 130 |
 
 ## Execution Flows
 
@@ -71,17 +70,11 @@ Start here when exploring this area:
 | `Remove → ClearCache` | intra_community | 3 |
 | `Move → ClearCache` | intra_community | 3 |
 | `DeleteCollection → ClearCache` | cross_community | 3 |
-| `DeleteCollection → ClearCache` | intra_community | 3 |
 | `RemoveFavorite → ClearCache` | intra_community | 3 |
 | `RemoveFavorite → GetAll` | intra_community | 3 |
 | `MoveFavorite → ClearCache` | intra_community | 3 |
 | `MoveFavorite → GetAll` | intra_community | 3 |
-
-## Connected Areas
-
-| Area | Connections |
-|------|-------------|
-| Services | 2 calls |
+| `UseWallpaperSelection → UseAlert` | cross_community | 3 |
 
 ## How to Explore
 
