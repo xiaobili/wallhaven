@@ -74,25 +74,51 @@ makepkg -si
 
 ## 从 AUR 安装
 
-Wallhaven 已发布到 AUR，可以使用 AUR 助手安装：
+Wallhaven 已发布到 AUR，提供两种包：
 
-### 使用 yay
+### wallhaven-bin（推荐）
+
+从 GitHub Release 下载预编译版本，安装速度快：
 
 ```bash
-yay -S wallhaven
+# 使用 yay
+yay -S wallhaven-bin
+
+# 或使用 paru
+paru -S wallhaven-bin
 ```
 
-### 使用 paru
+**优点**：
+- ✅ 安装快速（无需编译）
+- ✅ 依赖更少
+- ✅ 适合大多数用户
+
+### wallhaven（从源码构建）
+
+从源码构建，适合开发者：
 
 ```bash
+# 使用 yay
+yay -S wallhaven
+
+# 或使用 paru
 paru -S wallhaven
 ```
+
+**优点**：
+- ✅ 可以自定义编译选项
+- ✅ 适合开发测试
+
+**注意**：需要安装完整的构建依赖（npm、nodejs、gcc 等）
 
 ### 手动安装
 
 ```bash
-git clone https://aur.archlinux.org/wallhaven.git
-cd wallhaven
+# 克隆 AUR 仓库
+git clone https://aur.archlinux.org/wallhaven-bin.git
+cd wallhaven-bin
+
+# 构建并安装
 makepkg -si
 ```
 

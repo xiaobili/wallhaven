@@ -194,6 +194,7 @@ jobs:
             dist/*.AppImage
             dist/*.snap
             dist/*.deb
+            dist/*.pacman
           if-no-files-found: error
 
   # 发布到 GitHub Releases

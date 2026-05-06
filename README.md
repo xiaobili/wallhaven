@@ -16,6 +16,15 @@
   <a href="#-项目结构">项目结构</a>
 </p>
 
+<p align="center">
+  <a href="https://aur.archlinux.org/packages/wallhaven-bin">
+    <img src="https://img.shields.io/aur/version/wallhaven-bin" alt="AUR version">
+  </a>
+  <a href="https://aur.archlinux.org/packages/wallhaven-bin">
+    <img src="https://img.shields.io/aur/votes/wallhaven-bin" alt="AUR votes">
+  </a>
+</p>
+
 ---
 
 > 该项目参考了 [leoFitz1024](https://github.com/leoFitz1024) 的 [Wallhaven](https://github.com/leoFitz1024/wallhaven) 项目，并进行了大量优化和扩展。RESPECT
@@ -187,9 +196,21 @@ npm run build:linux
 
 ### Arch Linux 安装
 
-Arch Linux 用户可以通过以下方式安装：
+Arch Linux 用户可以通过 AUR 安装：
 
 #### 从 AUR 安装（推荐）
+
+**wallhaven-bin**（预编译版本，推荐）：
+
+```bash
+# 使用 yay
+yay -S wallhaven-bin
+
+# 或使用 paru
+paru -S wallhaven-bin
+```
+
+**wallhaven**（从源码构建）：
 
 ```bash
 # 使用 yay

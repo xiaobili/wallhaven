@@ -1,0 +1,66 @@
+name: Publish to AUR
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 2.7.0)'
+        required: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Download .pacman file
+        run: |
+          wget -O wallhaven-${{ steps.version.outputs.version }}.pacman \
+            https://github.com/xiaobili/wallhaven/releases/download/v${{ steps.version.outputs.version }}/wallhaven-${{ steps.version.outputs.version }}.pacman
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          SHA256=$(sha256sum wallhaven-${{ steps.version.outputs.version }}.pacman | awk '{print $1}')
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "SHA256: $SHA256"
+
+      - name: Update PKGBUILD
+        run: |
+          cd archlinux/wallhaven-bin
+          sed -i "s/pkgver=.*/pkgver=${{ steps.version.outputs.version }}/" PKGBUILD
+          sed -i "s/sha256sums=.*/sha256sums=('${{ steps.sha256.outputs.sha256 }}')/" PKGBUILD
+          echo "Updated PKGBUILD:"
+          cat PKGBUILD
+
+      - name: Generate .SRCINFO
+        run: |
+          cd archlinux/wallhaven-bin
+          docker run --rm -v $(pwd):/src archlinux:latest \
+            sh -c "pacman -Sy --noconfirm pacman-contrib && cd /src && makepkg --printsrcinfo > .SRCINFO"
+          echo "Generated .SRCINFO:"
+          cat .SRCINFO
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.0
+        with:
+          pkgname: wallhaven-bin
+          pkgbuild: ./archlinux/wallhaven-bin/PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to v${{ steps.version.outputs.version }}"
