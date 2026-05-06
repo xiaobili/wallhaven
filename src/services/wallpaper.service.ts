@@ -99,9 +99,13 @@ class WallpaperServiceImpl {
   /**
    * 搜索壁纸
    * @param params - 搜索参数
+   * @param options - 可选参数（包含 AbortSignal）
    * @returns 搜索结果
    */
-  async search(params: GetParams | null): Promise<IpcResponse<WallpaperSearchResult>> {
+  async search(
+    params: GetParams | null,
+    options?: { signal?: AbortSignal },
+  ): Promise<IpcResponse<WallpaperSearchResult>> {
     try {
       // 过滤空值参数
       const filteredParams: Record<string, unknown> = {}
@@ -120,10 +124,26 @@ class WallpaperServiceImpl {
         return { success: true, data: cachedData }
       }
 
+      // 检查是否已取消
+      if (options?.signal?.aborted) {
+        return {
+          success: false,
+          error: {
+            code: 'ABORTED',
+            message: '搜索请求已取消',
+          },
+        }
+      }
+
       // 获取 API Key
       const apiKey = await this.getApiKey()
       // 调用 API
-      const result = await apiClient.get<WallpaperSearchResult>('/search', filteredParams, apiKey)
+      const result = await apiClient.get<WallpaperSearchResult>(
+        '/search',
+        filteredParams,
+        apiKey,
+        options,
+      )
 
       // 成功时注入 is_favorite 字段并缓存结果
       if (result.success && result.data) {

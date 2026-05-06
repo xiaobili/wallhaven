@@ -66,6 +66,7 @@ class ApiClientImpl {
     url: string,
     params?: Record<string, unknown>,
     apiKey?: string,
+    options?: { signal?: AbortSignal },
   ): Promise<IpcResponse<T>> {
     try {
       // 生产环境：通过 Electron IPC 代理
@@ -93,10 +94,24 @@ class ApiClientImpl {
       if (apiKey) {
         config.headers = { 'X-API-Key': apiKey }
       }
+      // 添加 AbortSignal 支持
+      if (options?.signal) {
+        config.signal = options.signal
+      }
 
       const response = await this.axiosInstance.get<T>(url, config)
       return { success: true, data: response.data }
     } catch (error) {
+      // 处理取消错误
+      if (axios.isCancel(error) || (error as any)?.name === 'CanceledError') {
+        return {
+          success: false,
+          error: {
+            code: 'ABORTED',
+            message: '请求已取消',
+          },
+        }
+      }
       return {
         success: false,
         error: {

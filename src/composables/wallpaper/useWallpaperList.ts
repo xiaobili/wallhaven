@@ -5,7 +5,7 @@
  * 协调 WallpaperService 和 WallpaperStore
  */
 
-import { computed, type ComputedRef } from 'vue'
+import { computed, onUnmounted, type ComputedRef } from 'vue'
 import type { TotalPageData, GetParams, CustomParams, PageData } from '@/types'
 import { useWallpaperStore } from '@/stores/modules/wallpaper'
 import { wallpaperService, type WallpaperSearchResult } from '@/services'
@@ -70,6 +70,9 @@ export function useWallpaperList(): UseWallpaperListReturn {
   /** 上次查询参数（用于检测变化） */
   let lastQueryParams: GetParams | null = null
 
+  /** 搜索请求 AbortController (QUAL-03) */
+  let searchAbortController: AbortController | null = null
+
   /**
    * 检查搜索参数是否变化
    */
@@ -83,41 +86,70 @@ export function useWallpaperList(): UseWallpaperListReturn {
    * @returns 是否成功
    */
   const fetch = async (params: GetParams | null): Promise<boolean> => {
+    // 取消前一个请求 (QUAL-03)
+    searchAbortController?.abort()
+
     // 检测搜索条件是否变化
     if (isParamsChanged(params)) {
       store.clearPageCache()
       lastQueryParams = params ? { ...params } : null
     }
 
+    // 创建新的 AbortController (QUAL-03)
+    searchAbortController = new AbortController()
+
     store.loading = true
     store.error = false
 
-    const result = await wallpaperService.search(params)
+    try {
+      const result = await wallpaperService.search(params, {
+        signal: searchAbortController.signal,
+      })
 
-    if (!result.success) {
-      showError(result.error?.message || '获取壁纸失败')
+      // 如果请求被取消，静默返回 (QUAL-03)
+      if (!result.success && result.error?.code === 'ABORTED') {
+        console.debug('Search request aborted:', params)
+        return false
+      }
+
+      if (!result.success) {
+        showError(result.error?.message || '获取壁纸失败')
+        store.error = true
+        store.loading = false
+        return false
+      }
+
+      store.queryParams = params
+      lastQueryParams = params ? { ...params } : null
+
+      const pageData = toPageData(result.data!)
+      store.totalPageData = {
+        sections: [pageData],
+        totalPage: pageData.totalPage,
+        currentPage: pageData.currentPage,
+      }
+
+      // 同时更新分页状态
+      store.setCachedPage(pageData.currentPage, pageData)
+      store.currentPageData = { ...pageData }
+      store.totalCount = result.data!.meta.total
+
+      store.loading = false
+      return true
+    } catch (error) {
+      // 处理取消错误 (QUAL-03)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.debug('Search request aborted:', params)
+        return false
+      }
+
+      showError(error instanceof Error ? error.message : '获取壁纸失败')
       store.error = true
       store.loading = false
       return false
+    } finally {
+      searchAbortController = null
     }
-
-    store.queryParams = params
-    lastQueryParams = params ? { ...params } : null
-
-    const pageData = toPageData(result.data!)
-    store.totalPageData = {
-      sections: [pageData],
-      totalPage: pageData.totalPage,
-      currentPage: pageData.currentPage,
-    }
-
-    // 同时更新分页状态
-    store.setCachedPage(pageData.currentPage, pageData)
-    store.currentPageData = { ...pageData }
-    store.totalCount = result.data!.meta.total
-
-    store.loading = false
-    return true
   }
 
   /**
@@ -145,32 +177,58 @@ export function useWallpaperList(): UseWallpaperListReturn {
       return true
     }
 
-    // 从 API 加载
+    // 从 API 加载时添加取消支持 (QUAL-03)
+    searchAbortController?.abort()
+    searchAbortController = new AbortController()
+
     store.loading = true
     store.error = false
 
-    const params: GetParams = { ...store.queryParams, page } as GetParams
-    const result = await wallpaperService.search(params)
+    try {
+      const params: GetParams = { ...store.queryParams, page } as GetParams
+      const result = await wallpaperService.search(params, {
+        signal: searchAbortController.signal,
+      })
 
-    if (!result.success) {
-      showError(result.error?.message || '获取壁纸失败')
+      // 处理取消 (QUAL-03)
+      if (!result.success && result.error?.code === 'ABORTED') {
+        console.debug('Page load request aborted:', page)
+        return false
+      }
+
+      if (!result.success) {
+        showError(result.error?.message || '获取壁纸失败')
+        store.error = true
+        store.loading = false
+        return false
+      }
+
+      const pageData = toPageData(result.data!)
+      store.setCachedPage(page, pageData)
+      store.currentPageData = { ...pageData }
+      // 同步更新 totalPageData 以触发 WallpaperList 组件更新
+      store.totalPageData = {
+        sections: [pageData],
+        totalPage: pageData.totalPage,
+        currentPage: pageData.currentPage,
+      }
+      store.totalCount = result.data!.meta.total
+      store.loading = false
+      return true
+    } catch (error) {
+      // 处理取消错误 (QUAL-03)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.debug('Page load request aborted:', page)
+        return false
+      }
+
+      showError(error instanceof Error ? error.message : '获取壁纸失败')
       store.error = true
       store.loading = false
       return false
+    } finally {
+      searchAbortController = null
     }
-
-    const pageData = toPageData(result.data!)
-    store.setCachedPage(page, pageData)
-    store.currentPageData = { ...pageData }
-    // 同步更新 totalPageData 以触发 WallpaperList 组件更新
-    store.totalPageData = {
-      sections: [pageData],
-      totalPage: pageData.totalPage,
-      currentPage: pageData.currentPage,
-    }
-    store.totalCount = result.data!.meta.total
-    store.loading = false
-    return true
   }
 
   /**
@@ -188,28 +246,54 @@ export function useWallpaperList(): UseWallpaperListReturn {
       return false
     }
 
+    // 添加取消支持 (QUAL-03)
+    searchAbortController?.abort()
+    searchAbortController = new AbortController()
+
     store.loading = true
 
-    const nextPage = store.totalPageData.currentPage + 1
-    const params = { ...store.queryParams, page: nextPage }
+    try {
+      const nextPage = store.totalPageData.currentPage + 1
+      const params = { ...store.queryParams, page: nextPage }
 
-    const result = await wallpaperService.search(params)
+      const result = await wallpaperService.search(params, {
+        signal: searchAbortController.signal,
+      })
 
-    if (!result.success) {
-      showError(result.error?.message || '加载更多失败')
+      // 处理取消 (QUAL-03)
+      if (!result.success && result.error?.code === 'ABORTED') {
+        console.debug('Load more request aborted')
+        return false
+      }
+
+      if (!result.success) {
+        showError(result.error?.message || '加载更多失败')
+        store.loading = false
+        return false
+      }
+
+      // result.data 已在成功检查后确认存在
+      const pageData = toPageData(result.data!)
+      store.totalPageData = {
+        ...store.totalPageData,
+        sections: [...store.totalPageData.sections, pageData],
+        currentPage: pageData.currentPage,
+      }
+      store.loading = false
+      return true
+    } catch (error) {
+      // 处理取消错误 (QUAL-03)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.debug('Load more request aborted')
+        return false
+      }
+
+      showError(error instanceof Error ? error.message : '加载更多失败')
       store.loading = false
       return false
+    } finally {
+      searchAbortController = null
     }
-
-    // result.data 已在成功检查后确认存在
-    const pageData = toPageData(result.data!)
-    store.totalPageData = {
-      ...store.totalPageData,
-      sections: [...store.totalPageData.sections, pageData],
-      currentPage: pageData.currentPage,
-    }
-    store.loading = false
-    return true
   }
 
   /**
@@ -332,6 +416,11 @@ export function useWallpaperList(): UseWallpaperListReturn {
       }
     }
   }
+
+  // 组件卸载时取消进行中的请求 (QUAL-03)
+  onUnmounted(() => {
+    searchAbortController?.abort()
+  })
 
   return {
     // 状态
