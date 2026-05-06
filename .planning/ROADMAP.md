@@ -65,38 +65,38 @@
 
 **目标:** 优化收藏状态批量查询和图片尺寸解析
 
-**状态:** ◆ 已规划 (2026-05-06)
+**状态:** ✅ 完成 (2026-05-06)
 
 **详细计划:** `.planning/phases/02-performance-query-parse/02-PLAN.md`
 
 ### Tasks
 
-- [ ] **Task 2.1**: 实现前端收藏状态缓存
+- [x] **Task 2.1**: 实现前端收藏状态缓存
   - 在 `useFavorites` composable 中添加本地状态缓存
   - 实现增量更新策略
   - 减少对 `favoritesRepository.getFavoriteStatusMap` 的调用
 
-- [ ] **Task 2.2**: 使用 sharp 库解析图片尺寸
+- [x] **Task 2.2**: 使用 sharp 库解析图片尺寸
   - 修改 `base.ts` 中的 `getImageDimensions` 函数
   - 使用 sharp 库替代手动解析
   - 测试 WebP 格式解析
 
-- [ ] **Task 2.3**: 验证查询和解析优化
+- [x] **Task 2.3**: 验证查询和解析优化
   - 测试收藏状态显示正确性
   - 测试本地壁纸列表（含 WebP）
   - 确认性能提升
 
 ### Verification
 
-- [ ] 收藏状态显示正确，延迟降低
-- [ ] WebP 图片尺寸正确显示
-- [ ] 本地壁纸浏览性能提升
-- [ ] 无功能退化
+- [x] 收藏状态显示正确，延迟降低
+- [x] WebP 图片尺寸正确显示
+- [x] 本地壁纸浏览性能提升
+- [x] 无功能退化
 
 ### Requirements Coverage
 
-- PERF-03: 收藏状态批量查询优化
-- PERF-04: 图片尺寸解析可靠性提升
+- PERF-03: 收藏状态批量查询优化 ✅
+- PERF-04: 图片尺寸解析可靠性提升 ✅
 
 ---
 
