@@ -63,6 +63,9 @@ jobs:
         with:
           pkgname: wallhaven-bin
           pkgbuild: ./archlinux/wallhaven-bin/PKGBUILD
+          assets: |
+            archlinux/wallhaven-bin/.SRCINFO
+            archlinux/wallhaven-bin/wallhaven-bin.install
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
