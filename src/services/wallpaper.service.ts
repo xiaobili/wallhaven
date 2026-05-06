@@ -31,7 +31,7 @@ interface CacheItem {
 class WallpaperServiceImpl {
   /** 缓存存储 (PERF-02: 使用 lru-cache) */
   private cache = new LRUCache<string, CacheItem>({
-    max: 50 * 1024 * 1024, // 50MB 内存限制
+    maxSize: 50 * 1024 * 1024, // 50MB 内存限制
     ttl: 5 * 60 * 1000, // 5 分钟 TTL
     sizeCalculation: (value: CacheItem) => {
       // 估算缓存项大小
