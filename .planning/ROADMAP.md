@@ -104,36 +104,39 @@
 
 **目标:** 统一错误处理格式和消除类型定义重复
 
+**状态:** ✅ 完成 (2026-05-06)
+
+**详细计划:** `.planning/phases/03-code-quality-error-types/03-PLAN.md`
+
 ### Tasks
 
-- [ ] **Task 3.1**: 统一错误处理格式
-  - 审查所有 IPC handlers 的错误返回格式
+- [x] **Task 3.1**: 统一错误处理格式
+  - 创建错误码常量 `IPC_ERROR_CODES`
+  - 创建 `createErrorResponse` 辅助函数
+  - 更新 `download.handler.ts`, `wallpaper.handler.ts`, `store.handler.ts`, `file.handler.ts`, `cache.handler.ts`, `api.handler.ts`
   - 统一使用 `IpcErrorInfo` 类型
-  - 更新错误码定义
-  - 更新调用方的错误处理逻辑
 
-- [ ] **Task 3.2**: 消除类型定义重复
-  - 统一 `DownloadProgressData` 到 `src/types/domain/download.ts`
-  - 统一 `CacheInfo` 到 `src/types/domain/` 目录
-  - 更新所有导入引用
-  - 删除重复定义
+- [x] **Task 3.2**: 消除类型定义重复
+  - 删除 `src/services/download.service.ts` 中的 `DownloadProgressData` 定义
+  - 删除 `src/repositories/settings.repository.ts` 中的 `CacheInfo` 定义
+  - 统一从 `@/types/ipc` 导入
 
-- [ ] **Task 3.3**: 验证错误处理和类型系统
-  - 测试错误场景（网络错误、数据库错误等）
-  - 运行 TypeScript 类型检查
-  - 确认无类型错误
+- [x] **Task 3.3**: 验证错误处理和类型系统
+  - TypeScript 类型检查通过
+  - 构建成功
+  - GitNexus 变更检测确认修改范围
 
 ### Verification
 
-- [ ] 所有错误返回格式一致
-- [ ] 无类型定义重复
-- [ ] TypeScript 编译无错误
-- [ ] 错误信息对用户友好
+- [x] 所有错误返回格式一致
+- [x] 无类型定义重复
+- [x] TypeScript 编译无错误
+- [x] 错误信息对用户友好
 
 ### Requirements Coverage
 
-- QUAL-01: 统一错误处理格式
-- QUAL-02: 消除类型定义重复
+- QUAL-01: 统一错误处理格式 ✅
+- QUAL-02: 消除类型定义重复 ✅
 
 ---
 
