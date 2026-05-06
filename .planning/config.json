@@ -1,0 +1,8 @@
+{
+  "yoloMode": true,
+  "planGranularity": "medium",
+  "gitStrategy": "atomic",
+  "parallelAgents": true,
+  "createdAt": "2026-05-06",
+  "projectType": "brownfield"
+}
