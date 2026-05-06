@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
-  "include": ["electron/**/*", "src/types/ipc.ts"],
+  "include": ["electron/**/*", "src/types/ipc.ts", "src/config/**/*", "src/errors/**/*"],
   "compilerOptions": {
     "composite": true,
     "types": ["electron-vite/node", "node"],

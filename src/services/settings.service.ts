@@ -5,7 +5,8 @@
 
 import type { IpcResponse, LocalFile } from '@/types/ipc'
 import type { AppSettings, WallpaperFit } from '@/types'
-import { settingsRepository, type CacheInfo, type ClearCacheResult } from '@/repositories'
+import { settingsRepository, type ClearCacheResult } from '@/repositories'
+import type { CacheInfo } from '@/types/ipc'
 
 /**
  * 默认应用设置

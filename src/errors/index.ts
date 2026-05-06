@@ -21,7 +21,10 @@ export { ErrorCodes, type ErrorCode } from './types'
 
 // ==================== IPC 错误处理统一化 ====================
 
-import type { IpcErrorInfo } from '@/types/ipc'
+import type { IpcErrorInfo } from '../types/ipc'
+
+// 导出 IpcErrorInfo 类型供主进程使用
+export type { IpcErrorInfo } from '../types/ipc'
 
 /**
  * IPC 错误码常量

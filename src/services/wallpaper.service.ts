@@ -8,6 +8,7 @@ import type { GetParams, CustomParams, WallpaperItem, WallpaperMeta } from '@/ty
 import { LRUCache } from 'lru-cache'
 import { apiClient } from '@/clients'
 import { favoritesRepository, settingsRepository, wallpaperRepository } from '@/repositories'
+import { CACHE_CONFIG } from '@/config/constants'
 
 /**
  * 壁纸搜索结果
@@ -31,8 +32,8 @@ interface CacheItem {
 class WallpaperServiceImpl {
   /** 缓存存储 (PERF-02: 使用 lru-cache) */
   private cache = new LRUCache<string, CacheItem>({
-    maxSize: 50 * 1024 * 1024, // 50MB 内存限制
-    ttl: 5 * 60 * 1000, // 5 分钟 TTL
+    maxSize: CACHE_CONFIG.SEARCH_MAX_SIZE_BYTES,
+    ttl: CACHE_CONFIG.SEARCH_TTL_MS,
     sizeCalculation: (value: CacheItem) => {
       // 估算缓存项大小
       return JSON.stringify(value.data).length

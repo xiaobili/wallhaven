@@ -18,7 +18,8 @@ import {
   isResumeDownloadParams,
   isPendingDownload,
 } from '../../../../src/types/ipc'
-import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
+import { IPC_ERROR_CODES, createErrorResponse, type IpcErrorInfo } from '../../../../src/errors'
+import { DOWNLOAD_CONFIG } from '../../../../src/config/constants'
 
 // /**
 //  * IPC Channel names (duplicated from src/types/ipc.ts to avoid cross-directory imports)
@@ -61,10 +62,8 @@ interface RetryTimerEntry {
 }
 const retryTimers = new Map<string, RetryTimerEntry>()
 
-/** Retry backoff configuration constants */
-const BACKOFF_BASE_MS = 2000 // 2 seconds — base delay for first retry
-const BACKOFF_MAX_MS = 30000 // 30 seconds — absolute ceiling
-const MAX_RETRIES = 3 // Max retry attempts before permanent failure
+// Destructure configuration values from DOWNLOAD_CONFIG
+const { BACKOFF_BASE_MS, BACKOFF_MAX_MS, MAX_RETRIES } = DOWNLOAD_CONFIG
 
 /**
  * Get state file path from temp file path
@@ -1030,7 +1029,7 @@ export function registerDownloadHandlers(): void {
           const result = readStateFile(statePath)
           if (!result.success) {
             // Log specific error
-            if (result.error === 'PARSE_ERROR') {
+            if (result.error.code === 'PARSE_ERROR') {
               logHandler('get-pending-downloads', `Corrupted state file: ${stateFile}`, 'warn')
             }
             // Delete invalid state file

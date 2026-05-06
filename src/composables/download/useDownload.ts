@@ -32,7 +32,8 @@
 
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from 'vue'
 import { useDownloadStore } from '@/stores/modules/download'
-import { downloadService, type DownloadProgressData } from '@/services'
+import { downloadService } from '@/services'
+import type { DownloadProgressData } from '@/types/ipc'
 import { useAlert } from '@/composables'
 import type { DownloadItem, FinishedDownloadItem } from '@/types'
 

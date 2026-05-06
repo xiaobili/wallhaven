@@ -3,6 +3,7 @@
 import axios, { type AxiosResponse, type CancelTokenSource } from 'axios'
 import type { GetParams } from '@/types'
 import { useWallpaperStore } from '@/stores/modules/wallpaper'
+import { CACHE_CONFIG } from '@/config/constants'
 
 /**
  * 创建 axios 实例
@@ -25,7 +26,6 @@ interface CacheItem {
 }
 
 const apiCache = new Map<string, CacheItem>()
-const CACHE_TTL = 5 * 60 * 1000 // 5分钟缓存
 
 /**
  * 生成缓存key
@@ -63,7 +63,7 @@ const setCache = (key: string, data: any): void => {
   apiCache.set(key, {
     data,
     timestamp: Date.now(),
-    ttl: CACHE_TTL,
+    ttl: CACHE_CONFIG.SEARCH_TTL_MS,
   })
 }
 
