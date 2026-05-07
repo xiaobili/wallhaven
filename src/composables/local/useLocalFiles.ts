@@ -22,6 +22,7 @@
  * ```
  */
 
+import { ref, computed } from 'vue'
 import { useAlert } from '@/composables'
 import { settingsService } from '@/services'
 import type { IpcResponse, LocalFile } from '@/types/ipc'
@@ -31,11 +32,19 @@ import type { IpcResponse, LocalFile } from '@/types/ipc'
  */
 export interface UseLocalFilesReturn {
   /** 读取目录内容 */
-  readDirectory: (dirPath: string) => Promise<IpcResponse<LocalFile[]>>
+  readDirectory: (dirPath: string, page?: number, pageSize?: number) => Promise<IpcResponse<LocalFile[]>>
   /** 在系统文件管理器中打开文件夹 */
   openFolder: (folderPath: string) => Promise<IpcResponse<void>>
   /** 删除文件 */
   deleteFile: (filePath: string) => Promise<IpcResponse<void>>
+  /** 当前页码（从 1 开始） */
+  currentPage: import('vue').Ref<number>
+  /** 总页数 */
+  totalPages: import('vue').ComputedRef<number>
+  /** 每页数量 */
+  pageSize: import('vue').Ref<number>
+  /** 文件总数 */
+  total: import('vue').Ref<number>
 }
 
 /**
@@ -46,16 +55,32 @@ export interface UseLocalFilesReturn {
 export function useLocalFiles(): UseLocalFilesReturn {
   const { showError } = useAlert()
 
+  // 分页状态
+  const currentPage = ref(1)
+  const pageSize = ref(50)
+  const total = ref(0)
+  const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
+
   /**
    * 读取目录内容
    * @param dirPath - 目录路径
+   * @param page - 页码（从 1 开始，可选）
+   * @param pageSizeParam - 每页数量（可选，默认 50）
    * @returns 文件列表
    */
-  const readDirectory = async (dirPath: string): Promise<IpcResponse<LocalFile[]>> => {
-    const result = await settingsService.readDirectory(dirPath)
+  const readDirectory = async (dirPath: string, page?: number, pageSizeParam?: number): Promise<IpcResponse<LocalFile[]>> => {
+    const result = await settingsService.readDirectory(dirPath, page, pageSizeParam)
 
     if (!result.success) {
       showError(result.error?.message || '读取目录失败')
+    }
+
+    // 更新分页状态
+    if (result.pagination) {
+      currentPage.value = result.pagination.page
+      pageSize.value = result.pagination.pageSize
+      total.value = result.pagination.total
+      // totalPages 是 computed，自动更新
     }
 
     return result
@@ -93,5 +118,9 @@ export function useLocalFiles(): UseLocalFilesReturn {
     readDirectory,
     openFolder,
     deleteFile,
+    currentPage,
+    totalPages,
+    pageSize,
+    total,
   }
 }
