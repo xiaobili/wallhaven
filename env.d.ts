@@ -15,7 +15,7 @@ interface ElectronAPI {
   selectFolder: () => Promise<string | null>
 
   // 目录操作
-  readDirectory: (dirPath: string) => Promise<{ error: string | null; files: any[] }>
+  readDirectory: (dirPath: string, page?: number, pageSize?: number) => Promise<{ error: string | null; files: any[]; total: number; page: number; pageSize: number }>
   openFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
 
   // 文件操作

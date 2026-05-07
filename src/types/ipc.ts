@@ -80,6 +80,8 @@ export interface IpcResponse<T = unknown> {
   success: boolean
   data?: T
   error?: IpcErrorInfo
+  /** 分页元数据（文件列表分页操作时存在） */
+  pagination?: PaginationMeta
 }
 
 /**
@@ -88,6 +90,19 @@ export interface IpcResponse<T = unknown> {
 export interface IpcErrorInfo {
   code: string
   message: string
+}
+
+/**
+ * 分页元数据
+ * 用于文件列表操作的分页响应
+ */
+export interface PaginationMeta {
+  /** 符合条件的文件总数 */
+  total: number
+  /** 当前页码（从 1 开始） */
+  page: number
+  /** 每页数量 */
+  pageSize: number
 }
 
 // ==================== 各通道的请求/响应类型 ====================
