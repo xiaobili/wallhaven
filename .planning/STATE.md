@@ -46,12 +46,13 @@ Next action: 里程碑 v2.8.1 全部完成 — 进入验证阶段
 
 ```
 v2.8.0: ██████████ 100% — SHIPPED
-v2.8.1: ██████░░░░  67% — Phase 7 & 8 complete
+v2.8.1: ██████████ 100% — ALL DONE (Phase 7-9 complete)
 ```
 
 **下一个行动:**
 
-1. `/gsd-plan-phase 9` — 进入规划阶段
+1. `/gsd-verify-work` — 验证里程碑完整性
+2. `/gsd-complete-milestone` — 归档并进入下一版本
 
 ---
 
