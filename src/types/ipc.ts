@@ -113,11 +113,27 @@ export interface LocalFile {
 }
 
 /**
+ * 读取目录请求参数
+ */
+export interface ReadDirectoryParams {
+  /** 页码，从 1 开始，默认 1 */
+  page?: number
+  /** 每页数量，默认 50 */
+  pageSize?: number
+}
+
+/**
  * 读取目录响应
  */
 export interface ReadDirectoryResponse {
   error: string | null
   files: LocalFile[]
+  /** 符合条件的文件总数 */
+  total: number
+  /** 当前页码 */
+  page: number
+  /** 每页数量 */
+  pageSize: number
 }
 
 /**

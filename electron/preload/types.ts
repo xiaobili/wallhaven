@@ -12,6 +12,7 @@ export type {
   IpcResponse,
   IpcErrorInfo,
   SelectFolderResponse,
+  ReadDirectoryParams,
   ReadDirectoryResponse,
   LocalFile,
   OpenFolderResponse,
