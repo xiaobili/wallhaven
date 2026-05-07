@@ -29,7 +29,7 @@
 ### 🚧 v2.8.1 本地壁纸列表分页 (Phases 7-9)
 
 - ✅ Phase 7: 后端分页支持 — PAG-01 (1 plan) 2026-05-07
-- [ ] Phase 8: 数据流链路分页参数传递 — PAG-02
+- [ ] Phase 8: 数据流链路分页参数传递 — PAG-02 (1 plan)
 - [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04
 
 ---
@@ -68,6 +68,11 @@ Plans:
 4. preload `readDirectory` 桥接转发分页参数到 `ipcRenderer.invoke('read-directory', dirPath, page, pageSize)`
 5. `useLocalFiles` composable 管理当前页码、总页数、每页数量等分页状态
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 08-01-PLAN.md — 数据链路各层添加分页参数 + composable 分页状态管理
+
 ### Phase 9: 前端分页 UI 集成
 
 **需求:** PAG-03, PAG-04
@@ -94,7 +99,7 @@ Plans:
 | 5. 架构优化（服务层与状态管理）| v2.8.0 | Complete | 2026-05-06 |
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
 | 7. 后端分页支持 | v2.8.1 | Complete | 2026-05-07 |
-| 8. 数据流链路分页参数传递 | v2.8.1 | Planning | — |
+| 8. 数据流链路分页参数传递 | v2.8.1 | Planned | — |
 | 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
 
 ---
