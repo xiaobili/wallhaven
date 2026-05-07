@@ -1,14 +1,14 @@
 # Roadmap: Wallhaven 壁纸浏览器
 
-**当前里程碑:** 准备 v2.9.0
-**最后更新:** 2026-05-06
+**当前里程碑:** v2.8.1 本地壁纸列表分页
+**最后更新:** 2026-05-07
 
 ---
 
 ## Milestones
 
 - ✅ **v2.8.0 性能与架构优化** — Phases 1-6 (shipped 2026-05-06)
-- 📋 **v2.9.0 待定** — 待规划
+- 🚧 **v2.8.1 本地壁纸列表分页** — Phases 7-9 (规划中)
 
 ---
 
@@ -26,9 +26,54 @@
 
 </details>
 
-### 📋 v2.9.0 待定 (Planning)
+### 🚧 v2.8.1 本地壁纸列表分页 (Phases 7-9)
 
-*运行 `/gsd-new-milestone` 开始下一个里程碑规划*
+- [ ] Phase 7: 后端分页支持 — PAG-01
+- [ ] Phase 8: 数据流链路分页参数传递 — PAG-02
+- [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04
+
+---
+
+## Phase Details
+
+### Phase 7: 后端分页支持
+
+**需求:** PAG-01
+
+**目标:** file.handler.ts `read-directory` handler 接受 `page`/`pageSize` 参数，返回分页结果及文件总数
+
+**成功标准:**
+1. IPC 类型定义新增 `PaginationParams`（page, pageSize）和 `PaginatedReadResult`（items, total）
+2. file.handler.ts `read-directory` handler 解析 `page`/`pageSize` 并使用 `Array.slice` 实现偏移/限制
+3. 读取目录后先过滤图片文件，计算总数 total，再根据 page/pageSize 截取子集
+4. 同时返回 `error`, `files` (当前页) 和新增的 `total`, `page`, `pageSize` 字段
+5. 兼容性: 未传分页参数时默认 page=1, pageSize=50，不破坏现有调用
+
+### Phase 8: 数据流链路分页参数传递
+
+**需求:** PAG-02
+
+**目标:** 从 composable 到 preload 的完整数据链路支持分页参数传递
+
+**成功标准:**
+1. `settingsService.readDirectory` 签名增加 `page`/`pageSize` 可选参数
+2. `settingsRepository.readDirectory` 签名增加 `page`/`pageSize` 可选参数
+3. `fileClient.readDirectory` 签名增加 `page`/`pageSize` 可选参数，传递到 `window.electronAPI.readDirectory`
+4. preload `readDirectory` 桥接转发分页参数到 `ipcRenderer.invoke('read-directory', dirPath, page, pageSize)`
+5. `useLocalFiles` composable 管理当前页码、总页数、每页数量等分页状态
+
+### Phase 9: 前端分页 UI 集成
+
+**需求:** PAG-03, PAG-04
+
+**目标:** LocalWallpaper.vue 集成 PaginationBar 组件，实现页码导航和页面缓存
+
+**成功标准:**
+1. `LocalWallpaper.vue` 在壁纸网格下方渲染 `PaginationBar` 组件，传入 `currentPage`, `totalPages`, `totalCount`, `loading`
+2. 页码切换时调用 composable 的 `goToPage(page)` 方法，触发数据重新加载
+3. 页面缓存: 切换页面时缓存当前页的 `LocalWallpaper[]`，返回已缓存页面时直接从缓存读取
+4. 刷新按钮清除所有缓存并重置到第 1 页
+5. 分页控件在大数据量下正常显示（测试 500+ 文件）
 
 ---
 
@@ -42,7 +87,10 @@
 | 4. 代码质量（取消机制与配置）| v2.8.0 | Complete | 2026-05-06 |
 | 5. 架构优化（服务层与状态管理）| v2.8.0 | Complete | 2026-05-06 |
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
+| 7. 后端分页支持 | v2.8.1 | Planning | — |
+| 8. 数据流链路分页参数传递 | v2.8.1 | Planning | — |
+| 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
 
 ---
 
-*路线图最后更新: 2026-05-06*
+*路线图最后更新: 2026-05-07*
