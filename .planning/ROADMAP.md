@@ -28,7 +28,7 @@
 
 ### 🚧 v2.8.1 本地壁纸列表分页 (Phases 7-9)
 
-- [ ] Phase 7: 后端分页支持 — PAG-01 (1 plan)
+- ✅ Phase 7: 后端分页支持 — PAG-01 (1 plan) 2026-05-07
 - [ ] Phase 8: 数据流链路分页参数传递 — PAG-02
 - [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04
 
@@ -36,23 +36,24 @@
 
 ## Phase Details
 
-### Phase 7: 后端分页支持
+### Phase 7: 后端分页支持 ✅
 
-**需求:** PAG-01
+**需求:** PAG-01 — 已完成 2026-05-07
 
 **目标:** file.handler.ts `read-directory` handler 接受 `page`/`pageSize` 参数，返回分页结果及文件总数
 
 **成功标准:**
-1. IPC 类型定义新增 `PaginationParams`（page, pageSize）和 `PaginatedReadResult`（items, total）
-2. file.handler.ts `read-directory` handler 解析 `page`/`pageSize` 并使用 `Array.slice` 实现偏移/限制
-3. 读取目录后先过滤图片文件，计算总数 total，再根据 page/pageSize 截取子集
-4. 同时返回 `error`, `files` (当前页) 和新增的 `total`, `page`, `pageSize` 字段
-5. 兼容性: 未传分页参数时默认 page=1, pageSize=50，不破坏现有调用
+1. ✅ IPC 类型定义新增 `ReadDirectoryParams`（page, pageSize）和 `ReadDirectoryResponse` 扩展（total, page, pageSize）
+2. ✅ file.handler.ts `read-directory` handler 解析 `page`/`pageSize` 并使用 `Array.slice` 实现偏移/限制
+3. ✅ 读取目录后先过滤图片文件，计算总数 total，再根据 page/pageSize 截取子集
+4. ✅ 同时返回 `error`, `files` (当前页) 和新增的 `total`, `page`, `pageSize` 字段
+5. ✅ 兼容性: 未传分页参数时默认 page=1, pageSize=50，不破坏现有调用
+6. ✅ 构建验证通过
 
-**Plans:** 1 plan
+**Plans:** 1 plan — 全部完成
 
 Plans:
-- [ ] 07-01-PLAN.md — 类型定义 + handler 分页逻辑 + preload 桥接
+- [x] 07-01-PLAN.md — 类型定义 + handler 分页逻辑 + preload 桥接 ✅
 
 ### Phase 8: 数据流链路分页参数传递
 
@@ -92,7 +93,7 @@ Plans:
 | 4. 代码质量（取消机制与配置）| v2.8.0 | Complete | 2026-05-06 |
 | 5. 架构优化（服务层与状态管理）| v2.8.0 | Complete | 2026-05-06 |
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
-| 7. 后端分页支持 | v2.8.1 | Planned (1 plan) | — |
+| 7. 后端分页支持 | v2.8.1 | Complete | 2026-05-07 |
 | 8. 数据流链路分页参数传递 | v2.8.1 | Planning | — |
 | 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
 
