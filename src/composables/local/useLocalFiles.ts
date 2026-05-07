@@ -26,6 +26,7 @@ import { ref, computed } from 'vue'
 import { useAlert } from '@/composables'
 import { settingsService } from '@/services'
 import type { IpcResponse, LocalFile } from '@/types/ipc'
+import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 /**
  * useLocalFiles 返回值接口
@@ -45,6 +46,12 @@ export interface UseLocalFilesReturn {
   pageSize: import('vue').Ref<number>
   /** 文件总数 */
   total: import('vue').Ref<number>
+  /** 跳转到指定页面（支持缓存） */
+  goToPage: (dirPath: string, page: number) => Promise<LocalWallpaper[]>
+  /** 清除页面缓存 */
+  clearCache: () => void
+  /** 当前页的壁纸列表（给 preview 导航使用，限制在当前页） */
+  localWallpapers: import('vue').Ref<LocalWallpaper[]>
 }
 
 /**
@@ -60,6 +67,60 @@ export function useLocalFiles(): UseLocalFilesReturn {
   const pageSize = ref(50)
   const total = ref(0)
   const totalPages = computed(() => Math.ceil(total.value / pageSize.value) || 1)
+
+  // 页面缓存
+  /** 页面缓存: Map<页码, LocalWallpaper[]> */
+  const pageCache = new Map<number, LocalWallpaper[]>()
+  const localWallpapers = ref<LocalWallpaper[]>([])
+
+  /**
+   * 清除页面缓存
+   */
+  const clearCache = (): void => {
+    pageCache.clear()
+    localWallpapers.value = []
+    currentPage.value = 1
+  }
+
+  /**
+   * 跳转到指定页面（支持缓存）
+   * @param dirPath - 目录路径
+   * @param page - 页码（从 1 开始）
+   * @returns 当前页壁纸列表
+   */
+  const goToPage = async (dirPath: string, page: number): Promise<LocalWallpaper[]> => {
+    // 缓存命中：直接返回缓存数据
+    if (pageCache.has(page)) {
+      currentPage.value = page
+      localWallpapers.value = pageCache.get(page)!
+      return localWallpapers.value
+    }
+
+    // 缓存未命中：调用 readDirectory 获取数据
+    const result = await readDirectory(dirPath, page, pageSize.value)
+
+    if (!result.success || !result.data) {
+      localWallpapers.value = []
+      return []
+    }
+
+    // 映射 LocalFile[] 到 LocalWallpaper[]
+    const mapped: LocalWallpaper[] = result.data.map((file) => ({
+      name: file.name,
+      path: file.path,
+      thumbnailPath: file.thumbnailPath || '',
+      size: file.size,
+      modifiedTime: new Date(file.modifiedAt).toISOString(),
+      width: file.width,
+      height: file.height,
+    }))
+
+    // 存入缓存
+    pageCache.set(page, mapped)
+    localWallpapers.value = mapped
+
+    return mapped
+  }
 
   /**
    * 读取目录内容
@@ -122,5 +183,8 @@ export function useLocalFiles(): UseLocalFilesReturn {
     totalPages,
     pageSize,
     total,
+    goToPage,
+    clearCache,
+    localWallpapers,
   }
 }
