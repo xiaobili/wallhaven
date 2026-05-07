@@ -52,7 +52,6 @@ import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 const { settings } = useSettings()
 const { alert, showSuccess, hideAlert, showError } = useAlert()
 const {
-  readDirectory,
   openFolder: openFolderAction,
   deleteFile,
   goToPage,

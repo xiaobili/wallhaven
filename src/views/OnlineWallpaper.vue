@@ -327,10 +327,10 @@ const saveParams = async (params: CustomParams): Promise<void> => {
 }
 
 /**
- * 批量下载
+ * 批量下载（使用跨页面保留的选中数据）
  */
 const downloadSelected = async (): Promise<void> => {
-  await selection.downloadSelected(wallpapers.value)
+  await selection.downloadSelected()
 }
 
 /**

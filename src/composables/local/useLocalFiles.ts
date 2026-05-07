@@ -22,7 +22,7 @@
  * ```
  */
 
-import { ref, computed } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import { useAlert } from '@/composables'
 import { settingsService } from '@/services'
 import type { IpcResponse, LocalFile } from '@/types/ipc'
@@ -33,19 +33,23 @@ import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
  */
 export interface UseLocalFilesReturn {
   /** 读取目录内容 */
-  readDirectory: (dirPath: string, page?: number, pageSize?: number) => Promise<IpcResponse<LocalFile[]>>
+  readDirectory: (
+    dirPath: string,
+    page?: number,
+    pageSize?: number,
+  ) => Promise<IpcResponse<LocalFile[]>>
   /** 在系统文件管理器中打开文件夹 */
   openFolder: (folderPath: string) => Promise<IpcResponse<void>>
   /** 删除文件 */
   deleteFile: (filePath: string) => Promise<IpcResponse<void>>
   /** 当前页码（从 1 开始） */
-  currentPage: import('vue').Ref<number>
+  currentPage: Ref<number>
   /** 总页数 */
-  totalPages: import('vue').ComputedRef<number>
+  totalPages: ComputedRef<number>
   /** 每页数量 */
-  pageSize: import('vue').Ref<number>
+  pageSize: Ref<number>
   /** 文件总数 */
-  total: import('vue').Ref<number>
+  total: Ref<number>
   /** 跳转到指定页面（支持缓存） */
   goToPage: (dirPath: string, page: number) => Promise<LocalWallpaper[]>
   /** 清除页面缓存 */
@@ -129,7 +133,11 @@ export function useLocalFiles(): UseLocalFilesReturn {
    * @param pageSizeParam - 每页数量（可选，默认 50）
    * @returns 文件列表
    */
-  const readDirectory = async (dirPath: string, page?: number, pageSizeParam?: number): Promise<IpcResponse<LocalFile[]>> => {
+  const readDirectory = async (
+    dirPath: string,
+    page?: number,
+    pageSizeParam?: number,
+  ): Promise<IpcResponse<LocalFile[]>> => {
     const result = await settingsService.readDirectory(dirPath, page, pageSizeParam)
 
     if (!result.success) {

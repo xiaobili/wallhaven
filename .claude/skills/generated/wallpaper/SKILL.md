@@ -1,11 +1,11 @@
 ---
 name: wallpaper
-description: "Skill for the Wallpaper area of wallhaven. 27 symbols across 10 files."
+description: "Skill for the Wallpaper area of wallhaven. 28 symbols across 10 files."
 ---
 
 # Wallpaper
 
-27 symbols | 10 files | Cohesion: 83%
+28 symbols | 10 files | Cohesion: 87%
 
 ## When to Use
 
@@ -21,10 +21,10 @@ description: "Skill for the Wallpaper area of wallhaven. 27 symbols across 10 fi
 | `src/composables/wallpaper/useWallpaperSelection.ts` | useWallpaperSelection, generateFilename, flattenWallpapers, clear, downloadSelected |
 | `src/composables/wallpaper/useWallpaperSetter.ts` | setWallpaper, downloadWallpaperFile, setBgFromUrl |
 | `src/composables/wallpaper/useWallpaperDownload.ts` | useWallpaperDownload, generateFilename, download |
+| `src/services/wallpaper.service.ts` | search, setWallpaper |
 | `src/services/download.service.ts` | simpleDownload, onProgress |
 | `src/composables/settings/useSettings.ts` | useSettings, getDefaults |
 | `src/stores/modules/wallpaper/index.ts` | createDefaultSettings, useWallpaperStore |
-| `src/services/wallpaper.service.ts` | setWallpaper |
 | `src/composables/download/useDownload.ts` | useDownload |
 | `src/stores/modules/download/index.ts` | useDownloadStore |
 
@@ -32,35 +32,35 @@ description: "Skill for the Wallpaper area of wallhaven. 27 symbols across 10 fi
 
 Start here when exploring this area:
 
-- **`isParamsChanged`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:75`
-- **`fetch`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:84`
-- **`goToPage`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:127`
-- **`loadMore`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:179`
-- **`refresh`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:235`
+- **`isParamsChanged`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:78`
+- **`fetch`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:87`
+- **`goToPage`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:159`
+- **`loadMore`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:237`
+- **`refresh`** (Function) — `src/composables/wallpaper/useWallpaperList.ts:319`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `isParamsChanged` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 75 |
-| `fetch` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 84 |
-| `goToPage` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 127 |
-| `loadMore` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 179 |
-| `refresh` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 235 |
+| `isParamsChanged` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 78 |
+| `fetch` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 87 |
+| `goToPage` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 159 |
+| `loadMore` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 237 |
+| `refresh` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 319 |
 | `setWallpaper` | Function | `src/composables/wallpaper/useWallpaperSetter.ts` | 60 |
 | `downloadWallpaperFile` | Function | `src/composables/wallpaper/useWallpaperSetter.ts` | 86 |
 | `setBgFromUrl` | Function | `src/composables/wallpaper/useWallpaperSetter.ts` | 106 |
-| `useWallpaperSelection` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 83 |
+| `useWallpaperSelection` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 97 |
 | `useWallpaperDownload` | Function | `src/composables/wallpaper/useWallpaperDownload.ts` | 51 |
-| `useDownload` | Function | `src/composables/download/useDownload.ts` | 71 |
+| `useDownload` | Function | `src/composables/download/useDownload.ts` | 72 |
 | `useDownloadStore` | Function | `src/stores/modules/download/index.ts` | 5 |
 | `useWallpaperList` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 65 |
 | `useSettings` | Function | `src/composables/settings/useSettings.ts` | 57 |
 | `getDefaults` | Function | `src/composables/settings/useSettings.ts` | 123 |
-| `useWallpaperStore` | Function | `src/stores/modules/wallpaper/index.ts` | 17 |
-| `flattenWallpapers` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 61 |
-| `clear` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 126 |
-| `downloadSelected` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 140 |
+| `useWallpaperStore` | Function | `src/stores/modules/wallpaper/index.ts` | 27 |
+| `flattenWallpapers` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 72 |
+| `clear` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 144 |
+| `downloadSelected` | Function | `src/composables/wallpaper/useWallpaperSelection.ts` | 158 |
 | `download` | Function | `src/composables/wallpaper/useWallpaperDownload.ts` | 57 |
 
 ## Execution Flows
@@ -82,8 +82,9 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Services | 5 calls |
-| Favorites | 4 calls |
+| Favorites | 3 calls |
+| Clients | 2 calls |
+| Services | 2 calls |
 
 ## How to Explore
 

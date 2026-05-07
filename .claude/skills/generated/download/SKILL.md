@@ -25,7 +25,7 @@ description: "Skill for the Download area of wallhaven. 7 symbols across 3 files
 
 Start here when exploring this area:
 
-- **`loadHistory`** (Function) — `src/composables/download/useDownload.ts:416`
+- **`loadHistory`** (Function) — `src/composables/download/useDownload.ts:417`
 - **`loadDownloadHistory`** (Function) — `src/stores/modules/download/index.ts:36`
 - **`generateId`** (Function) — `src/stores/modules/download/index.ts:29`
 - **`addDownloadTask`** (Function) — `src/stores/modules/download/index.ts:46`
@@ -35,13 +35,13 @@ Start here when exploring this area:
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `loadHistory` | Function | `src/composables/download/useDownload.ts` | 416 |
+| `loadHistory` | Function | `src/composables/download/useDownload.ts` | 417 |
 | `loadDownloadHistory` | Function | `src/stores/modules/download/index.ts` | 36 |
 | `generateId` | Function | `src/stores/modules/download/index.ts` | 29 |
 | `addDownloadTask` | Function | `src/stores/modules/download/index.ts` | 46 |
 | `updateProgress` | Function | `src/stores/modules/download/index.ts` | 66 |
 | `completeDownload` | Function | `src/stores/modules/download/index.ts` | 85 |
-| `getFinishedRecords` | Method | `src/services/download.service.ts` | 242 |
+| `getFinishedRecords` | Method | `src/services/download.service.ts` | 225 |
 
 ## How to Explore
 

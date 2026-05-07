@@ -10,7 +10,9 @@
     >
       <i class="fas fa-search" />
       <p>没有找到匹配的壁纸</p>
-      <p class="hint">尝试调整搜索条件或关键词</p>
+      <p class="hint">
+        尝试调整搜索条件或关键词
+      </p>
     </div>
 
     <!-- 壁纸列表 -->
@@ -76,8 +78,8 @@
               ]"
               :data-wallpaper-id="liItem.id"
               style="width: 300px; height: 200px"
-              @click.ctrl.exact.prevent="toggleSelect(liItem.id)"
-              @click.meta.exact.prevent="toggleSelect(liItem.id)"
+              @click.ctrl.exact.prevent="toggleSelect(liItem)"
+              @click.meta.exact.prevent="toggleSelect(liItem)"
             >
               <!-- 收藏状态指示器 -->
               <!-- <div
@@ -91,7 +93,7 @@
               <!-- 选择框 -->
               <div
                 class="thumb-checkbox"
-                @click.stop.prevent="toggleSelect(liItem.id)"
+                @click.stop.prevent="toggleSelect(liItem)"
               >
                 <i
                   v-if="isSelected(liItem.id)"
@@ -199,8 +201,8 @@ const emit = defineEmits<{
   preview: [item: WallpaperItem]
   'download-img': [item: WallpaperItem]
   'close-search-modal': []
-  'select-wallpaper': [id: string] // 切换选择状态
-  'select-all': [payload: { sectionIndex: number; ids: string[]; selected: boolean }]
+  'select-wallpaper': [item: WallpaperItem] // 切换选择状态
+  'select-all': [payload: { sectionIndex: number; ids: string[]; items: WallpaperItem[]; selected: boolean }]
   'toggle-favorite': [item: WallpaperItem, event: MouseEvent] // left click - quick add
   'show-favorite-dropdown': [item: WallpaperItem, event: MouseEvent] // right click - show dropdown
   'close-dropdown': [] // 关闭下拉菜单
@@ -248,10 +250,10 @@ const handleFavoriteRightClick = (item: WallpaperItem, event: MouseEvent): void 
 }
 
 /**
- * 切换选择状态
+ * 切换选择状态（传入选中的完整壁纸对象以存储数据）
  */
-const toggleSelect = (id: string): void => {
-  emit('select-wallpaper', id)
+const toggleSelect = (item: WallpaperItem): void => {
+  emit('select-wallpaper', item)
 }
 
 type SelectState = 'none' | 'some' | 'all'
@@ -276,7 +278,7 @@ const toggleSelectAll = (sectionData: WallpaperItem[], sectionIndex: number): vo
   const state = getSelectState(sectionData)
   const selectAll = state !== 'all' // toggle: if all selected → deselect; otherwise → select
   const ids = sectionData.map((item) => item.id)
-  emit('select-all', { sectionIndex, ids, selected: selectAll })
+  emit('select-all', { sectionIndex, ids, items: sectionData, selected: selectAll })
 }
 
 /**

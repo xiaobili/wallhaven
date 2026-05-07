@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **wallhaven** (2448 symbols, 4199 relationships, 167 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **wallhaven** (2484 symbols, 4177 relationships, 169 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -39,5 +39,17 @@ This project is indexed by GitNexus as **wallhaven** (2448 symbols, 4199 relatio
 | Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Work in the Clients area (107 symbols) | `.claude/skills/generated/clients/SKILL.md` |
+| Work in the Services area (57 symbols) | `.claude/skills/generated/services/SKILL.md` |
+| Work in the Handlers area (39 symbols) | `.claude/skills/generated/handlers/SKILL.md` |
+| Work in the Favorites area (36 symbols) | `.claude/skills/generated/favorites/SKILL.md` |
+| Work in the Wallpaper area (28 symbols) | `.claude/skills/generated/wallpaper/SKILL.md` |
+| Work in the Repositories area (13 symbols) | `.claude/skills/generated/repositories/SKILL.md` |
+| Work in the Errors area (8 symbols) | `.claude/skills/generated/errors/SKILL.md` |
+| Work in the Download area (7 symbols) | `.claude/skills/generated/download/SKILL.md` |
+| Work in the Main area (6 symbols) | `.claude/skills/generated/main/SKILL.md` |
+| Work in the Show area (5 symbols) | `.claude/skills/generated/show/SKILL.md` |
+| Work in the Scripts area (5 symbols) | `.claude/skills/generated/scripts/SKILL.md` |
+| Work in the Local area (3 symbols) | `.claude/skills/generated/local/SKILL.md` |
 
 <!-- gitnexus:end -->

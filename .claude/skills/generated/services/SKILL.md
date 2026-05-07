@@ -1,11 +1,11 @@
 ---
 name: services
-description: "Skill for the Services area of wallhaven. 79 symbols across 14 files."
+description: "Skill for the Services area of wallhaven. 57 symbols across 11 files."
 ---
 
 # Services
 
-79 symbols | 14 files | Cohesion: 95%
+57 symbols | 11 files | Cohesion: 98%
 
 ## When to Use
 
@@ -18,15 +18,15 @@ description: "Skill for the Services area of wallhaven. 79 symbols across 14 fil
 | File | Symbols |
 |------|---------|
 | `src/services/download.service.ts` | getDownloadPath, startDownload, resumeDownload, cleanupOrphanFiles, constructor (+7) |
-| `src/services/settings.service.ts` | get, set, update, getDefaults, reset (+4) |
 | `src/composables/download/useDownload.ts` | startDownload, resumeDownload, cleanupOrphanFiles, pauseDownload, cancelDownload (+4) |
+| `src/services/settings.service.ts` | get, set, update, getDefaults, reset (+3) |
 | `src/services/wallpaperApi.ts` | generateCacheKey, getFromCache, setCache, isProduction, callWallhavenAPIViaIPC (+3) |
-| `src/services/wallpaper.service.ts` | generateCacheKey, getFromCache, setCache, getApiKey, search (+3) |
-| `src/services/collections.service.ts` | create, rename, setDefault, clearCache, getAll (+2) |
 | `src/composables/settings/useSettings.ts` | load, update, reset, saveChanges, selectFolder |
-| `src/composables/favorites/useCollections.ts` | load, create, rename, setDefault |
 | `src/services/window.service.ts` | minimize, maximize, close, isMaximized |
 | `src/repositories/window.repository.ts` | minimize, maximize, close, isMaximized |
+| `src/services/wallpaper.service.ts` | saveQueryParams, loadQueryParams |
+| `src/composables/wallpaper/useWallpaperList.ts` | saveCustomParams, loadSavedParams |
+| `src/composables/local/useLocalFiles.ts` | openFolder, deleteFile |
 
 ## Entry Points
 
@@ -36,7 +36,7 @@ Start here when exploring this area:
 - **`update`** (Function) — `src/composables/settings/useSettings.ts:85`
 - **`reset`** (Function) — `src/composables/settings/useSettings.ts:104`
 - **`saveChanges`** (Function) — `src/composables/settings/useSettings.ts:154`
-- **`loadSettings`** (Function) — `src/stores/modules/wallpaper/index.ts:110`
+- **`loadSettings`** (Function) — `src/stores/modules/wallpaper/index.ts:131`
 
 ## Key Symbols
 
@@ -46,45 +46,43 @@ Start here when exploring this area:
 | `update` | Function | `src/composables/settings/useSettings.ts` | 85 |
 | `reset` | Function | `src/composables/settings/useSettings.ts` | 104 |
 | `saveChanges` | Function | `src/composables/settings/useSettings.ts` | 154 |
-| `loadSettings` | Function | `src/stores/modules/wallpaper/index.ts` | 110 |
+| `loadSettings` | Function | `src/stores/modules/wallpaper/index.ts` | 131 |
 | `cancelCurrentRequest` | Function | `src/services/wallpaperApi.ts` | 188 |
 | `searchWallpapers` | Function | `src/services/wallpaperApi.ts` | 200 |
 | `getWallpaperDetail` | Function | `src/services/wallpaperApi.ts` | 249 |
-| `load` | Function | `src/composables/favorites/useCollections.ts` | 33 |
-| `create` | Function | `src/composables/favorites/useCollections.ts` | 40 |
-| `rename` | Function | `src/composables/favorites/useCollections.ts` | 51 |
-| `setDefault` | Function | `src/composables/favorites/useCollections.ts` | 81 |
-| `startDownload` | Function | `src/composables/download/useDownload.ts` | 222 |
-| `resumeDownload` | Function | `src/composables/download/useDownload.ts` | 271 |
-| `cleanupOrphanFiles` | Function | `src/composables/download/useDownload.ts` | 484 |
-| `loadCollections` | Function | `src/stores/modules/favorites/index.ts` | 78 |
-| `loadAll` | Function | `src/stores/modules/favorites/index.ts` | 88 |
-| `loadCounts` | Function | `src/stores/modules/favorites/index.ts` | 95 |
-| `saveCustomParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 259 |
-| `loadSavedParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 275 |
+| `startDownload` | Function | `src/composables/download/useDownload.ts` | 223 |
+| `resumeDownload` | Function | `src/composables/download/useDownload.ts` | 272 |
+| `cleanupOrphanFiles` | Function | `src/composables/download/useDownload.ts` | 485 |
+| `saveCustomParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 343 |
+| `loadSavedParams` | Function | `src/composables/wallpaper/useWallpaperList.ts` | 359 |
+| `selectFolder` | Function | `src/composables/settings/useSettings.ts` | 175 |
+| `pauseDownload` | Function | `src/composables/download/useDownload.ts` | 250 |
+| `cancelDownload` | Function | `src/composables/download/useDownload.ts` | 358 |
+| `restorePendingDownloads` | Function | `src/composables/download/useDownload.ts` | 429 |
+| `handleProgress` | Function | `src/composables/download/useDownload.ts` | 89 |
+| `removeFinished` | Function | `src/composables/download/useDownload.ts` | 385 |
+| `clearFinished` | Function | `src/composables/download/useDownload.ts` | 400 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Refresh → IsProduction` | cross_community | 5 |
-| `Refresh → GetErrorCode` | cross_community | 5 |
-| `Refresh → GetErrorMessage` | cross_community | 5 |
-| `Fetch → IsProduction` | cross_community | 4 |
-| `Fetch → GetErrorCode` | cross_community | 4 |
-| `Fetch → GetErrorMessage` | cross_community | 4 |
-| `LoadMore → IsProduction` | cross_community | 4 |
-| `LoadMore → GetErrorCode` | cross_community | 4 |
-| `LoadMore → GetErrorMessage` | cross_community | 4 |
 | `GetWallpaperDetail → CreateDefaultSettings` | cross_community | 4 |
+| `SaveChanges → Get` | intra_community | 4 |
+| `SaveChanges → GetDefaults` | intra_community | 4 |
+| `SaveChanges → Set` | intra_community | 4 |
+| `SetBgFromUrl → GetDownloadPath` | cross_community | 4 |
+| `Reset → Set` | intra_community | 3 |
+| `Reset → GetDefaults` | intra_community | 3 |
+| `UseSettings → GetDefaults` | cross_community | 3 |
+| `CleanupOrphanFiles → GetDownloadPath` | intra_community | 3 |
+| `StartDownload → GetDownloadPath` | intra_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Clients | 2 calls |
 | Wallpaper | 1 calls |
-| Favorites | 1 calls |
 
 ## How to Explore
 

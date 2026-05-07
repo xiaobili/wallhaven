@@ -9,6 +9,8 @@ import * as path from 'path'
 import { getImageDimensions, generateThumbnail, logHandler } from './base'
 import { IPC_ERROR_CODES, createErrorResponse } from '../../../../src/errors'
 
+const { access, readdir, stat } = fs.promises
+
 export function registerFileHandlers(): void {
   /**
    * 选择文件夹对话框
@@ -31,11 +33,13 @@ export function registerFileHandlers(): void {
    */
   ipcMain.handle('read-directory', async (_event, dirPath: string, page: number = 1, pageSize: number = 50) => {
     try {
-      if (!fs.existsSync(dirPath)) {
+      try {
+        await access(dirPath)
+      } catch {
         return { error: '目录不存在', files: [], total: 0, page: 1, pageSize: 50 }
       }
 
-      const files = fs.readdirSync(dirPath)
+      const files = await readdir(dirPath)
       const imageFiles = files.filter((file) => {
         const ext = path.extname(file).toLowerCase()
         return ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)
@@ -48,7 +52,7 @@ export function registerFileHandlers(): void {
       const fileDetails = await Promise.all(
         pagedImageFiles.map(async (file) => {
           const filePath = path.join(dirPath, file)
-          const stats = fs.statSync(filePath)
+          const stats = await stat(filePath)
 
           // 获取图片尺寸和生成缩略图
           let width = 0
