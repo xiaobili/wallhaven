@@ -119,6 +119,15 @@
           </li>
         </ul>
       </section>
+
+      <!-- 分页控件 -->
+      <PaginationBar
+        :current-page="currentPage"
+        :total-pages="totalPages"
+        :total-count="totalCount"
+        :loading="loading"
+        @go-to-page="(page: number) => $emit('go-to-page', page)"
+      />
     </div>
 
     <!-- 空状态 -->
@@ -158,6 +167,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatFileSize } from '@/utils/helpers'
+import PaginationBar from '@/components/PaginationBar.vue'
 
 // 本地壁纸接口
 export interface LocalWallpaper {
@@ -175,12 +185,21 @@ interface Props {
   localWallpapers: LocalWallpaper[]
   loading: boolean
   downloadPath: string
+  /** 当前页码（从 1 开始） */
+  currentPage: number
+  /** 总页数 */
+  totalPages: number
+  /** 总壁纸数量 */
+  totalCount: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   localWallpapers: () => [],
   loading: false,
   downloadPath: '',
+  currentPage: 1,
+  totalPages: 1,
+  totalCount: 0,
 })
 
 // Emits
@@ -191,6 +210,7 @@ defineEmits<{
   'delete-wallpaper': [wallpaper: LocalWallpaper, index: number]
   preview: [wallpaper: LocalWallpaper]
   'image-error': [index: number]
+  'go-to-page': [page: number]
 }>()
 
 // 计算属性
