@@ -28,7 +28,10 @@ jobs:
           if [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
           else
-            VERSION=$(node -p "require('./package.json').version")
+            echo "Getting version from package.json"
+            VERSION= $(node -p "require('./package.json').version")
+            VERSION=${VERSION#v}
+            echo "Using version from package.json: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Publishing version: $VERSION"
