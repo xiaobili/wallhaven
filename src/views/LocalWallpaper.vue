@@ -26,12 +26,16 @@
       :local-wallpapers="localWallpapers"
       :loading="loading"
       :download-path="downloadPath"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-count="total"
       @refresh="refreshList"
       @open-folder="openFolder"
       @set-wallpaper="setAsWallpaper"
       @delete-wallpaper="deleteWallpaper"
       @preview="previewWallpaper"
       @image-error="handleImageError"
+      @go-to-page="handleGoToPage"
     />
   </div>
 </template>
@@ -47,12 +51,22 @@ import type { LocalWallpaper } from '@/components/LocalWallpaperMain.vue'
 
 const { settings } = useSettings()
 const { alert, showSuccess, hideAlert, showError } = useAlert()
-const { readDirectory, openFolder: openFolderAction, deleteFile } = useLocalFiles()
+const {
+  readDirectory,
+  openFolder: openFolderAction,
+  deleteFile,
+  goToPage,
+  clearCache,
+  currentPage,
+  totalPages,
+  total,
+  localWallpapers: composableLocalWallpapers,
+} = useLocalFiles()
 const { setWallpaper } = useWallpaperSetter()
 
 // 响应式数据
 const loading = ref<boolean>(false)
-const localWallpapers = ref<LocalWallpaper[]>([])
+const localWallpapers = composableLocalWallpapers
 const previewItem = ref<WallpaperItem | null>(null)
 
 const imgShow = ref<boolean>(false)
@@ -104,27 +118,26 @@ const refreshList = async (): Promise<void> => {
   loading.value = true
 
   try {
-    const result = await readDirectory(downloadPath.value)
-
-    if (!result.success || !result.data) {
-      console.error('读取目录失败:', result.error)
-      localWallpapers.value = []
-      return
-    }
-
-    localWallpapers.value = result.data.map((file) => ({
-      name: file.name,
-      path: file.path,
-      thumbnailPath: file.thumbnailPath || '',
-      size: file.size,
-      modifiedTime: new Date(file.modifiedAt).toISOString(),
-      width: file.width,
-      height: file.height,
-    }))
+    clearCache()
+    await goToPage(downloadPath.value, 1)
 
     console.log(`已加载 ${localWallpapers.value.length} 张本地壁纸`)
   } catch (error) {
     console.error('读取本地壁纸失败:', error)
+    localWallpapers.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleGoToPage = async (page: number): Promise<void> => {
+  if (!downloadPath.value) return
+
+  loading.value = true
+  try {
+    await goToPage(downloadPath.value, page)
+  } catch (error) {
+    console.error('切换页面失败:', error)
     localWallpapers.value = []
   } finally {
     loading.value = false
