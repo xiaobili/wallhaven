@@ -33,21 +33,26 @@ class FileClientImpl extends BaseClient {
   /**
    * 读取目录
    */
-  async readDirectory(dirPath: string): Promise<IpcResponse<LocalFile[]>> {
+  async readDirectory(dirPath: string, page?: number, pageSize?: number): Promise<IpcResponse<LocalFile[]>> {
     if (!this.isAvailable()) {
       return this.createUnavailableResponse<LocalFile[]>()
     }
 
     try {
-      const result = await window.electronAPI.readDirectory(dirPath)
+      const result = await window.electronAPI.readDirectory(dirPath, page, pageSize)
       if (result.error) {
         return {
           success: false,
           data: [],
+          pagination: { total: result.total, page: result.page, pageSize: result.pageSize },
           error: { code: 'READ_DIRECTORY_ERROR', message: result.error },
         }
       }
-      return { success: true, data: result.files as LocalFile[] }
+      return {
+        success: true,
+        data: result.files as LocalFile[],
+        pagination: { total: result.total, page: result.page, pageSize: result.pageSize },
+      }
     } catch (error) {
       return {
         success: false,

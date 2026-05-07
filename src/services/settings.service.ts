@@ -125,10 +125,12 @@ class SettingsServiceImpl {
   /**
    * 读取目录内容
    * @param dirPath - 目录路径
+   * @param page - 页码（从 1 开始，可选）
+   * @param pageSize - 每页数量（可选，默认 50）
    * @returns 返回目录中的文件列表
    */
-  async readDirectory(dirPath: string): Promise<IpcResponse<LocalFile[]>> {
-    return settingsRepository.readDirectory(dirPath)
+  async readDirectory(dirPath: string, page?: number, pageSize?: number): Promise<IpcResponse<LocalFile[]>> {
+    return settingsRepository.readDirectory(dirPath, page, pageSize)
   }
 
   /**

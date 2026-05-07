@@ -51,7 +51,7 @@ export const electronClient = {
 
   // 文件操作
   selectFolder: () => fileClient.selectFolder(),
-  readDirectory: (dirPath: string) => fileClient.readDirectory(dirPath),
+  readDirectory: (dirPath: string, page?: number, pageSize?: number) => fileClient.readDirectory(dirPath, page, pageSize),
   openFolder: (folderPath: string) => fileClient.openFolder(folderPath),
   deleteFile: (filePath: string) => fileClient.deleteFile(filePath),
   fileExists: (filePath: string) => fileClient.fileExists(filePath),
