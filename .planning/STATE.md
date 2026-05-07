@@ -1,19 +1,28 @@
 # Project State
 
 **项目**: Wallhaven 壁纸浏览器
-**当前里程碑**: 准备 v2.9.0
-**当前阶段**: 无 — 里程碑已完成
-**最后更新**: 2026-05-06
+**当前里程碑**: v2.8.1
+**当前阶段**: 规划中 (defining requirements)
+**最后更新**: 2026-05-07
 
 ---
 
 ## Project Reference
 
-详见: `.planning/PROJECT.md` (更新于 2026-05-06)
+详见: `.planning/PROJECT.md` (更新于 2026-05-07)
 
-**核心价值:** 性能优先，质量为本 — 在严格保持功能兼容性的前提下，优化内部实现质量
+**核心价值:** 流畅体验，数据驱动 — 为本地壁纸管理引入分页机制，提升大数据量下的浏览流畅度
 
-**当前焦点:** 准备下一个里程碑
+**当前焦点:** 本地壁纸列表分页
+
+---
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-07 — Milestone v2.8.1 started
 
 ---
 
@@ -23,10 +32,13 @@
 
 ```
 v2.8.0: ██████████ 100% — SHIPPED
+v2.8.1: ░░░░░░░░░░   0% — Defining requirements
 ```
 
 **下一个行动:**
-1. 运行 `/gsd-new-milestone` 开始下一个里程碑规划
+1. 完成需求定义
+2. 创建执行路线图
+3. 开始 Phase 1 实现
 
 ---
 
