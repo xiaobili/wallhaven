@@ -55,20 +55,22 @@
 Plans:
 - [x] 07-01-PLAN.md — 类型定义 + handler 分页逻辑 + preload 桥接 ✅
 
-### Phase 8: 数据流链路分页参数传递
+### Phase 8: 数据流链路分页参数传递 ✅
 
-**需求:** PAG-02
+**需求:** PAG-02 — 已完成 2026-05-07
 
 **目标:** 从 composable 到 preload 的完整数据链路支持分页参数传递
 
 **成功标准:**
-1. `settingsService.readDirectory` 签名增加 `page`/`pageSize` 可选参数
-2. `settingsRepository.readDirectory` 签名增加 `page`/`pageSize` 可选参数
-3. `fileClient.readDirectory` 签名增加 `page`/`pageSize` 可选参数，传递到 `window.electronAPI.readDirectory`
-4. preload `readDirectory` 桥接转发分页参数到 `ipcRenderer.invoke('read-directory', dirPath, page, pageSize)`
-5. `useLocalFiles` composable 管理当前页码、总页数、每页数量等分页状态
+1. ✅ `settingsService.readDirectory` 签名增加 `page`/`pageSize` 可选参数
+2. ✅ `settingsRepository.readDirectory` 签名增加 `page`/`pageSize` 可选参数
+3. ✅ `fileClient.readDirectory` 签名增加 `page`/`pageSize` 可选参数，传递到 `window.electronAPI.readDirectory`
+4. ✅ preload `readDirectory` 桥接转发分页参数到 `ipcRenderer.invoke('read-directory', dirPath, page, pageSize)`（Phase 7 完成）
+5. ✅ `useLocalFiles` composable 管理当前页码、总页数、每页数量等分页状态
+6. ✅ 类型检查 (`tsc --noEmit`) 通过
+7. ✅ 构建 (`electron-vite build`) 通过
 
-**Plans:** 1 plan
+**Plans:** 1 plan — 全部完成
 
 Plans:
 - [x] 08-01-PLAN.md — 数据链路各层添加分页参数 + composable 分页状态管理
@@ -99,7 +101,7 @@ Plans:
 | 5. 架构优化（服务层与状态管理）| v2.8.0 | Complete | 2026-05-06 |
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
 | 7. 后端分页支持 | v2.8.1 | Complete | 2026-05-07 |
-| 8. 数据流链路分页参数传递 | v2.8.1 | Planned | 2026-05-07 |
+| 8. 数据流链路分页参数传递 | v2.8.1 | Complete | 2026-05-07 |
 | 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
 
 ---
