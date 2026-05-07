@@ -29,10 +29,10 @@ export function registerFileHandlers(): void {
   /**
    * 读取目录内容（带缩略图）
    */
-  ipcMain.handle('read-directory', async (_event, dirPath: string) => {
+  ipcMain.handle('read-directory', async (_event, dirPath: string, page: number = 1, pageSize: number = 50) => {
     try {
       if (!fs.existsSync(dirPath)) {
-        return { error: '目录不存在', files: [] }
+        return { error: '目录不存在', files: [], total: 0, page: 1, pageSize: 50 }
       }
 
       const files = fs.readdirSync(dirPath)
@@ -41,8 +41,12 @@ export function registerFileHandlers(): void {
         return ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)
       })
 
+      const total = imageFiles.length
+      const startIndex = (page - 1) * pageSize
+      const pagedImageFiles = imageFiles.slice(startIndex, startIndex + pageSize)
+
       const fileDetails = await Promise.all(
-        imageFiles.map(async (file) => {
+        pagedImageFiles.map(async (file) => {
           const filePath = path.join(dirPath, file)
           const stats = fs.statSync(filePath)
 
@@ -77,10 +81,10 @@ export function registerFileHandlers(): void {
         }),
       )
 
-      return { error: null, files: fileDetails }
+      return { error: null, files: fileDetails, total, page, pageSize }
     } catch (error: any) {
       logHandler('read-directory', `Error: ${error.message}`, 'error')
-      return { error: error.message, files: [] }
+      return { error: error.message, files: [], total: 0, page: 1, pageSize: 50 }
     }
   })
 
