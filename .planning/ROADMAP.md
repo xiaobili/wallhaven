@@ -28,7 +28,7 @@
 
 ### 🚧 v2.8.1 本地壁纸列表分页 (Phases 7-9)
 
-- [ ] Phase 7: 后端分页支持 — PAG-01
+- [ ] Phase 7: 后端分页支持 — PAG-01 (1 plan)
 - [ ] Phase 8: 数据流链路分页参数传递 — PAG-02
 - [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04
 
@@ -48,6 +48,11 @@
 3. 读取目录后先过滤图片文件，计算总数 total，再根据 page/pageSize 截取子集
 4. 同时返回 `error`, `files` (当前页) 和新增的 `total`, `page`, `pageSize` 字段
 5. 兼容性: 未传分页参数时默认 page=1, pageSize=50，不破坏现有调用
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — 类型定义 + handler 分页逻辑 + preload 桥接
 
 ### Phase 8: 数据流链路分页参数传递
 
@@ -87,7 +92,7 @@
 | 4. 代码质量（取消机制与配置）| v2.8.0 | Complete | 2026-05-06 |
 | 5. 架构优化（服务层与状态管理）| v2.8.0 | Complete | 2026-05-06 |
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
-| 7. 后端分页支持 | v2.8.1 | Planning | — |
+| 7. 后端分页支持 | v2.8.1 | Planned (1 plan) | — |
 | 8. 数据流链路分页参数传递 | v2.8.1 | Planning | — |
 | 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
 
