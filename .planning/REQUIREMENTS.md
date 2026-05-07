@@ -45,5 +45,5 @@
 |---------|-------|------|
 | PAG-01 | Phase 7: 后端分页支持 | Complete |
 | PAG-02 | Phase 8: 数据流链路分页参数传递 | Complete |
-| PAG-03 | Phase 9: 前端分页 UI 集成 | Planning |
-| PAG-04 | Phase 9: 前端分页 UI 集成 | Planning |
+| PAG-03 | Phase 9: 前端分页 UI 集成 | Complete |
+| PAG-04 | Phase 9: 前端分页 UI 集成 | Complete |

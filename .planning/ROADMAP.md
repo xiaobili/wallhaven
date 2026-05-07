@@ -8,7 +8,7 @@
 ## Milestones
 
 - ✅ **v2.8.0 性能与架构优化** — Phases 1-6 (shipped 2026-05-06)
-- 🚧 **v2.8.1 本地壁纸列表分页** — Phases 7-9 (规划中)
+- ✅ **v2.8.1 本地壁纸列表分页** — Phases 7-9 (已完成 2026-05-07)
 
 ---
 
@@ -30,7 +30,7 @@
 
 - ✅ Phase 7: 后端分页支持 — PAG-01 (1 plan) 2026-05-07
 - [x] Phase 8: 数据流链路分页参数传递 — PAG-02 (1 plan) 2026-05-07
-- [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04 (1 plan)
+- [x] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04 (1 plan) 2026-05-07
 
 ---
 
@@ -75,23 +75,23 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — 数据链路各层添加分页参数 + composable 分页状态管理
 
-### Phase 9: 前端分页 UI 集成
+### Phase 9: 前端分页 UI 集成 ✅
 
-**需求:** PAG-03, PAG-04
+**需求:** PAG-03, PAG-04 — 已完成 2026-05-07
 
 **目标:** LocalWallpaper.vue 集成 PaginationBar 组件，实现页码导航和页面缓存
 
 **成功标准:**
-1. `LocalWallpaper.vue` 在壁纸网格下方渲染 `PaginationBar` 组件，传入 `currentPage`, `totalPages`, `totalCount`, `loading`
-2. 页码切换时调用 composable 的 `goToPage(page)` 方法，触发数据重新加载
-3. 页面缓存: 切换页面时缓存当前页的 `LocalWallpaper[]`，返回已缓存页面时直接从缓存读取
-4. 刷新按钮清除所有缓存并重置到第 1 页
-5. 分页控件在大数据量下正常显示（测试 500+ 文件）
+1. ✅ `LocalWallpaper.vue` 在壁纸网格下方渲染 `PaginationBar` 组件，传入 `currentPage`, `totalPages`, `totalCount`, `loading`
+2. ✅ 页码切换时调用 composable 的 `goToPage(page)` 方法，触发数据重新加载
+3. ✅ 页面缓存: 切换页面时缓存当前页的 `LocalWallpaper[]`，返回已缓存页面时直接从缓存读取
+4. ✅ 刷新按钮清除所有缓存并重置到第 1 页
+5. ✅ 分页控件在大数据量下正常显示（测试 500+ 文件）
 
-**Plans:** 1 plan
+**Plans:** 1 plan — 全部完成
 
 Plans:
-- [ ] 09-01-PLAN.md — 集成 PaginationBar + 页面缓存 (goToPage, clearCache)
+- [x] 09-01-PLAN.md — 集成 PaginationBar + 页面缓存 (goToPage, clearCache) ✅
 
 ---
 
@@ -107,7 +107,7 @@ Plans:
 | 6. 架构优化（IPC 命名规范）| v2.8.0 | Complete | 2026-05-06 |
 | 7. 后端分页支持 | v2.8.1 | Complete | 2026-05-07 |
 | 8. 数据流链路分页参数传递 | v2.8.1 | Complete | 2026-05-07 |
-| 9. 前端分页 UI 集成 | v2.8.1 | Planning | — |
+| 9. 前端分页 UI 集成 | v2.8.1 | Complete | 2026-05-07 |
 
 ---
 
