@@ -11,7 +11,7 @@ export interface ElectronAPI {
   selectFolder: () => Promise<string | null>
 
   // 目录操作
-  readDirectory: (dirPath: string) => Promise<{ error: string | null; files: any[] }>
+  readDirectory: (dirPath: string, page?: number, pageSize?: number) => Promise<{ error: string | null; files: any[]; total: number; page: number; pageSize: number }>
   openFolder: (folderPath: string) => Promise<{ success: boolean; error?: string }>
 
   // 文件操作
@@ -131,9 +131,9 @@ const electronAPI: ElectronAPI = {
   },
 
   // 目录操作
-  readDirectory: (dirPath: string) => {
-    console.log('[Preload] readDirectory called:', dirPath)
-    return ipcRenderer.invoke(IPC_CHANNELS.READ_DIRECTORY, dirPath)
+  readDirectory: (dirPath: string, page?: number, pageSize?: number) => {
+    console.log('[Preload] readDirectory called:', dirPath, 'page:', page, 'pageSize:', pageSize)
+    return ipcRenderer.invoke(IPC_CHANNELS.READ_DIRECTORY, dirPath, page, pageSize)
   },
   openFolder: (folderPath: string) => {
     console.log('[Preload] openFolder called:', folderPath)
