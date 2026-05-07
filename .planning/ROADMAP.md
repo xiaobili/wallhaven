@@ -30,7 +30,7 @@
 
 - ✅ Phase 7: 后端分页支持 — PAG-01 (1 plan) 2026-05-07
 - [x] Phase 8: 数据流链路分页参数传递 — PAG-02 (1 plan) 2026-05-07
-- [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04
+- [ ] Phase 9: 前端分页 UI 集成 — PAG-03, PAG-04 (1 plan)
 
 ---
 
@@ -87,6 +87,11 @@ Plans:
 3. 页面缓存: 切换页面时缓存当前页的 `LocalWallpaper[]`，返回已缓存页面时直接从缓存读取
 4. 刷新按钮清除所有缓存并重置到第 1 页
 5. 分页控件在大数据量下正常显示（测试 500+ 文件）
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — 集成 PaginationBar + 页面缓存 (goToPage, clearCache)
 
 ---
 
